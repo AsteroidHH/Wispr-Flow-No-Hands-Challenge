@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { InputControlCenter } from '@/components/InputControlCenter';
 import { BentoGrid } from '@/components/BentoGrid';
+import { TerminalPreview } from '@/components/terminal-preview';
 import { getPresetById, getDefaultPreset } from '@/lib/presets';
 import { transformApiResponseToDeliverables } from '@/lib/transform';
 import { exportArtifactsBundle } from '@/lib/exportBundle';
@@ -19,6 +20,7 @@ export default function Home() {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [refiningCard, setRefiningCard] = useState<keyof Deliverables | null>(null);
   const [isExportingBundle, setIsExportingBundle] = useState<boolean>(false);
+  const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
   const [generationSource, setGenerationSource] = useState<string>('preset_ready');
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -211,6 +213,7 @@ export default function Home() {
         githubUrl="https://github.com/AsteroidHH/Wispr-Flow-No-Hands-Challenge"
         onExportBundle={handleExportBundle}
         isExportingBundle={isExportingBundle}
+        onOpenTerminal={() => setIsTerminalOpen(true)}
       />
 
       {/* Main Two-Column Layout */}
@@ -282,6 +285,12 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {/* Terminal Preview Modal Drawer */}
+      <TerminalPreview
+        isOpen={isTerminalOpen}
+        onClose={() => setIsTerminalOpen(false)}
+      />
 
       {/* Footer */}
       <footer className="mt-auto border-t border-neutral-900 bg-neutral-950/80 py-4 text-center text-xs text-neutral-500">

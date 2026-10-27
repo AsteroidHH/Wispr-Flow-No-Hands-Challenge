@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Radio, Sparkles, ExternalLink, Archive, Loader2 } from 'lucide-react';
+import { Radio, Sparkles, ExternalLink, Archive, Loader2, Terminal } from 'lucide-react';
 
 function GithubIcon({ className = 'h-4 w-4' }: { className?: string }) {
   return (
@@ -25,6 +25,7 @@ interface NavbarProps {
   githubUrl?: string;
   onExportBundle?: () => void;
   isExportingBundle?: boolean;
+  onOpenTerminal?: () => void;
 }
 
 export function Navbar({
@@ -32,6 +33,7 @@ export function Navbar({
   githubUrl = 'https://github.com/AsteroidHH/Wispr-Flow-No-Hands-Challenge',
   onExportBundle,
   isExportingBundle = false,
+  onOpenTerminal,
 }: NavbarProps) {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur-md">
@@ -70,12 +72,25 @@ export function Navbar({
           </div>
         </div>
 
-        {/* Right Actions: Export Bundle, GitHub repo link & Audio status */}
+        {/* Right Actions: Terminal CLI, Export Bundle, GitHub repo link & Audio status */}
         <div className="flex items-center gap-2.5">
           <div className="hidden lg:flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-950/20 px-2.5 py-1 text-xs text-emerald-400 font-mono">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
             Wispr Audio Active
           </div>
+
+          {/* Terminal CLI Toggle Button */}
+          {onOpenTerminal && (
+            <button
+              type="button"
+              onClick={onOpenTerminal}
+              title="Open interactive terminal CLI preview"
+              className="flex items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900/90 px-3 py-1.5 text-xs font-mono font-medium text-neutral-200 transition-all hover:border-indigo-500/50 hover:bg-neutral-800 hover:text-white"
+            >
+              <Terminal className="h-3.5 w-3.5 text-indigo-400" />
+              <span className="hidden sm:inline">Terminal CLI</span>
+            </button>
+          )}
 
           {/* Export Artifacts Bundle Button */}
           {onExportBundle && (
@@ -100,7 +115,7 @@ export function Navbar({
             href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/80 px-3 py-1.5 text-xs font-medium text-neutral-200 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
+            className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/80 px-3.5 py-1.5 text-xs font-medium text-neutral-200 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
           >
             <GithubIcon className="h-4 w-4" />
             <span className="hidden sm:inline">GitHub</span>
