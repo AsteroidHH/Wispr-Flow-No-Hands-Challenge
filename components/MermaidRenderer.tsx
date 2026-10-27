@@ -12,19 +12,19 @@ export const THEME_CONFIGS: Record<
 > = {
   obsidian: {
     name: 'Obsidian Dark',
-    badgeColor: 'border-indigo-500/40 text-indigo-300 bg-indigo-950/30',
+    badgeColor: 'border-[#5e6ad2]/40 text-[#bdc2ff] bg-[#5e6ad2]/20',
     variables: {
       darkMode: true,
-      background: '#090d16',
-      mainBkg: '#161b22',
-      primaryColor: '#6366f1',
-      primaryTextColor: '#f8fafc',
-      primaryBorderColor: '#4f46e5',
-      lineColor: '#94a3b8',
+      background: '#0d0e0f',
+      mainBkg: '#121315',
+      primaryColor: '#5e6ad2',
+      primaryTextColor: '#e3e2e3',
+      primaryBorderColor: '#5e6ad2',
+      lineColor: '#908f9e',
       secondaryColor: '#8b5cf6',
       tertiaryColor: '#0e7490',
-      edgeLabelBackground: '#1e293b',
-      nodeBorder: '#475569',
+      edgeLabelBackground: '#1b1c1d',
+      nodeBorder: '#292a2b',
     },
   },
   cyberpunk: {
@@ -32,7 +32,7 @@ export const THEME_CONFIGS: Record<
     badgeColor: 'border-pink-500/40 text-pink-300 bg-pink-950/30',
     variables: {
       darkMode: true,
-      background: '#090d16',
+      background: '#0d0e0f',
       mainBkg: '#0f172a',
       primaryColor: '#ec4899',
       primaryTextColor: '#fdf4ff',
@@ -46,19 +46,19 @@ export const THEME_CONFIGS: Record<
   },
   slate: {
     name: 'Slate Minimal',
-    badgeColor: 'border-slate-500/40 text-slate-300 bg-slate-900/40',
+    badgeColor: 'border-[#292a2b] text-[#908f9e] bg-[#1b1c1d]',
     variables: {
       darkMode: true,
-      background: '#090d16',
-      mainBkg: '#1e293b',
-      primaryColor: '#475569',
-      primaryTextColor: '#f1f5f9',
-      primaryBorderColor: '#64748b',
-      lineColor: '#cbd5e1',
-      secondaryColor: '#334155',
-      tertiaryColor: '#0f172a',
-      edgeLabelBackground: '#0f172a',
-      nodeBorder: '#94a3b8',
+      background: '#0d0e0f',
+      mainBkg: '#1b1c1d',
+      primaryColor: '#343536',
+      primaryTextColor: '#e3e2e3',
+      primaryBorderColor: '#292a2b',
+      lineColor: '#908f9e',
+      secondaryColor: '#292a2b',
+      tertiaryColor: '#121315',
+      edgeLabelBackground: '#121315',
+      nodeBorder: '#292a2b',
     },
   },
 };
@@ -100,6 +100,8 @@ export function MermaidRenderer({
       console.warn('Mermaid initialization warning:', err);
     }
 
+    let currentUniqueId = '';
+
     async function renderDiagram() {
       if (!code.trim()) {
         setSvgContent('');
@@ -112,10 +114,10 @@ export function MermaidRenderer({
       setError(null);
 
       // Distinct ID prevents DOM ID collision in Mermaid cache
-      const uniqueId = `mermaid-chart-${Math.random().toString(36).substring(2, 10)}`;
+      currentUniqueId = `mermaid-chart-${Math.random().toString(36).substring(2, 10)}`;
 
       try {
-        const { svg } = await mermaid.render(uniqueId, code.trim());
+        const { svg } = await mermaid.render(currentUniqueId, code.trim());
         if (isMounted) {
           setSvgContent(svg);
           setIsLoading(false);
@@ -131,7 +133,7 @@ export function MermaidRenderer({
       } catch (err: unknown) {
         console.error('Mermaid render error:', err);
         if (isMounted) {
-          const strayErrorEl = document.getElementById(uniqueId);
+          const strayErrorEl = document.getElementById(currentUniqueId) || document.getElementById(`d${currentUniqueId}`);
           if (strayErrorEl) strayErrorEl.remove();
 
           setError(err instanceof Error ? err.message : 'Failed to parse Mermaid diagram.');
@@ -144,6 +146,10 @@ export function MermaidRenderer({
 
     return () => {
       isMounted = false;
+      if (currentUniqueId) {
+        const stray = document.getElementById(currentUniqueId) || document.getElementById(`d${currentUniqueId}`);
+        if (stray) stray.remove();
+      }
     };
   }, [code, theme, onSvgRendered]);
 
@@ -159,12 +165,12 @@ export function MermaidRenderer({
 
   return (
     <div
-      className={`relative flex items-center justify-center overflow-auto rounded-lg bg-[#090d16] p-4 border border-neutral-800/80 transition-colors ${className}`}
+      className={`relative flex items-center justify-center overflow-auto rounded-lg bg-[#0d0e0f] p-4 border border-[#292a2b] transition-colors ${className}`}
     >
       {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#090d16]/85 backdrop-blur-xs">
-          <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
-          <span className="ml-2 text-xs font-mono text-neutral-400">Rendering visual topology...</span>
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0d0e0f]/85 backdrop-blur-xs">
+          <Loader2 className="h-6 w-6 animate-spin text-[#5e6ad2]" />
+          <span className="ml-2 text-xs font-mono text-[#908f9e]">Rendering visual topology...</span>
         </div>
       )}
 

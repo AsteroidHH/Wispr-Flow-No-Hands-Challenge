@@ -27,33 +27,32 @@ export function BentoGrid({
 }: BentoGridProps) {
   if (isGenerating) {
     return (
-      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-2xl border border-neutral-800/80 bg-neutral-900/40 p-8 text-center backdrop-blur-md">
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-500/10 border border-indigo-500/30">
-          <div className="absolute inset-0 rounded-2xl animate-ping bg-indigo-500/20" />
-          <Sparkles className="h-8 w-8 text-indigo-400 animate-spin" />
+      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-8 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0d0e0f] border border-[#292a2b] text-[#5e6ad2]">
+          <Sparkles className="h-5 w-5 animate-spin" />
         </div>
-        <h3 className="mt-5 text-base font-semibold text-white">Synthesizing Deliverables</h3>
-        <p className="mt-1.5 max-w-sm text-xs text-neutral-400">
+        <h3 className="mt-4 text-sm font-semibold text-[#e3e2e3]">Synthesizing deliverables</h3>
+        <p className="mt-1 max-w-sm text-xs text-[#908f9e]">
           Converting unstructured voice brain dump and git context into 4 developer-grade assets...
         </p>
-        <div className="mt-6 flex items-center gap-3 font-mono text-[11px] text-neutral-500">
-          <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <div className="mt-5 flex items-center gap-3 font-mono text-[11px] text-[#908f9e]">
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
             PR Spec
           </span>
           <span>•</span>
-          <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#5e6ad2]"></span>
             Mermaid Diagram
           </span>
           <span>•</span>
-          <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-pink-400 animate-pulse"></span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#bdc2ff]"></span>
             Demo Script
           </span>
           <span>•</span>
-          <span className="flex items-center gap-1">
-            <span className="h-1.5 w-1.5 rounded-full bg-sky-400 animate-pulse"></span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-sky-400"></span>
             Social Post
           </span>
         </div>
@@ -63,9 +62,9 @@ export function BentoGrid({
 
   if (!deliverables) {
     return (
-      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-2xl border border-neutral-800/60 bg-neutral-900/30 p-8 text-center">
-        <p className="text-sm text-neutral-400">
-          Select a judge preset or hit <span className="font-mono text-indigo-400">Generate Deliverables</span> to view output.
+      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-8 text-center">
+        <p className="text-xs text-[#908f9e]">
+          Select a judge preset or hit <span className="font-mono text-[#e3e2e3]">Generate Deliverables</span> to view output.
         </p>
       </div>
     );
@@ -76,13 +75,13 @@ export function BentoGrid({
       {/* Bento Grid Header */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <h2 className="text-xs font-mono uppercase tracking-wider text-neutral-300">
-            Real-Time Deliverables Bento
-          </h2>
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          <span className="text-xs font-medium text-[#e3e2e3]">
+            Generated deliverables
+          </span>
         </div>
-        <span className="text-[11px] font-mono text-neutral-500">
-          4 Artifacts Generated • Voice-Tweakable
+        <span className="text-[11px] font-mono text-[#908f9e]">
+          4 Artifacts • Voice-Tweakable
         </span>
       </div>
 

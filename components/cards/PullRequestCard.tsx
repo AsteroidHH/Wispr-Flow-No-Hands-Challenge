@@ -75,21 +75,27 @@ export function PullRequestCard({
 
   const getFullMarkdown = () => {
     if (data.prMarkdown) return data.prMarkdown;
-    return `## ${data.title}
+    const title = data.title || 'Feature Implementation';
+    const commitMsg = data.commitMessage || 'feat: update implementation';
+    const summary = data.summary || 'Summary of changes';
+    const keyChangesList = (data.keyChanges || []).map((change) => `- ${change}`).join('\n');
+    const breakingChangesList = (data.breakingChanges || []).map((b) => `- ${b}`).join('\n');
+
+    return `## ${title}
 
 ### Commit Message
 \`\`\`
-${data.commitMessage}
+${commitMsg}
 \`\`\`
 
 ### Summary
-${data.summary}
+${summary}
 
 ### Key Changes
-${data.keyChanges.map((change) => `- ${change}`).join('\n')}
+${keyChangesList || '- General code refactor'}
 
 ### ⚠️ Breaking Changes
-${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
+${breakingChangesList || '- None'}`;
   };
 
   const handleCopy = async () => {
@@ -119,61 +125,84 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
       // ignore
     }
 
-    const titleParam = encodeURIComponent(data.title);
-    const bodyParam = encodeURIComponent(getFullMarkdown());
-    const compare = compareBranch.trim() || 'main...feature';
+    const titleParam = encodeURIComponent(data.title || 'ShipSpeak: Deliverables PR');
+    const fullMarkdown = getFullMarkdown();
+
+    // Guard URL length against browser and GitHub server query limits (~4500 chars)
+    const MAX_PARAM_LENGTH = 4000;
+    let safeMarkdown = fullMarkdown;
+    let wasTruncated = false;
+
+    if (encodeURIComponent(safeMarkdown).length > MAX_PARAM_LENGTH) {
+      wasTruncated = true;
+      safeMarkdown = fullMarkdown.slice(0, 1800) + '\n\n... *(Full PR spec copied to clipboard — paste directly into description)*';
+      try {
+        navigator.clipboard.writeText(fullMarkdown);
+      } catch {
+        // ignore
+      }
+    }
+
+    const bodyParam = encodeURIComponent(safeMarkdown);
+    const compare = encodeURIComponent(compareBranch.trim() || 'main...feature');
 
     const githubPrUrl = `https://github.com/${cleanRepo}/compare/${compare}?quick_pull=1&title=${titleParam}&body=${bodyParam}`;
 
     window.open(githubPrUrl, '_blank', 'noopener,noreferrer');
     setIsRepoModalOpen(false);
-    showToast(`Opened PR compare on GitHub for ${cleanRepo}`);
+    showToast(wasTruncated ? 'PR URL launched! Full spec copied to clipboard' : `Opened PR compare on GitHub for ${cleanRepo}`);
   };
 
   return (
     <>
       <div
-        className={`flex flex-col justify-between rounded-xl border bg-neutral-900/60 p-5 shadow-lg backdrop-blur-sm transition-all duration-300 ${
+        className={`flex flex-col justify-between rounded-xl border bg-[#1b1c1d] p-5 transition-colors overflow-hidden ${
           isRefining
-            ? 'border-indigo-500/80 shadow-[0_0_25px_rgba(99,102,241,0.25)] ring-1 ring-indigo-500/50'
-            : 'border-neutral-800 hover:border-neutral-700/80'
+            ? 'border-[#5e6ad2] ring-1 ring-[#5e6ad2]/50'
+            : 'border-[#292a2b] hover:border-[#343536]'
         }`}
       >
         <div>
           {/* Card Header */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-800/80">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#292a2b]">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0d0e0f] text-[#bdc2ff] border border-[#292a2b]">
                 {isRefining ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
                 ) : (
-                  <GitPullRequest className="h-4 w-4" />
+                  <GitPullRequest className="h-3.5 w-3.5 text-[#5e6ad2]" />
                 )}
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-neutral-100 flex items-center gap-2">
-                  GitHub PR & Commit
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xs font-semibold text-[#e3e2e3]">
+                    GitHub PR & commit
+                  </h3>
+                  {/* Stitch Target Branch Tag Pill */}
+                  <span className="rounded bg-[#0d0e0f] px-2 py-0.5 text-[10px] font-mono text-[#908f9e] border border-[#292a2b] hidden sm:inline-block">
+                    Target: {compareBranch.replace('...', ' → ')}
+                  </span>
                   {isRefining && (
-                    <span className="text-[10px] font-mono text-indigo-400 animate-pulse">
+                    <span className="text-[10px] font-mono text-[#bdc2ff]">
                       Refining...
                     </span>
                   )}
-                </h3>
-                <p className="text-[11px] text-neutral-400">Structured release specification</p>
+                </div>
+                <p className="text-[11px] text-[#908f9e]">Structured release specification</p>
               </div>
             </div>
 
-            {/* Action Bar */}
-            <div className="flex flex-wrap items-center gap-1.5">
+            {/* Ghost Toolbar & Actions */}
+            <div className="flex items-center gap-1.5">
               {/* View Tab Toggle */}
-              <div className="flex rounded-lg bg-neutral-950 p-0.5 border border-neutral-800">
+              <div className="flex rounded-md bg-[#0d0e0f] p-0.5 border border-[#292a2b]">
                 <button
                   type="button"
                   onClick={() => setViewTab('structured')}
-                  className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
                     viewTab === 'structured'
-                      ? 'bg-neutral-800 text-emerald-300 shadow-xs'
-                      : 'text-neutral-400 hover:text-neutral-200'
+                      ? 'bg-[#1f2021] text-[#e3e2e3] shadow-xs'
+                      : 'text-[#908f9e] hover:text-[#e3e2e3]'
                   }`}
                 >
                   <Layers className="h-3 w-3" />
@@ -182,10 +211,10 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
                 <button
                   type="button"
                   onClick={() => setViewTab('markdown')}
-                  className={`flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
                     viewTab === 'markdown'
-                      ? 'bg-neutral-800 text-emerald-300 shadow-xs'
-                      : 'text-neutral-400 hover:text-neutral-200'
+                      ? 'bg-[#1f2021] text-[#e3e2e3] shadow-xs'
+                      : 'text-[#908f9e] hover:text-[#e3e2e3]'
                   }`}
                 >
                   <FileText className="h-3 w-3" />
@@ -197,35 +226,14 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
               <button
                 type="button"
                 onClick={handleCopy}
-                className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-mono font-medium transition-all ${
-                  copied
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                    : 'bg-neutral-800 text-neutral-300 border border-neutral-700 hover:bg-neutral-700 hover:text-white'
-                }`}
+                title="Copy markdown spec"
+                className="flex items-center gap-1 p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#292a2b] transition-colors text-xs border border-[#292a2b] bg-[#0d0e0f]"
               >
                 {copied ? (
-                  <>
-                    <Check className="h-3.5 w-3.5 text-emerald-400" />
-                    <span>Copied!</span>
-                  </>
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
                 ) : (
-                  <>
-                    <Copy className="h-3.5 w-3.5" />
-                    <span>Copy</span>
-                  </>
+                  <Copy className="h-3.5 w-3.5" />
                 )}
-              </button>
-
-              {/* Open on GitHub Button (Zero-OAuth PR launcher) */}
-              <button
-                type="button"
-                onClick={() => setIsRepoModalOpen(true)}
-                title="Open directly on GitHub with prefilled PR description (Zero OAuth)"
-                className="flex items-center gap-1 rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-1 text-xs font-mono font-medium text-neutral-300 transition-all hover:border-emerald-500/50 hover:bg-neutral-700 hover:text-white"
-              >
-                <GithubIcon className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="hidden sm:inline">Open on GitHub</span>
-                <ExternalLink className="h-2.5 w-2.5 text-neutral-400" />
               </button>
 
               {/* Export Bundle Button */}
@@ -235,23 +243,34 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
                   onClick={onExportBundle}
                   disabled={isExportingBundle}
                   title="Export complete deliverables bundle (.zip)"
-                  className="flex items-center gap-1 rounded-lg border border-neutral-700 bg-neutral-800 px-2 py-1 text-xs font-mono font-medium text-indigo-300 transition-all hover:bg-neutral-700 hover:text-white disabled:opacity-50"
+                  className="flex items-center gap-1 p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#292a2b] transition-colors text-xs border border-[#292a2b] bg-[#0d0e0f] disabled:opacity-40"
                 >
                   {isExportingBundle ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
                   ) : (
-                    <Archive className="h-3.5 w-3.5 text-indigo-400" />
+                    <Archive className="h-3.5 w-3.5" />
                   )}
-                  <span className="hidden md:inline">ZIP</span>
                 </button>
               )}
+
+              {/* Authoritative "Create PR on GitHub" Button in #5e6ad2 */}
+              <button
+                type="button"
+                onClick={() => setIsRepoModalOpen(true)}
+                title="Open directly on GitHub with prefilled PR description (Zero OAuth)"
+                className="flex items-center gap-1.5 rounded-md bg-[#5e6ad2] hover:bg-[#5e6ad2]/90 text-white px-2.5 py-1 text-xs font-medium transition-colors shadow-sm"
+              >
+                <GithubIcon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Create PR</span>
+                <ExternalLink className="h-2.5 w-2.5 opacity-80" />
+              </button>
             </div>
           </div>
 
           {/* Toast Notification */}
           {toastMessage && (
-            <div className="mt-2.5 flex items-center gap-1.5 rounded-lg bg-emerald-950/40 px-2.5 py-1 text-[11px] font-mono text-emerald-300 border border-emerald-500/30 animate-fadeIn">
-              <Sparkles className="h-3 w-3 text-emerald-400" />
+            <div className="mt-2.5 flex items-center gap-1.5 rounded-md bg-[#0d0e0f] px-2.5 py-1 text-[11px] font-mono text-[#bdc2ff] border border-[#292a2b] animate-fadeIn">
+              <Sparkles className="h-3 w-3 text-[#5e6ad2]" />
               <span>{toastMessage}</span>
             </div>
           )}
@@ -259,40 +278,42 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
           {/* Tab Content */}
           {viewTab === 'structured' ? (
             <div className="mt-4 space-y-3">
-              <div className="rounded-lg bg-neutral-950/80 p-3 border border-neutral-800/70">
-                <div className="flex items-center gap-1.5 text-[11px] font-mono font-medium text-emerald-400">
-                  <GitCommit className="h-3.5 w-3.5 shrink-0" />
-                  <span>COMMIT MESSAGE</span>
+              <div className="rounded-lg bg-[#0d0e0f] p-3 border border-[#292a2b]">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-[#bdc2ff]">
+                  <GitCommit className="h-3.5 w-3.5 text-[#5e6ad2] shrink-0" />
+                  <span>Commit message</span>
                 </div>
-                <p className="mt-1 font-mono text-xs text-neutral-200 select-all break-all">
+                <p className="mt-1 font-mono text-xs text-[#e3e2e3] select-all break-all">
                   {data.commitMessage}
                 </p>
               </div>
 
               <div>
-                <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-400">
-                  PR Title
+                <span className="text-xs font-medium text-[#908f9e]">
+                  PR title
                 </span>
-                <p className="text-sm font-medium text-white">{data.title}</p>
+                <p className="text-sm font-medium text-[#e3e2e3] mt-0.5">{data.title}</p>
               </div>
 
               <div>
-                <span className="text-[11px] font-mono uppercase tracking-wider text-neutral-400">
-                  Executive Summary
+                <span className="text-xs font-medium text-[#908f9e]">
+                  Executive summary
                 </span>
-                <p className="text-xs text-neutral-300 leading-relaxed mt-0.5">{data.summary}</p>
+                <p className="text-xs text-[#e3e2e3] leading-relaxed mt-0.5">{data.summary}</p>
               </div>
 
-              {/* Key Changes */}
+              {/* Stitch Checkmark Change List */}
               <div>
-                <div className="flex items-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-neutral-400 mb-1.5">
+                <div className="flex items-center gap-1.5 text-xs font-medium text-[#908f9e] mb-1.5">
                   <Layers className="h-3 w-3" />
-                  <span>Key Changes ({data.keyChanges.length})</span>
+                  <span>Key changes ({(data.keyChanges || []).length})</span>
                 </div>
                 <ul className="space-y-1.5">
-                  {data.keyChanges.map((change, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-neutral-300">
-                      <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+                  {(data.keyChanges || []).map((change, idx) => (
+                    <li key={idx} className="flex items-start gap-2 text-xs text-[#e3e2e3]">
+                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400">
+                        <Check className="h-2.5 w-2.5 stroke-[2.5]" />
+                      </span>
                       <span className="leading-snug">{change}</span>
                     </li>
                   ))}
@@ -301,15 +322,15 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
 
               {/* Breaking Changes */}
               {data.breakingChanges && data.breakingChanges.length > 0 && (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 p-3">
-                  <div className="flex items-center gap-1.5 text-[11px] font-mono font-medium text-amber-400">
+                <div className="rounded-lg border border-red-500/30 bg-[#0d0e0f] p-3">
+                  <div className="flex items-center gap-1.5 text-xs font-medium text-red-400">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                    <span>BREAKING CHANGES DETECTED</span>
+                    <span>Breaking changes detected</span>
                   </div>
                   <ul className="mt-1.5 space-y-1">
                     {data.breakingChanges.map((bChange, idx) => (
-                      <li key={idx} className="text-xs text-amber-200/90 flex items-start gap-1.5">
-                        <span className="text-amber-400 font-bold">•</span>
+                      <li key={idx} className="text-xs text-red-200/90 flex items-start gap-1.5">
+                        <span className="text-red-400 font-bold">•</span>
                         <span>{bChange}</span>
                       </li>
                     ))}
@@ -319,14 +340,14 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
             </div>
           ) : (
             <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-mono text-neutral-400">
-                <span className="flex items-center gap-1 text-emerald-400">
-                  <CheckSquare className="h-3 w-3" />
-                  OVERVIEW • CHANGES • CHECKLIST
+              <div className="flex items-center justify-between text-xs text-[#908f9e] font-medium">
+                <span className="flex items-center gap-1 text-[#e3e2e3]">
+                  <CheckSquare className="h-3 w-3 text-[#5e6ad2]" />
+                  Overview • Changes • Checklist
                 </span>
-                <span>Markdown</span>
+                <span className="font-mono text-[10px] text-[#908f9e]">Markdown</span>
               </div>
-              <pre className="max-h-[380px] overflow-y-auto rounded-lg bg-neutral-950 p-3.5 font-mono text-xs text-neutral-200 border border-neutral-800/80 whitespace-pre-wrap leading-relaxed">
+              <pre className="max-h-[380px] overflow-y-auto rounded-lg bg-[#0d0e0f] p-3.5 font-mono text-xs text-[#e3e2e3] border border-[#292a2b] whitespace-pre-wrap leading-relaxed">
                 {getFullMarkdown()}
               </pre>
             </div>
@@ -343,22 +364,22 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
 
       {/* Zero-OAuth "Open on GitHub" Modal Popover */}
       {isRepoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md rounded-2xl border border-neutral-800 bg-[#0d121f] p-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-neutral-800/80 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-md rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-5 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[#292a2b] pb-3">
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0d0e0f] text-[#e3e2e3] border border-[#292a2b]">
                   <GithubIcon className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-white">Open PR on GitHub</h3>
-                  <p className="text-[11px] text-neutral-400 font-mono">Zero-OAuth instant pull request</p>
+                  <h3 className="text-sm font-semibold text-[#e3e2e3]">Open PR on GitHub</h3>
+                  <p className="text-[11px] text-[#908f9e] font-mono">Zero-OAuth instant pull request</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsRepoModalOpen(false)}
-                className="rounded-lg p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                className="rounded-md p-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-white"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -366,8 +387,8 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
 
             <form onSubmit={handleLaunchGitHubPR} className="mt-4 space-y-3.5">
               <div>
-                <label className="block text-[11px] font-mono text-neutral-300 uppercase tracking-wider mb-1">
-                  Target Repository (`owner/repo`)
+                <label className="block text-xs font-medium text-[#e3e2e3] mb-1">
+                  Target repository (`owner/repo`)
                 </label>
                 <input
                   type="text"
@@ -375,40 +396,40 @@ ${data.breakingChanges.map((b) => `- ${b}`).join('\n')}`;
                   value={repoPath}
                   onChange={(e) => setRepoPath(e.target.value)}
                   placeholder="e.g. AsteroidHH/Wispr-Flow-No-Hands-Challenge"
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs font-mono text-neutral-100 placeholder:text-neutral-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                  className="w-full rounded-md border border-[#292a2b] bg-[#0d0e0f] px-3 py-2 text-xs font-mono text-[#e3e2e3] placeholder:text-[#908f9e]/40 focus:border-[#5e6ad2] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-mono text-neutral-300 uppercase tracking-wider mb-1">
-                  Compare Branch Path
+                <label className="block text-xs font-medium text-[#e3e2e3] mb-1">
+                  Compare branch path
                 </label>
                 <input
                   type="text"
                   value={compareBranch}
                   onChange={(e) => setCompareBranch(e.target.value)}
                   placeholder="main...feature"
-                  className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs font-mono text-neutral-100 placeholder:text-neutral-600 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500/40"
+                  className="w-full rounded-md border border-[#292a2b] bg-[#0d0e0f] px-3 py-2 text-xs font-mono text-[#e3e2e3] placeholder:text-[#908f9e]/40 focus:border-[#5e6ad2] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]"
                 />
               </div>
 
-              <div className="rounded-lg bg-emerald-950/20 p-2.5 border border-emerald-500/20 text-[11px] text-emerald-300/90 leading-relaxed font-sans">
+              <div className="rounded-lg bg-[#0d0e0f] p-2.5 border border-[#292a2b] text-xs text-[#908f9e] leading-relaxed font-sans">
                 <p>
-                  🚀 <strong>Zero OAuth Required:</strong> This automatically pre-populates GitHub’s native PR review interface with your generated title, commit message, and full Markdown spec.
+                  🚀 <strong>Zero OAuth required:</strong> Pre-populates GitHub’s native PR review interface with your generated title, commit message, and Markdown spec.
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-neutral-800/80">
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#292a2b]">
                 <button
                   type="button"
                   onClick={() => setIsRepoModalOpen(false)}
-                  className="rounded-lg border border-neutral-800 px-3 py-1.5 text-xs font-medium text-neutral-400 hover:bg-neutral-800 hover:text-white"
+                  className="rounded-md border border-[#292a2b] bg-[#0d0e0f] px-3 py-1.5 text-xs font-medium text-[#908f9e] hover:bg-[#292a2b] hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-emerald-600/25 hover:bg-emerald-500 transition-colors"
+                  className="flex items-center gap-1.5 rounded-md bg-[#5e6ad2] hover:bg-[#5e6ad2]/90 text-white px-3.5 py-1.5 text-xs font-semibold transition-colors"
                 >
                   <span>Launch GitHub PR</span>
                   <ExternalLink className="h-3 w-3" />

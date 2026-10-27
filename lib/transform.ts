@@ -1,8 +1,8 @@
 import { Deliverables, GenerateApiResponseData } from './types';
 
 export function transformApiResponseToDeliverables(data: GenerateApiResponseData): Deliverables {
-  // Extract bullet points from markdown for quick summary if possible
-  const lines = data.prMarkdown.split('\n');
+  const prMarkdown = data.prMarkdown || '';
+  const lines = prMarkdown ? prMarkdown.split('\n') : [];
   const bulletLines = lines
     .filter(line => line.trim().startsWith('- ') || line.trim().startsWith('* '))
     .map(line => line.trim().replace(/^[-*]\s+/, ''));
@@ -19,43 +19,46 @@ export function transformApiResponseToDeliverables(data: GenerateApiResponseData
 
   // Extract first paragraph for summary
   const summaryParagraph = lines.find(line => line.trim().length > 20 && !line.startsWith('#')) 
-    || `${data.prTitle}: Synthesized from voice transcript and git diff context.`;
+    || `${data.prTitle || 'Feature Implementation'}: Synthesized from voice transcript and git diff context.`;
+
+  const rawSocial = data.socialPost || '🚀 Shipping updates built with ShipSpeak';
+  const scriptSegments = Array.isArray(data.videoScript) ? data.videoScript : [];
 
   return {
     pullRequest: {
-      title: data.prTitle,
-      commitMessage: data.commitMessage,
+      title: data.prTitle || 'feat: automated feature delivery',
+      commitMessage: data.commitMessage || 'feat: update implementation',
       summary: summaryParagraph,
       keyChanges,
       breakingChanges,
-      prMarkdown: data.prMarkdown,
+      prMarkdown,
     },
     architecture: {
       title: 'Architecture Topology',
-      mermaidCode: data.mermaidSyntax,
+      mermaidCode: data.mermaidSyntax || 'flowchart TD\n  Client --> Gateway\n  Gateway --> Backend',
       description: 'Flowchart rendered dynamically from structured Gemini pipeline output.',
     },
     videoScript: {
       title: '2-Minute Hackathon Demo Script',
       totalDuration: '02:00',
-      segments: data.videoScript.map((seg, idx) => ({
+      segments: scriptSegments.map((seg, idx) => ({
         timestamp: seg.timestamp || `00:${idx * 30} - 00:${(idx + 1) * 30}`,
         stage: `Segment ${idx + 1}`,
-        audio: seg.spokenLine,
-        spokenLine: seg.spokenLine,
-        visualCue: seg.visualCue,
+        audio: seg.spokenLine || 'Demo narration segment',
+        spokenLine: seg.spokenLine || 'Demo narration segment',
+        visualCue: seg.visualCue || 'Screen view',
       })),
     },
     socialPost: {
-      rawPost: data.socialPost,
+      rawPost: rawSocial,
       twitter: {
-        content: data.socialPost.slice(0, 275),
-        charCount: Math.min(280, data.socialPost.length),
+        content: rawSocial.slice(0, 275),
+        charCount: Math.min(280, rawSocial.length),
         hashtags: ['#buildinpublic', '#WisprNoHandChallenge', '#dev'],
       },
       linkedin: {
-        hook: data.socialPost.split('\n')[0] || 'Excited to share our latest architecture update:',
-        body: data.socialPost,
+        hook: rawSocial.split('\n')[0] || 'Excited to share our latest architecture update:',
+        body: rawSocial,
         takeaways: [
           'Voice-first shipping eliminates last-mile documentation drag.',
           'Automated PR, Mermaid diagrams, and video scripts in seconds.'

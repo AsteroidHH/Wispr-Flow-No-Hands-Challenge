@@ -41,7 +41,11 @@ export default function Home() {
 
   // Handle Generation via /api/generate
   const handleGenerate = useCallback(async () => {
-    if (!voiceTranscript.trim() && !gitDiff.trim()) return;
+    if (!voiceTranscript.trim() && !gitDiff.trim()) {
+      setNotification('Please enter a voice transcript or select a preset to generate deliverables.');
+      setTimeout(() => setNotification(null), 3500);
+      return;
+    }
 
     setIsGenerating(true);
     setNotification('Invoking Gemini 2.5 Flash structured pipeline...');
@@ -206,10 +210,10 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#090d16] text-neutral-100">
+    <div className="flex min-h-screen flex-col bg-[#0d0e0f] text-[#e3e2e3]">
       {/* Sticky Top Navigation Bar */}
       <Navbar
-        badgeText="Built for the Wispr No Hand Challenge"
+        badgeText="Wispr Flow Challenge"
         githubUrl="https://github.com/AsteroidHH/Wispr-Flow-No-Hands-Challenge"
         onExportBundle={handleExportBundle}
         isExportingBundle={isExportingBundle}
@@ -218,40 +222,35 @@ export default function Home() {
 
       {/* Main Two-Column Layout */}
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-800/80 pb-4">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#292a2b] pb-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-[#e3e2e3] flex items-center gap-2">
               <span>Developer Shipping Cockpit</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-mono text-indigo-400 border border-indigo-500/20">
-                <Zap className="h-3 w-3" />
+              <span className="inline-flex items-center gap-1 rounded bg-[#1b1c1d] px-2 py-0.5 text-xs font-mono text-[#908f9e] border border-[#292a2b]">
+                <Zap className="h-3 w-3 text-[#5e6ad2]" />
                 Zero-Hand Flow
               </span>
             </h1>
-            <p className="mt-1 text-xs text-neutral-400">
+            <p className="mt-0.5 text-xs text-[#908f9e]">
               Convert raw unstructured voice brain dumps and git diffs into PRs, architecture diagrams, demo scripts, and social updates.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
             {/* Generation Engine Status Pill */}
-            <div className="flex items-center gap-1.5 rounded-lg border border-indigo-500/30 bg-indigo-950/20 px-2.5 py-1 text-xs text-indigo-300 font-mono">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400 animate-pulse"></span>
+            <div className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-2.5 py-1 text-xs text-[#908f9e] font-mono">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
               {generationSource === 'gemini_2.5_flash'
                 ? 'Gemini 2.5 Flash'
                 : 'ShipSpeak Engine Active'}
             </div>
-
-            <span className="flex items-center gap-1.5 rounded-lg border border-purple-500/30 bg-purple-950/20 px-2.5 py-1 text-xs text-purple-300 font-mono">
-              <Mic className="h-3.5 w-3.5 text-purple-400" />
-              Wispr Hotkey Ready
-            </span>
           </div>
         </div>
 
         {/* Dynamic Notification Banner */}
         {notification && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-950/30 px-3.5 py-2 text-xs font-mono text-indigo-200 animate-fadeIn shadow-lg">
-            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#292a2b] bg-[#1b1c1d] px-3.5 py-2 text-xs font-mono text-[#e3e2e3] animate-fadeIn shadow-sm">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
             <span>{notification}</span>
           </div>
         )}
@@ -293,14 +292,14 @@ export default function Home() {
       />
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-neutral-900 bg-neutral-950/80 py-4 text-center text-xs text-neutral-500">
+      <footer className="mt-auto border-t border-[#292a2b] bg-[#121315] py-4 text-center text-xs text-[#908f9e]">
         <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="flex items-center gap-1.5 font-mono text-[11px]">
-            <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+          <p className="flex items-center gap-1.5 font-mono text-[11px] text-[#e3e2e3]">
+            <Sparkles className="h-3 w-3 text-[#5e6ad2]" />
             ShipSpeak • The Voice-First Last-Mile Engine for Developers
           </p>
-          <p className="font-mono text-[11px] text-neutral-500">
-            Engineered for the Wispr No Hand Challenge • Hold Wispr to refine any card
+          <p className="font-mono text-[11px] text-[#908f9e]">
+            Wispr Flow Challenge • Hold Wispr to refine any card
           </p>
         </div>
       </footer>

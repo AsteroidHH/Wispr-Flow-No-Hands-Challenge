@@ -53,7 +53,7 @@ export function VoiceTweakInput({
   };
 
   return (
-    <div className="mt-4 pt-3 border-t border-neutral-800/80">
+    <div className="mt-4 pt-3 border-t border-[#292a2b]">
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         {/* Subtle Mic Button */}
         <button
@@ -61,22 +61,22 @@ export function VoiceTweakInput({
           onClick={handleMicClick}
           disabled={isRefining}
           title="Hold Wispr to dictate refinement"
-          className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-all ${
+          className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors ${
             isListening
-              ? 'border-red-500/60 bg-red-950/40 text-red-400 shadow-[0_0_12px_rgba(239,68,68,0.4)]'
-              : 'border-neutral-800 bg-neutral-900/90 text-neutral-400 hover:border-purple-500/50 hover:bg-neutral-800 hover:text-purple-300'
+              ? 'border-rose-500/50 bg-rose-950/40 text-rose-300'
+              : 'border-[#292a2b] bg-[#121315] text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#292a2b]'
           } disabled:opacity-40 disabled:cursor-not-allowed`}
         >
           {isListening && (
-            <span className="absolute -top-1 -right-1 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            <span className="absolute -top-0.5 -right-0.5 flex h-1.5 w-1.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
             </span>
           )}
-          <Mic className={`h-3.5 w-3.5 ${isListening ? 'animate-bounce text-red-400' : ''}`} />
+          <Mic className={`h-3.5 w-3.5 ${isListening ? 'animate-pulse text-rose-400' : ''}`} />
         </button>
 
-        {/* Subtle Input Bar */}
+        {/* Quiet Integrated Input */}
         <div className="relative flex-1">
           <input
             type="text"
@@ -84,7 +84,7 @@ export function VoiceTweakInput({
             disabled={isRefining}
             onChange={(e) => setInput(e.target.value)}
             placeholder={isRefining ? `Refining ${cardName}...` : placeholder}
-            className="w-full rounded-lg border border-neutral-800/80 bg-neutral-950/70 px-3 py-1.5 text-xs text-neutral-200 placeholder:text-neutral-500 focus:border-indigo-500/60 focus:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-indigo-500/30 font-sans transition-all disabled:opacity-50"
+            className="w-full rounded-md border border-[#292a2b] bg-[#0d0e0f] px-3 py-1 text-xs text-[#e3e2e3] placeholder:text-[#908f9e]/50 focus:border-[#5e6ad2] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2] font-sans transition-colors disabled:opacity-50"
           />
         </div>
 
@@ -92,14 +92,14 @@ export function VoiceTweakInput({
         <button
           type="submit"
           disabled={!input.trim() || isRefining}
-          className="flex h-8 items-center gap-1 rounded-lg border border-neutral-700 bg-neutral-800 px-2.5 text-xs font-medium text-neutral-200 transition-colors hover:border-indigo-500/50 hover:bg-indigo-600 hover:text-white disabled:opacity-40 disabled:hover:bg-neutral-800 disabled:hover:border-neutral-700 disabled:cursor-not-allowed"
+          className="flex h-7 items-center gap-1 rounded-md border border-[#292a2b] bg-[#121315] px-2.5 text-xs font-medium text-[#e3e2e3] transition-colors hover:bg-[#292a2b] disabled:opacity-30 disabled:cursor-not-allowed"
         >
           {isRefining ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
+            <Loader2 className="h-3 w-3 animate-spin text-[#bdc2ff]" />
           ) : (
             <>
               <span className="text-[11px] hidden sm:inline">Refine</span>
-              <ArrowRight className="h-3 w-3" />
+              <ArrowRight className="h-3 w-3 text-[#908f9e]" />
             </>
           )}
         </button>
@@ -107,13 +107,13 @@ export function VoiceTweakInput({
 
       {/* Visual Feedback Line */}
       {(feedback || isRefining) && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-mono text-purple-400 animate-fadeIn">
+        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-mono text-[#bdc2ff] animate-fadeIn">
           {isRefining ? (
-            <Loader2 className="h-3 w-3 animate-spin text-indigo-400" />
+            <Loader2 className="h-3 w-3 animate-spin text-[#5e6ad2]" />
           ) : (
-            <Sparkles className="h-3 w-3 text-purple-400" />
+            <Sparkles className="h-3 w-3 text-[#bdc2ff]" />
           )}
-          <span>{isRefining ? `Gemini Flash refining ${cardName}...` : feedback}</span>
+          <span>{isRefining ? `Refining ${cardName}...` : feedback}</span>
         </div>
       )}
     </div>

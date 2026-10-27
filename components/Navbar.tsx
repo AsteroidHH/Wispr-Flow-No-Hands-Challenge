@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Radio, Sparkles, ExternalLink, Archive, Loader2, Terminal } from 'lucide-react';
+import { Radio, GitBranch, ExternalLink, Archive, Loader2, Terminal } from 'lucide-react';
 
 function GithubIcon({ className = 'h-4 w-4' }: { className?: string }) {
   return (
@@ -29,65 +29,53 @@ interface NavbarProps {
 }
 
 export function Navbar({
-  badgeText = 'Built for the Wispr No Hand Challenge',
+  badgeText = 'Wispr Flow Challenge',
   githubUrl = 'https://github.com/AsteroidHH/Wispr-Flow-No-Hands-Challenge',
   onExportBundle,
   isExportingBundle = false,
   onOpenTerminal,
 }: NavbarProps) {
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-neutral-800/80 bg-neutral-950/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Brand / Logo */}
+    <header className="sticky top-0 z-40 w-full border-b border-[#292a2b] bg-[#121315]/90 backdrop-blur-md">
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Brand / Logo & Target Branch */}
         <div className="flex items-center gap-3">
-          <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-[1px] shadow-lg shadow-purple-500/20">
-            <div className="flex h-full w-full items-center justify-center rounded-[11px] bg-neutral-950">
-              <Radio className="h-5 w-5 text-indigo-400 animate-pulse" />
-            </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#292a2b] bg-[#1b1c1d] text-[#e3e2e3]">
+            <Radio className="h-4 w-4 text-[#5e6ad2]" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl font-bold tracking-tight text-white">
-                Ship<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400">Speak</span>
-              </span>
-              <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-mono font-medium text-indigo-400 border border-indigo-500/20">
-                v1.0
+          <div className="flex items-center gap-2.5">
+            <div>
+              <span className="text-sm font-semibold tracking-tight text-[#e3e2e3]">
+                Ship<span className="text-[#5e6ad2]">Speak</span>
               </span>
             </div>
-            <p className="text-[11px] text-neutral-400 hidden sm:block">
-              Voice-first last-mile shipping engine for developers
-            </p>
+            {/* Subtle branch pill from Stitch */}
+            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-[#292a2b] bg-[#1b1c1d] px-2.5 py-0.5 text-[11px] font-mono text-[#908f9e]">
+              <GitBranch className="h-3 w-3 text-[#5e6ad2]" />
+              <span>main</span>
+            </div>
           </div>
         </div>
 
-        {/* Center Badge: Wispr No Hand Challenge */}
+        {/* Center Badge: Wispr Flow Challenge */}
         <div className="hidden md:flex items-center">
-          <div className="group relative flex items-center gap-2 rounded-full border border-purple-500/30 bg-purple-950/30 px-3.5 py-1.5 text-xs font-medium text-purple-200 shadow-[0_0_15px_-3px_rgba(168,85,247,0.25)] transition-all hover:border-purple-500/50 hover:bg-purple-950/40">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-purple-400 opacity-75"></span>
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-purple-500"></span>
-            </span>
-            <Sparkles className="h-3.5 w-3.5 text-purple-400" />
-            <span className="font-mono tracking-tight">{badgeText}</span>
+          <div className="flex items-center gap-2 rounded-full border border-[#292a2b] bg-[#1b1c1d] px-3 py-1 text-xs text-[#908f9e]">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+            <span className="font-medium tracking-tight text-[#e3e2e3]">{badgeText}</span>
           </div>
         </div>
 
-        {/* Right Actions: Terminal CLI, Export Bundle, GitHub repo link & Audio status */}
-        <div className="flex items-center gap-2.5">
-          <div className="hidden lg:flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-950/20 px-2.5 py-1 text-xs text-emerald-400 font-mono">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            Wispr Audio Active
-          </div>
-
+        {/* Right Actions: Terminal CLI, Export Bundle, GitHub repo link */}
+        <div className="flex items-center gap-2">
           {/* Terminal CLI Toggle Button */}
           {onOpenTerminal && (
             <button
               type="button"
               onClick={onOpenTerminal}
               title="Open interactive terminal CLI preview"
-              className="flex items-center gap-1.5 rounded-lg border border-neutral-800 bg-neutral-900/90 px-3 py-1.5 text-xs font-mono font-medium text-neutral-200 transition-all hover:border-indigo-500/50 hover:bg-neutral-800 hover:text-white"
+              className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] transition-colors hover:bg-[#292a2b]"
             >
-              <Terminal className="h-3.5 w-3.5 text-indigo-400" />
+              <Terminal className="h-3.5 w-3.5 text-[#908f9e]" />
               <span className="hidden sm:inline">Terminal CLI</span>
             </button>
           )}
@@ -99,15 +87,15 @@ export function Navbar({
               onClick={onExportBundle}
               disabled={isExportingBundle}
               title="Export complete deliverables bundle as ShipSpeak-deliverables.zip"
-              className="flex items-center gap-1.5 rounded-lg border border-purple-500/40 bg-purple-950/30 px-3 py-1.5 text-xs font-mono font-medium text-purple-200 transition-all hover:bg-purple-900/40 hover:border-purple-400 hover:text-white disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] transition-colors hover:bg-[#292a2b] disabled:opacity-50"
             >
               {isExportingBundle ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-400" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#908f9e]" />
               ) : (
-                <Archive className="h-3.5 w-3.5 text-purple-400" />
+                <Archive className="h-3.5 w-3.5 text-[#908f9e]" />
               )}
               <span className="hidden sm:inline">Export Bundle</span>
-              <span className="rounded bg-purple-900/70 px-1 py-0.5 text-[9px] text-purple-300 font-mono">ZIP</span>
+              <span className="rounded bg-[#292a2b] px-1 py-0.2 text-[9px] text-[#bdc2ff] font-mono">ZIP</span>
             </button>
           )}
 
@@ -115,11 +103,11 @@ export function Navbar({
             href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/80 px-3.5 py-1.5 text-xs font-medium text-neutral-200 transition-colors hover:border-neutral-700 hover:bg-neutral-800 hover:text-white"
+            className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] transition-colors hover:bg-[#292a2b]"
           >
-            <GithubIcon className="h-4 w-4" />
+            <GithubIcon className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">GitHub</span>
-            <ExternalLink className="h-3 w-3 text-neutral-400" />
+            <ExternalLink className="h-3 w-3 text-[#908f9e]" />
           </a>
         </div>
       </div>

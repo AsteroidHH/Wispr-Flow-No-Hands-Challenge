@@ -44,6 +44,19 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
   const [copiedCommand, setCopiedCommand] = useState(false);
   const logsEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+
+  // Clear all pending timeouts on unmount or reset
+  const clearSimulationTimers = () => {
+    timeoutsRef.current.forEach(clearTimeout);
+    timeoutsRef.current = [];
+  };
+
+  useEffect(() => {
+    return () => {
+      clearSimulationTimers();
+    };
+  }, []);
 
   const npmCommand = 'npx shipspeak --voice';
 
@@ -63,6 +76,7 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
+        clearSimulationTimers();
         onClose();
       }
     };
@@ -87,6 +101,7 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
 
   const runSimulation = () => {
     if (isRunning) return;
+    clearSimulationTimers();
     setIsRunning(true);
 
     const ts = getTimestamp();
@@ -102,7 +117,7 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
     ]);
 
     // 2. Step 1: Listening
-    setTimeout(() => {
+    const t1 = setTimeout(() => {
       setLogs((prev) => [
         ...prev,
         {
@@ -112,9 +127,10 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
         },
       ]);
     }, 600);
+    timeoutsRef.current.push(t1);
 
     // 3. Step 2: Audio capture
-    setTimeout(() => {
+    const t2 = setTimeout(() => {
       setLogs((prev) => [
         ...prev,
         {
@@ -124,9 +140,10 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
         },
       ]);
     }, 1500);
+    timeoutsRef.current.push(t2);
 
     // 4. Step 3: Gemini 2.5 Flash synthesis
-    setTimeout(() => {
+    const t3 = setTimeout(() => {
       setLogs((prev) => [
         ...prev,
         {
@@ -136,9 +153,10 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
         },
       ]);
     }, 2400);
+    timeoutsRef.current.push(t3);
 
     // 5. Step 4: Generated PR & Mermaid
-    setTimeout(() => {
+    const t4 = setTimeout(() => {
       setLogs((prev) => [
         ...prev,
         {
@@ -153,9 +171,10 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
         },
       ]);
     }, 3300);
+    timeoutsRef.current.push(t4);
 
     // 6. Step 5: Created branch and staged
-    setTimeout(() => {
+    const t5 = setTimeout(() => {
       setLogs((prev) => [
         ...prev,
         {
@@ -166,6 +185,7 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
       ]);
       setIsRunning(false);
     }, 4200);
+    timeoutsRef.current.push(t5);
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
@@ -213,9 +233,9 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 sm:p-6 backdrop-blur-md animate-fadeIn">
-      <div className="relative flex h-full max-h-[640px] w-full max-w-3xl flex-col rounded-2xl border border-neutral-800 bg-[#0c1017] shadow-2xl overflow-hidden font-mono text-xs">
+      <div className="relative flex h-full max-h-[640px] w-full max-w-3xl flex-col rounded-xl border border-[#292a2b] bg-[#1b1c1d] shadow-2xl overflow-hidden font-mono text-xs">
         {/* macOS Style Window Titlebar */}
-        <div className="flex h-10 items-center justify-between border-b border-neutral-800/80 bg-[#161b22] px-4 select-none">
+        <div className="flex h-10 items-center justify-between border-b border-[#292a2b] bg-[#121315] px-4 select-none">
           {/* Traffic Light Buttons */}
           <div className="flex items-center gap-2">
             <button
@@ -237,8 +257,8 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
           </div>
 
           {/* Terminal Title */}
-          <div className="flex items-center gap-2 text-neutral-400 text-[11px]">
-            <TerminalIcon className="h-3.5 w-3.5 text-indigo-400" />
+          <div className="flex items-center gap-2 text-[#908f9e] text-xs">
+            <TerminalIcon className="h-3.5 w-3.5 text-[#5e6ad2]" />
             <span>shipspeak-cli — bash — 80x24</span>
           </div>
 
@@ -246,30 +266,30 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded p-1 text-neutral-400 hover:bg-neutral-800 hover:text-white transition-colors"
+            className="rounded p-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-white transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Action Toolbar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-800/80 bg-[#0f141d] px-4 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#292a2b] bg-[#121315] px-4 py-2">
           {/* Quick Action Buttons */}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={runSimulation}
               disabled={isRunning}
-              className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+              className="flex items-center gap-1.5 rounded-md bg-white hover:bg-neutral-200 text-[#0d0e0f] px-3 py-1 text-xs font-semibold shadow-sm disabled:opacity-50 transition-colors"
             >
-              <Play className="h-3 w-3" />
+              <Play className="h-3 w-3 text-[#5e6ad2]" />
               <span>{isRunning ? 'Running Pipeline...' : 'Run shipspeak --listen'}</span>
             </button>
 
             <button
               type="button"
               onClick={() => setLogs(INITIAL_LOGS)}
-              className="flex items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900 px-2.5 py-1 text-neutral-400 hover:bg-neutral-800 hover:text-neutral-200 transition-colors"
+              className="flex items-center gap-1 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-2.5 py-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3] transition-colors"
               title="Reset terminal output"
             >
               <RotateCcw className="h-3 w-3" />
@@ -279,15 +299,15 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
 
           {/* 1-Click NPM Copy Command */}
           <div className="flex items-center gap-1.5">
-            <span className="text-[11px] text-neutral-400 hidden sm:inline">Install & Run:</span>
+            <span className="text-xs text-[#908f9e] hidden sm:inline">Install & Run:</span>
             <button
               type="button"
               onClick={copyNpxCommand}
               title="Copy hypothetical CLI command to clipboard"
-              className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-mono transition-all ${
+              className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-mono transition-colors ${
                 copiedCommand
-                  ? 'border-emerald-500/50 bg-emerald-950/40 text-emerald-300'
-                  : 'border-neutral-800 bg-neutral-900 text-neutral-300 hover:border-neutral-700 hover:bg-neutral-800 hover:text-white'
+                  ? 'border-emerald-500/40 bg-emerald-950/30 text-emerald-300'
+                  : 'border-[#292a2b] bg-[#1b1c1d] text-[#e3e2e3] hover:bg-[#292a2b]'
               }`}
             >
               {copiedCommand ? (
@@ -297,7 +317,7 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
                 </>
               ) : (
                 <>
-                  <Copy className="h-3 w-3 text-indigo-400" />
+                  <Copy className="h-3 w-3 text-[#bdc2ff]" />
                   <span>{npmCommand}</span>
                 </>
               )}
@@ -306,7 +326,7 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
         </div>
 
         {/* Terminal Screen Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 text-neutral-300 font-mono text-[11px] leading-relaxed select-text">
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 text-[#e3e2e3] font-mono text-[11px] leading-relaxed bg-[#0d0e0f] select-text">
           {logs.map((log, idx) => (
             <div key={idx} className="flex items-start gap-2 animate-fadeIn">
               <span className="text-neutral-600 select-none text-[10px] shrink-0 pt-0.5">
@@ -315,21 +335,21 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
 
               {log.type === 'input' && (
                 <div className="flex items-center gap-1 text-emerald-400 font-semibold">
-                  <span className="text-neutral-500">developer@macbook:~/project$</span>
+                  <span className="text-[#908f9e]">developer@macbook:~/project$</span>
                   <span>{log.text}</span>
                 </div>
               )}
 
               {log.type === 'info' && (
-                <span className="text-cyan-300 font-medium">{log.text}</span>
+                <span className="text-sky-300 font-medium">{log.text}</span>
               )}
 
               {log.type === 'audio' && (
-                <span className="text-purple-300 font-medium">{log.text}</span>
+                <span className="text-[#bdc2ff] font-medium">{log.text}</span>
               )}
 
               {log.type === 'ai' && (
-                <span className="text-indigo-300 font-medium">{log.text}</span>
+                <span className="text-[#5e6ad2] font-medium">{log.text}</span>
               )}
 
               {log.type === 'success' && (
@@ -337,16 +357,16 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
               )}
 
               {log.type === 'system' && (
-                <span className="text-neutral-400 italic">{log.text}</span>
+                <span className="text-[#908f9e] italic">{log.text}</span>
               )}
             </div>
           ))}
 
           {/* Active typing indicator if running */}
           {isRunning && (
-            <div className="flex items-center gap-2 text-indigo-400 animate-pulse">
-              <span className="text-neutral-600 text-[10px]">Processing...</span>
-              <span className="inline-block h-3.5 w-1.5 bg-indigo-400 animate-ping" />
+            <div className="flex items-center gap-2 text-[#5e6ad2] animate-pulse">
+              <span className="text-[#908f9e] text-[10px]">Processing...</span>
+              <span className="inline-block h-3.5 w-1.5 bg-[#5e6ad2] animate-ping" />
             </div>
           )}
 
@@ -356,7 +376,7 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
         {/* Terminal Input Bar */}
         <form
           onSubmit={handleFormSubmit}
-          className="flex items-center gap-2 border-t border-neutral-800/80 bg-[#0f141d] px-4 py-2.5"
+          className="flex items-center gap-2 border-t border-[#292a2b] bg-[#121315] px-4 py-2.5"
         >
           <div className="flex items-center gap-1 text-emerald-400 font-bold shrink-0">
             <span>❯</span>
@@ -368,12 +388,12 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
             onChange={(e) => setInputValue(e.target.value)}
             disabled={isRunning}
             placeholder='Type "speak --listen" or "clear"...'
-            className="flex-1 bg-transparent text-xs font-mono text-neutral-100 placeholder:text-neutral-600 focus:outline-none"
+            className="flex-1 bg-transparent text-xs font-mono text-[#e3e2e3] placeholder:text-[#908f9e]/40 focus:outline-none"
           />
           <button
             type="submit"
             disabled={!inputValue.trim() || isRunning}
-            className="flex items-center gap-1 rounded bg-neutral-800 px-2 py-0.5 text-[10px] text-neutral-300 hover:bg-neutral-700 hover:text-white disabled:opacity-40 transition-colors"
+            className="flex items-center gap-1 rounded bg-[#1b1c1d] hover:bg-[#292a2b] px-2 py-0.5 text-[10px] text-[#e3e2e3] disabled:opacity-30 transition-colors"
           >
             <span>Enter</span>
             <ChevronRight className="h-3 w-3" />

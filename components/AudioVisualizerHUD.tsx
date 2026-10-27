@@ -24,6 +24,11 @@ export function AudioVisualizerHUD({
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [currentLevel, setCurrentLevel] = useState<number>(0);
 
+  const onVolumeChangeRef = useRef(onVolumeChange);
+  useEffect(() => {
+    onVolumeChangeRef.current = onVolumeChange;
+  }, [onVolumeChange]);
+
   // Stop & Clean up audio stream and context
   const cleanupAudio = useCallback(() => {
     if (animationFrameRef.current) {
@@ -70,7 +75,7 @@ export function AudioVisualizerHUD({
     }
 
     setCurrentLevel(0);
-    if (onVolumeChange) onVolumeChange(0);
+    if (onVolumeChangeRef.current) onVolumeChangeRef.current(0);
 
     // Clear canvas
     const canvas = canvasRef.current;
@@ -78,7 +83,7 @@ export function AudioVisualizerHUD({
       const ctx = canvas.getContext('2d');
       if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
-  }, [onVolumeChange]);
+  }, []);
 
   useEffect(() => {
     if (!isActive) {
@@ -150,7 +155,7 @@ export function AudioVisualizerHUD({
           const normalizedVol = Math.min(1, avg / 128); // 0 to ~1
 
           setCurrentLevel(normalizedVol);
-          if (onVolumeChange) onVolumeChange(normalizedVol);
+          if (onVolumeChangeRef.current) onVolumeChangeRef.current(normalizedVol);
 
           // Clear canvas
           ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -165,11 +170,10 @@ export function AudioVisualizerHUD({
             const rawVal = dataArray[binIdx] || 0;
             const barHeight = Math.max(3, Math.floor((rawVal / 255) * canvas.height));
 
-            // Gradient from Indigo (#6366f1) to Cyan (#06b6d4)
+            // Restrained Indigo to Cyan gradient
             const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
-            gradient.addColorStop(0, '#4f46e5');
-            gradient.addColorStop(0.5, '#6366f1');
-            gradient.addColorStop(1, '#06b6d4');
+            gradient.addColorStop(0, '#5e6ad2');
+            gradient.addColorStop(1, '#38bdf8');
 
             ctx.fillStyle = gradient;
             ctx.beginPath();
@@ -202,45 +206,42 @@ export function AudioVisualizerHUD({
       isMounted = false;
       cleanupAudio();
     };
-  }, [isActive, cleanupAudio, onVolumeChange]);
+  }, [isActive, cleanupAudio]);
 
   if (!isActive) return null;
 
   return (
-    <div className={`rounded-lg border border-cyan-500/30 bg-neutral-950/90 p-2.5 shadow-lg ${className}`}>
+    <div className={`rounded-lg border border-[#292a2b] bg-[#0d0e0f] p-2.5 ${className}`}>
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75"></span>
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-500"></span>
-          </span>
-          <span className="text-[11px] font-mono text-cyan-300 font-semibold tracking-wider flex items-center gap-1">
-            <Activity className="h-3 w-3 text-cyan-400" />
-            LIVE AUDIO HUD
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+          <span className="text-xs font-medium text-[#e3e2e3] flex items-center gap-1.5">
+            <Activity className="h-3 w-3 text-[#5e6ad2]" />
+            Live audio visualizer
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-mono text-neutral-400">
-            Signal: <span className="text-cyan-400">{Math.round(currentLevel * 100)}%</span>
+          <span className="text-[10px] font-mono text-[#908f9e]">
+            Signal: <span className="text-[#bdc2ff]">{Math.round(currentLevel * 100)}%</span>
           </span>
           <div
-            className="flex items-center gap-1 text-[10px] font-mono text-neutral-500 cursor-help"
+            className="flex items-center gap-1 text-[10px] text-[#908f9e] cursor-help"
             title="ambient visualizer for your Wispr Flow voice stream."
           >
-            <Info className="h-3 w-3 text-neutral-400" />
+            <Info className="h-3 w-3 text-[#908f9e]" />
             <span className="hidden sm:inline">Wispr Voice HUD</span>
           </div>
         </div>
       </div>
 
       {permissionError ? (
-        <div className="flex items-center gap-1.5 rounded bg-rose-950/40 p-2 text-[11px] text-rose-300 border border-rose-500/30">
+        <div className="flex items-center gap-1.5 rounded bg-rose-950/30 p-2 text-[11px] text-rose-300 border border-rose-500/20">
           <AlertCircle className="h-3.5 w-3.5 text-rose-400 shrink-0" />
           <span>{permissionError}</span>
         </div>
       ) : (
-        <div className="relative w-full h-8 flex items-center justify-center bg-neutral-900/60 rounded overflow-hidden">
+        <div className="relative w-full h-8 flex items-center justify-center bg-[#121315] rounded border border-[#292a2b] overflow-hidden">
           <canvas
             ref={canvasRef}
             width={380}
