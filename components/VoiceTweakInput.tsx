@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Mic, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { useTheme } from '@/lib/ThemeContext';
 
@@ -12,7 +12,7 @@ interface VoiceTweakInputProps {
 }
 
 export function VoiceTweakInput({
-  cardName,
+  cardName = 'card',
   onTweak,
   isRefining = false,
   placeholder = 'Hold Wispr to refine this card.'
@@ -22,36 +22,83 @@ export function VoiceTweakInput({
   const [isListening, setIsListening] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
 
+  // Timers tracked in refs to eliminate memory leaks on unmount
+  const tweakTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Keep a stable ref for onTweak to prevent closure stale issues
+  const onTweakRef = useRef(onTweak);
+  useEffect(() => {
+    onTweakRef.current = onTweak;
+  }, [onTweak]);
+
+  // Clean up all pending timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (tweakTimeoutRef.current) {
+        clearTimeout(tweakTimeoutRef.current);
+        tweakTimeoutRef.current = null;
+      }
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || isRefining) return;
+    if (isRefining) return;
+    const trimmed = input.trim();
+    if (!trimmed) return;
 
-    const instruction = input.trim();
-    onTweak(instruction);
-    setFeedback(`Refining ${cardName}...`);
-    setInput('');
-    setTimeout(() => setFeedback(null), 3000);
+    try {
+      // Clear input immediately to lock against rapid duplicate submits
+      setInput('');
+      onTweakRef.current(trimmed);
+      setFeedback(`Refining ${cardName}...`);
+
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setFeedback(null);
+        feedbackTimeoutRef.current = null;
+      }, 3000);
+    } catch (err) {
+      console.error('Failed to submit voice tweak:', err);
+    }
   };
 
   const handleMicClick = () => {
     if (isRefining) return;
-    setIsListening(prev => !prev);
 
-    if (!isListening) {
-      // Simulate voice input for instant demoing if user clicks mic
-      const mockVoicePrompts = [
-        'make the PR more concise',
-        'add a Redis note to the architecture diagram',
-        'shorten the video script hook to 15 seconds',
-        'make the social post more provocative with metrics'
-      ];
-      const selected = mockVoicePrompts[Math.floor(Math.random() * mockVoicePrompts.length)];
-
-      setTimeout(() => {
-        setInput(selected);
-        setIsListening(false);
-      }, 1000);
+    // Clear any pending mic simulation timer
+    if (tweakTimeoutRef.current) {
+      clearTimeout(tweakTimeoutRef.current);
+      tweakTimeoutRef.current = null;
     }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    setIsListening(true);
+    // Simulate voice input for instant demoing if user clicks mic
+    const mockVoicePrompts = [
+      'make the PR more concise',
+      'add a Redis note to the architecture diagram',
+      'shorten the video script hook to 15 seconds',
+      'make the social post more provocative with metrics'
+    ];
+    const selected = mockVoicePrompts[Math.floor(Math.random() * mockVoicePrompts.length)];
+
+    tweakTimeoutRef.current = setTimeout(() => {
+      setInput(selected);
+      setIsListening(false);
+      tweakTimeoutRef.current = null;
+    }, 1000);
   };
 
   return (
@@ -119,9 +166,9 @@ export function VoiceTweakInput({
 
       {/* Ephemeral Feedback */}
       {feedback && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-amber-700 font-mono animate-fadeIn">
-          <Sparkles className="h-2.5 w-2.5 text-amber-600" />
-          <span>{feedback}</span>
+        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-amber-700 font-mono animate-fadeIn truncate">
+          <Sparkles className="h-2.5 w-2.5 text-amber-600 shrink-0" />
+          <span className="truncate">{feedback}</span>
         </div>
       )}
     </div>

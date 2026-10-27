@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   GitPullRequest,
   GitCommit,
@@ -19,6 +19,12 @@ import {
 import { PullRequestDeliverable } from '@/lib/types';
 import { VoiceTweakInput } from '@/components/VoiceTweakInput';
 import { useTheme } from '@/lib/ThemeContext';
+import {
+  formatPrMarkdown,
+  sanitizeRepoSlug,
+  buildGitHubCompareUrl,
+  safeClipboardCopy,
+} from '@/lib/githubUrl';
 
 function GithubIcon({ className = 'h-3.5 w-3.5' }: { className?: string }) {
   return (
@@ -59,20 +65,41 @@ export function PullRequestCard({
   const [repoPath, setRepoPath] = useState('AsteroidHH/Wispr-Flow-No-Hands-Challenge');
   const [compareBranch, setCompareBranch] = useState('main...feature');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const toastTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  // Load saved repo path from localStorage if present
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const copiedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load saved repo path safely from localStorage if present
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('shipspeak_repo_path');
-      if (saved) setRepoPath(saved);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = localStorage.getItem('shipspeak_repo_path');
+        if (saved && typeof saved === 'string') {
+          const sanitized = sanitizeRepoSlug(saved);
+          if (sanitized) setRepoPath(sanitized);
+        }
+      }
     } catch {
-      // ignore
+      // ignore security or private browsing storage exceptions
     }
+
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
     };
   }, []);
+
+  // Keyboard shortcut listener for modal (Escape to close)
+  useEffect(() => {
+    if (!isRepoModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsRepoModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isRepoModalOpen]);
 
   const showToast = (msg: string) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -81,36 +108,17 @@ export function PullRequestCard({
   };
 
   const getFullMarkdown = () => {
-    if (data.prMarkdown) return data.prMarkdown;
-    const title = data.title || 'Feature Implementation';
-    const commitMsg = data.commitMessage || 'feat: update implementation';
-    const summary = data.summary || 'Summary of changes';
-    const keyChangesList = (data.keyChanges || []).map((change) => `- ${change}`).join('\n');
-    const breakingChangesList = (data.breakingChanges || []).map((b) => `- ${b}`).join('\n');
-
-    return `## ${title}
-
-### Commit Message
-\`\`\`
-${commitMsg}
-\`\`\`
-
-### Summary
-${summary}
-
-### Key Changes
-${keyChangesList || '- General code refactor'}
-
-### ⚠️ Breaking Changes
-${breakingChangesList || '- None'}`;
+    return formatPrMarkdown(data);
   };
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(getFullMarkdown());
+      const fullText = getFullMarkdown();
+      await safeClipboardCopy(fullText);
+      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
       setCopied(true);
       showToast('PR spec copied to clipboard');
-      setTimeout(() => setCopied(false), 2000);
+      copiedTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy', err);
     }
@@ -119,44 +127,51 @@ ${breakingChangesList || '- None'}`;
   // Launch GitHub Compare PR with pre-filled title and body (zero OAuth!)
   const handleLaunchGitHubPR = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanRepo = repoPath.trim().replace(/^https?:\/\/github\.com\//, '').replace(/\/$/, '');
+    const cleanRepo = sanitizeRepoSlug(repoPath);
 
-    if (!cleanRepo || !cleanRepo.includes('/')) {
-      showToast('Please enter a valid owner/repo format');
+    if (!cleanRepo) {
+      showToast('Please enter a valid owner/repo format (e.g. owner/repo)');
       return;
     }
 
     try {
-      localStorage.setItem('shipspeak_repo_path', cleanRepo);
-    } catch {
-      // ignore
-    }
-
-    const titleParam = encodeURIComponent(data.title || 'ShipSpeak: Deliverables PR');
-    const fullMarkdown = getFullMarkdown();
-
-    const MAX_PARAM_LENGTH = 4000;
-    let safeMarkdown = fullMarkdown;
-    let wasTruncated = false;
-
-    if (encodeURIComponent(safeMarkdown).length > MAX_PARAM_LENGTH) {
-      wasTruncated = true;
-      safeMarkdown = fullMarkdown.slice(0, 1800) + '\n\n... *(Full PR spec copied to clipboard — paste directly into description)*';
-      try {
-        navigator.clipboard.writeText(fullMarkdown);
-      } catch {
-        // ignore
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('shipspeak_repo_path', cleanRepo);
       }
+    } catch {
+      // ignore storage write errors
     }
 
-    const bodyParam = encodeURIComponent(safeMarkdown);
-    const compare = encodeURIComponent(compareBranch.trim() || 'main...feature');
-    const githubPrUrl = `https://github.com/${cleanRepo}/compare/${compare}?quick_pull=1&title=${titleParam}&body=${bodyParam}`;
+    const fullMarkdown = getFullMarkdown();
+    const { url: githubPrUrl, wasTruncated } = buildGitHubCompareUrl({
+      repo: cleanRepo,
+      compare: compareBranch,
+      title: data?.title,
+      body: fullMarkdown,
+    });
 
-    window.open(githubPrUrl, '_blank', 'noopener,noreferrer');
+    if (wasTruncated) {
+      // Automatically copy complete PR spec to clipboard when URL is truncated
+      safeClipboardCopy(fullMarkdown);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.open(githubPrUrl, '_blank', 'noopener,noreferrer');
+    }
+
     setIsRepoModalOpen(false);
-    showToast(wasTruncated ? 'PR URL launched! Full spec copied to clipboard' : `Opened PR compare on GitHub for ${cleanRepo}`);
+    showToast(
+      wasTruncated
+        ? 'PR URL launched! Full spec copied to clipboard'
+        : `Opened PR compare on GitHub for ${cleanRepo}`
+    );
   };
+
+  const safeCommitMessage = data?.commitMessage || 'feat: update implementation';
+  const safeTitle = data?.title || 'Feature Implementation';
+  const safeSummary = data?.summary || 'Summary of changes';
+  const keyChanges = Array.isArray(data?.keyChanges) ? data.keyChanges : [];
+  const breakingChanges = Array.isArray(data?.breakingChanges) ? data.breakingChanges : [];
 
   return (
     <>
@@ -209,7 +224,7 @@ ${breakingChangesList || '- None'}`;
                         : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
                     }`}
                   >
-                    Target: {compareBranch.replace('...', ' → ')}
+                    Target: {(compareBranch || 'main...feature').replace('...', ' → ')}
                   </span>
                   {isRefining && (
                     <span className={`text-[10px] font-mono ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
@@ -227,6 +242,8 @@ ${breakingChangesList || '- None'}`;
             <div className="flex items-center gap-1.5">
               {/* View Tab Toggle */}
               <div
+                role="tablist"
+                aria-label="PR view options"
                 className={`flex rounded-md p-0.5 border ${
                   isLight
                     ? 'bg-[#F4F4F5] border-[#E6E6E4]'
@@ -235,6 +252,8 @@ ${breakingChangesList || '- None'}`;
               >
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={viewTab === 'structured'}
                   onClick={() => setViewTab('structured')}
                   className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
                     viewTab === 'structured'
@@ -251,6 +270,8 @@ ${breakingChangesList || '- None'}`;
                 </button>
                 <button
                   type="button"
+                  role="tab"
+                  aria-selected={viewTab === 'markdown'}
                   onClick={() => setViewTab('markdown')}
                   className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
                     viewTab === 'markdown'
@@ -345,7 +366,7 @@ ${breakingChangesList || '- None'}`;
                     isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
                   }`}
                 >
-                  {data.commitMessage}
+                  {safeCommitMessage}
                 </p>
               </div>
 
@@ -354,7 +375,7 @@ ${breakingChangesList || '- None'}`;
                   PR title
                 </span>
                 <p className={`text-sm font-medium mt-0.5 ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
-                  {data.title}
+                  {safeTitle}
                 </p>
               </div>
 
@@ -363,7 +384,7 @@ ${breakingChangesList || '- None'}`;
                   Executive summary
                 </span>
                 <p className={`text-xs leading-relaxed mt-0.5 ${isLight ? 'text-zinc-600' : 'text-[#c6c5d5]'}`}>
-                  {data.summary}
+                  {safeSummary}
                 </p>
               </div>
 
@@ -371,10 +392,10 @@ ${breakingChangesList || '- None'}`;
               <div>
                 <div className={`flex items-center gap-1.5 text-xs font-medium mb-1.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
                   <Layers className="h-3 w-3" />
-                  <span>Key changes ({(data.keyChanges || []).length})</span>
+                  <span>Key changes ({keyChanges.length})</span>
                 </div>
                 <ul className="space-y-1.5">
-                  {(data.keyChanges || []).map((change, idx) => (
+                  {keyChanges.map((change, idx) => (
                     <li key={idx} className={`flex items-start gap-2 text-xs ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
                       <span
                         className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
@@ -385,14 +406,19 @@ ${breakingChangesList || '- None'}`;
                       >
                         <Check className="h-2.5 w-2.5 stroke-[2.5]" />
                       </span>
-                      <span className="leading-snug">{change}</span>
+                      <span className="leading-snug">{String(change)}</span>
                     </li>
                   ))}
+                  {keyChanges.length === 0 && (
+                    <li className={`text-xs italic ${isLight ? 'text-zinc-400' : 'text-[#908f9e]'}`}>
+                      No key changes listed.
+                    </li>
+                  )}
                 </ul>
               </div>
 
               {/* Breaking Changes Alert Box matching Stitch */}
-              {data.breakingChanges && data.breakingChanges.length > 0 && (
+              {breakingChanges.length > 0 && (
                 <div
                   className={`rounded-lg p-3 border ${
                     isLight
@@ -405,10 +431,10 @@ ${breakingChangesList || '- None'}`;
                     <span>Breaking changes detected</span>
                   </div>
                   <ul className="mt-1.5 space-y-1">
-                    {data.breakingChanges.map((bChange, idx) => (
+                    {breakingChanges.map((bChange, idx) => (
                       <li key={idx} className={`text-xs flex items-start gap-1.5 ${isLight ? 'text-amber-800' : 'text-red-200/90'}`}>
                         <span className={`font-bold ${isLight ? 'text-amber-700' : 'text-red-400'}`}>•</span>
-                        <span>{bChange}</span>
+                        <span>{String(bChange)}</span>
                       </li>
                     ))}
                   </ul>
@@ -480,7 +506,15 @@ ${breakingChangesList || '- None'}`;
 
       {/* Zero-OAuth "Open on GitHub" Modal Popover */}
       {isRepoModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fadeIn">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pr-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsRepoModalOpen(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fadeIn"
+        >
           <div
             className={`w-full max-w-md rounded-xl border p-5 shadow-2xl ${
               isLight
@@ -500,7 +534,7 @@ ${breakingChangesList || '- None'}`;
                   <GithubIcon className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className={`text-sm font-semibold ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+                  <h3 id="pr-modal-title" className={`text-sm font-semibold ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
                     Open PR on GitHub
                   </h3>
                   <p className={`text-[11px] font-mono ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
@@ -511,7 +545,8 @@ ${breakingChangesList || '- None'}`;
               <button
                 type="button"
                 onClick={() => setIsRepoModalOpen(false)}
-                className={`rounded-md p-1 ${isLight ? 'text-zinc-500 hover:bg-zinc-100 hover:text-black' : 'text-[#908f9e] hover:bg-[#292a2b] hover:text-white'}`}
+                aria-label="Close dialog"
+                className={`rounded-md p-1 cursor-pointer ${isLight ? 'text-zinc-500 hover:bg-zinc-100 hover:text-black' : 'text-[#908f9e] hover:bg-[#292a2b] hover:text-white'}`}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -561,7 +596,7 @@ ${breakingChangesList || '- None'}`;
                 }`}
               >
                 <p>
-                  🚀 <strong>Zero OAuth required:</strong> Pre-populates GitHub’s native PR review interface with your generated title, commit message, and Markdown spec.
+                  🚀 <strong>Zero OAuth required:</strong> Pre-populates GitHub’s native PR review interface with your generated title, commit message, and Markdown spec. Automatically copies full spec to clipboard if URL length limits are reached.
                 </p>
               </div>
 
@@ -569,7 +604,7 @@ ${breakingChangesList || '- None'}`;
                 <button
                   type="button"
                   onClick={() => setIsRepoModalOpen(false)}
-                  className={`rounded-md border px-3 py-1.5 text-xs font-medium ${
+                  className={`rounded-md border px-3 py-1.5 text-xs font-medium cursor-pointer ${
                     isLight
                       ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
                       : 'border-[#292a2b] bg-[#1f2021] text-[#e3e2e3] hover:bg-[#292a2b]'
@@ -579,7 +614,7 @@ ${breakingChangesList || '- None'}`;
                 </button>
                 <button
                   type="submit"
-                  className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors shadow-sm text-white ${
+                  className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors shadow-sm text-white cursor-pointer ${
                     isLight ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[#5e6ad2] hover:bg-[#5e6ad2]/90'
                   }`}
                 >

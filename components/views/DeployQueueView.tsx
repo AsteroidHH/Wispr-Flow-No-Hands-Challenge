@@ -20,10 +20,18 @@ interface DeployQueueViewProps {
 export function DeployQueueView({ onBack }: DeployQueueViewProps) {
   const { isLight } = useTheme();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const refreshTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+    };
+  }, []);
 
   const handleRefresh = () => {
+    if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 800);
+    refreshTimeoutRef.current = setTimeout(() => setIsRefreshing(false), 800);
   };
 
   const queueEvents = [

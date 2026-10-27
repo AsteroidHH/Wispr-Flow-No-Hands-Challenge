@@ -44,19 +44,27 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
   const [copiedCommand, setCopiedCommand] = useState(false);
   const logsEndRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const timeoutsRef = useRef<NodeJS.Timeout[]>([]);
+  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Clear all pending timeouts on unmount or reset
-  const clearSimulationTimers = () => {
-    timeoutsRef.current.forEach(clearTimeout);
+  const clearSimulationTimers = React.useCallback(() => {
+    timeoutsRef.current.forEach((t) => clearTimeout(t));
     timeoutsRef.current = [];
-  };
+  }, []);
 
   useEffect(() => {
     return () => {
       clearSimulationTimers();
     };
-  }, []);
+  }, [clearSimulationTimers]);
+
+  // If closed while running or unmounted, cancel pending timers immediately
+  useEffect(() => {
+    if (!isOpen) {
+      clearSimulationTimers();
+      setIsRunning(false);
+    }
+  }, [isOpen, clearSimulationTimers]);
 
   const npmCommand = 'npx shipspeak --voice';
 
@@ -68,29 +76,41 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
   // Focus input when opened
   useEffect(() => {
     if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 150);
+      const t = setTimeout(() => inputRef.current?.focus(), 150);
+      return () => clearTimeout(t);
     }
   }, [isOpen]);
 
   // Close on Escape
   useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         clearSimulationTimers();
+        setIsRunning(false);
         onClose();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, clearSimulationTimers]);
+
+  const handleReset = () => {
+    clearSimulationTimers();
+    setIsRunning(false);
+    setLogs(INITIAL_LOGS);
+    setInputValue('');
+  };
 
   const copyNpxCommand = async () => {
     try {
-      await navigator.clipboard.writeText(npmCommand);
-      setCopiedCommand(true);
-      setTimeout(() => setCopiedCommand(false), 2000);
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(npmCommand);
+        setCopiedCommand(true);
+        setTimeout(() => setCopiedCommand(false), 2000);
+      }
     } catch (err) {
-      console.error('Failed to copy', err);
+      console.warn('Failed to copy', err);
     }
   };
 
@@ -190,11 +210,39 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const cmd = inputValue.trim().toLowerCase();
-    if (!cmd) return;
+    if (isRunning) return;
+
+    const raw = inputValue.trim();
+    if (!raw) return;
+    const cmd = raw.toLowerCase();
 
     if (cmd === 'clear' || cmd === 'cls') {
+      clearSimulationTimers();
+      setIsRunning(false);
       setLogs([]);
+      setInputValue('');
+      return;
+    }
+
+    if (cmd === 'reset') {
+      handleReset();
+      return;
+    }
+
+    if (cmd === 'help' || cmd === '-h' || cmd === '--help' || cmd === '?') {
+      setLogs((prev) => [
+        ...prev,
+        {
+          type: 'input',
+          text: raw,
+          timestamp: getTimestamp(),
+        },
+        {
+          type: 'system',
+          text: 'Available ShipSpeak commands:\n• speak --listen (or "shipspeak --listen"): Run voice-to-code pipeline simulation\n• clear (or "cls"): Clear the terminal screen\n• reset: Reset terminal session to default logs\n• help: Show this command directory',
+          timestamp: getTimestamp(),
+        },
+      ]);
       setInputValue('');
       return;
     }
@@ -217,12 +265,12 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
       ...prev,
       {
         type: 'input',
-        text: inputValue,
+        text: raw.length > 200 ? raw.slice(0, 200) + '...' : raw,
         timestamp: getTimestamp(),
       },
       {
         type: 'system',
-        text: `Command not recognized: "${inputValue}". Try: "speak --listen" or click "Run Voice Pipeline".`,
+        text: `Command not recognized: "${raw.length > 80 ? raw.slice(0, 80) + '...' : raw}". Try: "speak --listen", "help", or click "Run Voice Pipeline".`,
         timestamp: getTimestamp(),
       },
     ]);
@@ -288,7 +336,7 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
 
             <button
               type="button"
-              onClick={() => setLogs(INITIAL_LOGS)}
+              onClick={handleReset}
               className="flex items-center gap-1 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-2.5 py-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3] transition-colors"
               title="Reset terminal output"
             >
@@ -326,38 +374,38 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
         </div>
 
         {/* Terminal Screen Body */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2 text-[#e3e2e3] font-mono text-[11px] leading-relaxed bg-[#0d0e0f] select-text">
+        <div className="flex-1 overflow-y-auto p-4 space-y-2 text-[#e3e2e3] font-mono text-[11px] leading-relaxed bg-[#0d0e0f] select-text break-words">
           {logs.map((log, idx) => (
-            <div key={idx} className="flex items-start gap-2 animate-fadeIn">
+            <div key={idx} className="flex items-start gap-2 animate-fadeIn break-words">
               <span className="text-neutral-600 select-none text-[10px] shrink-0 pt-0.5">
                 {log.timestamp}
               </span>
 
               {log.type === 'input' && (
-                <div className="flex items-center gap-1 text-emerald-400 font-semibold">
+                <div className="flex items-center gap-1 text-emerald-400 font-semibold break-all">
                   <span className="text-[#908f9e]">developer@macbook:~/project$</span>
-                  <span>{log.text}</span>
+                  <span className="break-all">{log.text}</span>
                 </div>
               )}
 
               {log.type === 'info' && (
-                <span className="text-sky-300 font-medium">{log.text}</span>
+                <span className="text-sky-300 font-medium break-words">{log.text}</span>
               )}
 
               {log.type === 'audio' && (
-                <span className="text-[#bdc2ff] font-medium">{log.text}</span>
+                <span className="text-[#bdc2ff] font-medium break-words">{log.text}</span>
               )}
 
               {log.type === 'ai' && (
-                <span className="text-[#5e6ad2] font-medium">{log.text}</span>
+                <span className="text-[#5e6ad2] font-medium break-words">{log.text}</span>
               )}
 
               {log.type === 'success' && (
-                <span className="text-emerald-400">{log.text}</span>
+                <span className="text-emerald-400 break-words">{log.text}</span>
               )}
 
               {log.type === 'system' && (
-                <span className="text-[#908f9e] italic">{log.text}</span>
+                <span className="text-[#908f9e] italic break-words whitespace-pre-wrap">{log.text}</span>
               )}
             </div>
           ))}

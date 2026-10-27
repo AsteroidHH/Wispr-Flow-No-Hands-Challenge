@@ -18,6 +18,18 @@ import { Deliverables } from '@/lib/types';
 import { Mic, Zap, Sparkles, CheckCircle2, Sliders } from 'lucide-react';
 import { useTheme } from '@/lib/ThemeContext';
 
+function getSanitizedCustomKey(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('shipspeak_custom_gemini_key');
+    if (!raw) return null;
+    const cleaned = raw.trim().replace(/[\r\n\t]/g, '').slice(0, 256);
+    return cleaned.length > 0 ? cleaned : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function Home() {
   const { isLight } = useTheme();
   const defaultPreset = getDefaultPreset();
@@ -35,15 +47,36 @@ export default function Home() {
   const [activeView, setActiveView] = useState<SidebarView>('overview');
   const [isToolingOpen, setIsToolingOpen] = useState<boolean>(false);
   const [toolingTab, setToolingTab] = useState<ToolingTab>('telemetry');
+  const notificationTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showNotification = useCallback((msg: string, durationMs = 3500) => {
+    if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
+    setNotification(msg);
+    notificationTimeoutRef.current = setTimeout(() => {
+      setNotification(null);
+      notificationTimeoutRef.current = null;
+    }, durationMs);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (notificationTimeoutRef.current) clearTimeout(notificationTimeoutRef.current);
+    };
+  }, []);
 
   const handleSidebarNavigate = (view: SidebarView) => {
     if (view === 'telemetry' || view === 'api-keys' || view === 'settings') {
-      setToolingTab(view as ToolingTab);
-      setIsToolingOpen(true);
+      if (isToolingOpen && toolingTab === view) {
+        setIsToolingOpen(false);
+      } else {
+        setToolingTab(view as ToolingTab);
+        setIsToolingOpen(true);
+      }
       setIsSidebarOpen(false);
       return;
     }
     setActiveView(view);
+    setIsToolingOpen(false);
     setIsSidebarOpen(false);
   };
 
@@ -63,25 +96,32 @@ export default function Home() {
     // Immediately populate high-quality mock results so judges can test instantly
     setDeliverables(preset.deliverables);
     setGenerationSource(`preset_${preset.id}`);
-    setNotification(`Loaded "${preset.name}" preset`);
-    setTimeout(() => setNotification(null), 3000);
-  }, []);
+    showNotification(`Loaded "${preset.name}" preset`, 3000);
+  }, [showNotification]);
 
   // Handle Generation via /api/generate
   const handleGenerate = useCallback(async () => {
     if (!voiceTranscript.trim() && !gitDiff.trim()) {
-      setNotification('Please enter a voice transcript or select a preset to generate deliverables.');
-      setTimeout(() => setNotification(null), 3500);
+      showNotification('Please enter a voice transcript or select a preset to generate deliverables.', 3500);
       return;
     }
 
+    // Switch to overview view to observe the live synthesis stream
+    setActiveView('overview');
+    setIsToolingOpen(false);
     setIsGenerating(true);
-    setNotification('Invoking Gemini 2.5 Flash structured pipeline...');
+    showNotification('Invoking Gemini 2.5 Flash structured pipeline...', 3500);
 
     try {
+      const customKey = getSanitizedCustomKey();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (customKey) {
+        headers['x-gemini-key'] = customKey;
+      }
+
       const response = await fetch('/api/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           transcript: voiceTranscript,
           diff: gitDiff,
@@ -104,7 +144,7 @@ export default function Home() {
           ? 'Gemini 2.5 Flash (Structured Output)'
           : 'ShipSpeak Engine (Grounding Fallback)';
         
-        setNotification(`Successfully generated deliverables via ${sourceLabel}`);
+        showNotification(`Successfully generated deliverables via ${sourceLabel}`, 4000);
       } else {
         throw new Error(result.error || 'Failed to generate deliverables from API');
       }
@@ -113,41 +153,73 @@ export default function Home() {
       const activePreset = getPresetById(activePresetId) || defaultPreset;
       setDeliverables(activePreset.deliverables);
       setGenerationSource('client_fallback');
-      setNotification('Deliverables populated from resilient local fallback.');
+      showNotification('Deliverables populated from resilient local fallback.', 4000);
     } finally {
       setIsGenerating(false);
-      setTimeout(() => setNotification(null), 4000);
     }
-  }, [activePresetId, voiceTranscript, gitDiff, defaultPreset]);
+  }, [activePresetId, voiceTranscript, gitDiff, defaultPreset, showNotification]);
 
-  // Keyboard shortcut: ⌘+Enter or Ctrl+Enter & ⌥S
+  // Global keyboard shortcuts: ⌘+Enter / Ctrl+Enter (Generate), ⌘K / Ctrl+K (CLI), ⌥S (Settings), Esc (Clear / Dismiss)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 1. ⌘+Enter or Ctrl+Enter -> Generate deliverables
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         handleGenerate();
-      } else if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 's' || e.key === 'S')) {
+        return;
+      }
+
+      // 2. ⌘K or Ctrl+K -> Toggle Terminal CLI Preview
+      if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
+        e.preventDefault();
+        setIsTerminalOpen((prev) => !prev);
+        return;
+      }
+
+      // 3. ⌥S or Alt+S -> Open Settings Tooling Drawer
+      if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 's' || e.key === 'S')) {
         e.preventDefault();
         handleOpenTooling('settings');
+        return;
+      }
+
+      // 4. Escape -> Close any active modal / overlay / notification
+      if (e.key === 'Escape') {
+        if (isTerminalOpen) {
+          setIsTerminalOpen(false);
+        } else if (isToolingOpen) {
+          setIsToolingOpen(false);
+        } else if (isSidebarOpen) {
+          setIsSidebarOpen(false);
+        } else if (notification) {
+          setNotification(null);
+        }
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleGenerate]);
+  }, [handleGenerate, isTerminalOpen, isToolingOpen, isSidebarOpen, notification]);
 
   // Handle Voice Tweaks on Individual Bento Cards via /api/tweak
   const handleTweakCard = async (cardKey: keyof Deliverables, instruction: string) => {
     if (!deliverables) return;
 
     setRefiningCard(cardKey);
-    setNotification(`Refining ${cardKey} with Gemini Flash: "${instruction}"...`);
+    showNotification(`Refining ${cardKey} with Gemini Flash: "${instruction}"...`, 3000);
 
     const currentCardData = deliverables[cardKey];
 
     try {
+      const customKey = getSanitizedCustomKey();
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (customKey) {
+        headers['x-gemini-key'] = customKey;
+      }
+
       const response = await fetch('/api/tweak', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           cardKey,
           currentContent: currentCardData,
@@ -169,7 +241,7 @@ export default function Home() {
             [cardKey]: result.data,
           };
         });
-        setNotification(`Updated ${cardKey} smoothly via voice refinement.`);
+        showNotification(`Updated ${cardKey} smoothly via voice refinement.`, 3500);
       } else {
         throw new Error(result.error || 'Invalid tweak response format');
       }
@@ -214,10 +286,9 @@ export default function Home() {
         }
         return updated;
       });
-      setNotification(`Refined ${cardKey} using local fallback.`);
+      showNotification(`Refined ${cardKey} using local fallback.`, 3500);
     } finally {
       setRefiningCard(null);
-      setTimeout(() => setNotification(null), 3500);
     }
   };
 
@@ -226,17 +297,16 @@ export default function Home() {
     if (!deliverables) return;
 
     setIsExportingBundle(true);
-    setNotification('Packaging ShipSpeak-deliverables.zip bundle...');
+    showNotification('Packaging ShipSpeak-deliverables.zip bundle...', 3000);
 
     try {
       await exportArtifactsBundle(deliverables);
-      setNotification('Downloaded ShipSpeak-deliverables.zip successfully!');
+      showNotification('Downloaded ShipSpeak-deliverables.zip successfully!', 3500);
     } catch (err) {
       console.error('Bundle export error:', err);
-      setNotification('Failed to package deliverables bundle');
+      showNotification('Failed to package deliverables bundle', 3500);
     } finally {
       setIsExportingBundle(false);
-      setTimeout(() => setNotification(null), 3500);
     }
   };
 
@@ -259,7 +329,7 @@ export default function Home() {
 
       {/* Docked Sidebar (Desktop fixed, Mobile overlay) */}
       <Sidebar
-        activeView={activeView}
+        activeView={isToolingOpen ? toolingTab : activeView}
         onSelectView={handleSidebarNavigate}
         className="hidden lg:flex"
       />
@@ -272,7 +342,7 @@ export default function Home() {
             onClick={() => setIsSidebarOpen(false)}
           />
           <Sidebar
-            activeView={activeView}
+            activeView={isToolingOpen ? toolingTab : activeView}
             onSelectView={handleSidebarNavigate}
             className="flex w-64 shadow-2xl"
           />

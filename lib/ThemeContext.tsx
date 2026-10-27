@@ -1,14 +1,46 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export type ThemeMode = 'light' | 'dark';
 
-interface ThemeContextType {
+export interface ThemeContextType {
   theme: ThemeMode;
   setTheme: (mode: ThemeMode) => void;
   toggleTheme: () => void;
   isLight: boolean;
+}
+
+export const THEME_STORAGE_KEY = 'shipspeak_theme';
+
+/**
+ * Safe localStorage reader that guards against SSR environments,
+ * security exceptions, restricted iframe sandboxes, and Safari private browsing DOMExceptions.
+ */
+export function safeGetStorage(key: string): string | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return window.localStorage.getItem(key);
+    }
+  } catch {
+    // Restricted storage environment (e.g. private browsing, disabled cookies)
+  }
+  return null;
+}
+
+/**
+ * Safe localStorage writer that gracefully absorbs QuotaExceededError or security exceptions.
+ */
+export function safeSetStorage(key: string, value: string): boolean {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(key, value);
+      return true;
+    }
+  } catch {
+    // Restricted storage environment
+  }
+  return false;
 }
 
 const ThemeContext = createContext<ThemeContextType>({
@@ -25,45 +57,45 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setMounted(true);
-    try {
-      const saved = localStorage.getItem('shipspeak_theme') as ThemeMode | null;
-      if (saved === 'dark' || saved === 'light') {
-        setThemeState(saved);
-      }
-    } catch {
-      // ignore
+    const saved = safeGetStorage(THEME_STORAGE_KEY) as ThemeMode | null;
+    if (saved === 'dark' || saved === 'light') {
+      setThemeState(saved);
     }
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    try {
-      localStorage.setItem('shipspeak_theme', theme);
-    } catch {
-      // ignore
-    }
+    safeSetStorage(THEME_STORAGE_KEY, theme);
 
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-      root.classList.remove('light');
-      document.body.style.backgroundColor = '#0d0e0f';
-      document.body.style.color = '#e3e2e3';
-    } else {
-      root.classList.remove('dark');
-      root.classList.add('light');
-      document.body.style.backgroundColor = '#FBFBFA';
-      document.body.style.color = '#18181B';
+    if (typeof document !== 'undefined') {
+      const root = document.documentElement;
+      if (theme === 'dark') {
+        root.classList.add('dark');
+        root.classList.remove('light');
+        root.style.colorScheme = 'dark';
+        if (document.body) {
+          document.body.style.backgroundColor = '#0d0e0f';
+          document.body.style.color = '#e3e2e3';
+        }
+      } else {
+        root.classList.remove('dark');
+        root.classList.add('light');
+        root.style.colorScheme = 'light';
+        if (document.body) {
+          document.body.style.backgroundColor = '#FBFBFA';
+          document.body.style.color = '#18181B';
+        }
+      }
     }
   }, [theme, mounted]);
 
-  const setTheme = (mode: ThemeMode) => {
+  const setTheme = useCallback((mode: ThemeMode) => {
     setThemeState(mode);
-  };
+  }, []);
 
-  const toggleTheme = () => {
+  const toggleTheme = useCallback(() => {
     setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+  }, []);
 
   return (
     <ThemeContext.Provider

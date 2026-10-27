@@ -50,16 +50,18 @@ export interface Deliverables {
 }
 
 export interface GenerateApiResponseData {
-  prTitle: string;
-  commitMessage: string;
-  prMarkdown: string;
-  mermaidSyntax: string;
-  videoScript: {
-    timestamp: string;
-    visualCue: string;
-    spokenLine: string;
+  prTitle?: string;
+  commitMessage?: string;
+  prMarkdown?: string;
+  mermaidSyntax?: string;
+  videoScript?: {
+    timestamp?: string;
+    stage?: string;
+    visualCue?: string;
+    spokenLine?: string;
+    audio?: string;
   }[];
-  socialPost: string;
+  socialPost?: string;
 }
 
 export interface Preset {

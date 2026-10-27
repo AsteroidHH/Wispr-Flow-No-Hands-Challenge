@@ -63,6 +63,35 @@ export const THEME_CONFIGS: Record<
   },
 };
 
+/**
+ * Remove any stray DOM elements injected by Mermaid into document.body
+ * during compilation or error rendering.
+ */
+function cleanUpMermaidElements(id: string, container: HTMLElement | null) {
+  if (!id || typeof document === 'undefined') return;
+  const selectors = [
+    `#${id}`,
+    `#d${id}`,
+    `#i${id}`,
+    `[id*="${id}"]`,
+    `#d${id}_selector`,
+    '.mermaid-error',
+  ];
+  selectors.forEach((sel) => {
+    try {
+      const elements = document.querySelectorAll(sel);
+      elements.forEach((el) => {
+        // Do not delete elements if they reside inside our own React container
+        if (!container || !container.contains(el)) {
+          el.remove();
+        }
+      });
+    } catch {
+      // Ignore invalid selector queries safely
+    }
+  });
+}
+
 interface MermaidRendererProps {
   code: string;
   theme?: MermaidTheme;
@@ -89,7 +118,9 @@ export function MermaidRenderer({
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    let isMounted = true;
+    let isCurrent = true;
+    let timeoutId: NodeJS.Timeout | null = null;
+    let currentUniqueId = '';
 
     const themeVars = THEME_CONFIGS[theme]?.variables || THEME_CONFIGS.obsidian.variables;
 
@@ -97,7 +128,8 @@ export function MermaidRenderer({
       mermaid.initialize({
         startOnLoad: false,
         theme: 'dark',
-        securityLevel: 'loose',
+        securityLevel: 'antiscript', // Strict sanitization against script execution/XSS
+        suppressErrorRendering: true, // Prevents Mermaid from injecting error DOM elements into document.body
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
         themeVariables: themeVars,
       });
@@ -105,52 +137,56 @@ export function MermaidRenderer({
       console.warn('Mermaid initialization warning:', err);
     }
 
-    let currentUniqueId = '';
+    const cleanCode = (code || '').trim();
+
+    if (!cleanCode) {
+      setSvgContent('');
+      setError(null);
+      setIsLoading(false);
+      onSvgRenderedRef.current?.('', null);
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    // Distinct ID prevents DOM ID collision in Mermaid cache
+    currentUniqueId = `mermaid-chart-${Math.random().toString(36).substring(2, 10)}`;
 
     async function renderDiagram() {
-      if (!code.trim()) {
-        if (isMounted) {
-          setSvgContent('');
-          setIsLoading(false);
-          if (onSvgRenderedRef.current) onSvgRenderedRef.current('', null);
-        }
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      // Distinct ID prevents DOM ID collision in Mermaid cache
-      currentUniqueId = `mermaid-chart-${Math.random().toString(36).substring(2, 10)}`;
-
       try {
-        const { svg } = await mermaid.render(currentUniqueId, code.trim());
-        if (isMounted) {
-          setSvgContent(svg);
-          setIsLoading(false);
-
-          if (onSvgRenderedRef.current) {
-            // Give DOM a microtask to attach before querying
-            setTimeout(() => {
-              if (isMounted) {
-                const svgEl = containerRef.current?.querySelector('svg') || null;
-                onSvgRenderedRef.current?.(svg, svgEl as SVGSVGElement | null);
-              }
-            }, 50);
-          }
+        const { svg } = await mermaid.render(currentUniqueId, cleanCode);
+        if (!isCurrent) {
+          cleanUpMermaidElements(currentUniqueId, containerRef.current);
+          return;
         }
-      } catch (err: unknown) {
-        if (!isMounted) return;
-        console.error('Mermaid render error:', err);
-        const strayErrorEl = document.getElementById(currentUniqueId) || document.getElementById(`d${currentUniqueId}`);
-        if (strayErrorEl) strayErrorEl.remove();
 
+        setSvgContent(svg);
+        setError(null);
+        setIsLoading(false);
+
+        // Allow microtask for DOM insertion before querying SVG element
+        timeoutId = setTimeout(() => {
+          if (!isCurrent) return;
+          const svgEl = containerRef.current?.querySelector('svg') || null;
+          onSvgRenderedRef.current?.(svg, svgEl as SVGSVGElement | null);
+        }, 50);
+      } catch (err: unknown) {
+        if (!isCurrent) {
+          cleanUpMermaidElements(currentUniqueId, containerRef.current);
+          return;
+        }
+
+        console.error('Mermaid render error:', err);
+        cleanUpMermaidElements(currentUniqueId, containerRef.current);
+
+        setSvgContent('');
         setError(err instanceof Error ? err.message : 'Failed to parse Mermaid diagram.');
         setIsLoading(false);
+        onSvgRenderedRef.current?.('', null);
       } finally {
-        if (!isMounted && currentUniqueId) {
-          const stray = document.getElementById(currentUniqueId) || document.getElementById(`d${currentUniqueId}`);
-          if (stray) stray.remove();
+        if (!isCurrent && currentUniqueId) {
+          cleanUpMermaidElements(currentUniqueId, containerRef.current);
         }
       }
     }
@@ -158,19 +194,27 @@ export function MermaidRenderer({
     renderDiagram();
 
     return () => {
-      isMounted = false;
+      isCurrent = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      cleanUpMermaidElements(currentUniqueId, containerRef.current);
     };
   }, [code, theme]);
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-xl border border-rose-500/30 bg-rose-950/20 p-6 text-center text-xs text-rose-300">
-        <AlertCircle className="mb-2 h-6 w-6 text-rose-400" />
+      <div
+        className={`flex flex-col items-center justify-center rounded-xl border border-rose-500/30 bg-rose-950/20 p-6 text-center text-xs text-rose-300 ${className}`}
+      >
+        <AlertCircle className="mb-2 h-6 w-6 text-rose-400 shrink-0" />
         <p className="font-semibold text-rose-200">Mermaid Render Error</p>
-        <p className="mt-1 font-mono text-[11px] text-rose-400/80">{error}</p>
+        <p className="mt-1 font-mono text-[11px] text-rose-400/80 whitespace-pre-wrap max-h-40 overflow-y-auto leading-relaxed">
+          {error}
+        </p>
       </div>
     );
   }
+
+  const safeZoom = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
 
   return (
     <div
@@ -186,7 +230,7 @@ export function MermaidRenderer({
       <div
         ref={containerRef}
         style={{
-          transform: `scale(${zoom})`,
+          transform: `scale(${safeZoom})`,
           transformOrigin: 'center center',
           transition: 'transform 0.2s ease-out',
         }}

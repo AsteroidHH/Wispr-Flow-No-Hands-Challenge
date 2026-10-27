@@ -3,6 +3,10 @@ import { GoogleGenAI, Type } from '@google/genai';
 import { getPresetById, JUDGE_PRESETS } from '@/lib/presets';
 import { GenerateApiResponseData } from '@/lib/types';
 
+// Payload limits to prevent memory exhaustion, token blowout, or API rejection
+export const MAX_DIFF_CHARS = 32000;
+export const MAX_TRANSCRIPT_CHARS = 24000;
+
 // Structured response schema definition for Gemini
 const generateResponseSchema = {
   type: Type.OBJECT,
@@ -63,8 +67,92 @@ const generateResponseSchema = {
   ],
 };
 
-function getMockFallbackForPreset(presetId?: string, transcript?: string, diff?: string): GenerateApiResponseData {
-  const preset = (presetId ? getPresetById(presetId) : null) || JUDGE_PRESETS[0];
+/**
+ * Sanitizes and repairs Mermaid diagram syntax from LLM output.
+ * Strips markdown code fences, guarantees a valid graph header,
+ * and repairs unquoted parenthesis/colon inside node brackets.
+ */
+export function cleanMermaidSyntax(raw: unknown): string {
+  if (typeof raw !== 'string' || !raw.trim()) {
+    return `flowchart TD
+  Client["Client Request"] --> Gateway["API Gateway"]
+  Gateway --> Service["ShipSpeak Engine"]
+  Service --> Output["Generated Deliverables"]`;
+  }
+
+  let clean = raw.trim();
+
+  // Strip markdown code fences if present (e.g. ```mermaid ... ```)
+  clean = clean.replace(/^```(?:mermaid)?\s*/i, '').replace(/\s*```$/, '').trim();
+
+  // Ensure valid diagram header
+  const validHeaders = ['flowchart', 'graph', 'sequenceDiagram', 'classDiagram', 'stateDiagram', 'erDiagram'];
+  const hasValidHeader = validHeaders.some(header => clean.startsWith(header));
+  if (!hasValidHeader) {
+    clean = `flowchart TD\n  ${clean.split('\n').join('\n  ')}`;
+  }
+
+  // Auto-quote unquoted parentheses inside square brackets: e.g. A[Client (Web)] -> A["Client (Web)"]
+  clean = clean.replace(/\[([^[\]"'\n]+\([^)\n]+\)[^[\]"'\n]*)\]/g, '["$1"]');
+
+  // Auto-quote unquoted colons inside square brackets: e.g. A[Cache: Redis] -> A["Cache: Redis"]
+  clean = clean.replace(/\[([^[\]"'\n]+:[^[\]"'\n]+)\]/g, '["$1"]');
+
+  return clean;
+}
+
+/**
+ * Validates and normalizes video script segments into strict schema.
+ */
+export function cleanVideoScript(raw: unknown): GenerateApiResponseData['videoScript'] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return [
+      {
+        timestamp: '00:00 - 00:30',
+        visualCue: 'Developer walkthrough of feature implementation',
+        spokenLine: 'Here is what was built and shipped with ShipSpeak.',
+      },
+      {
+        timestamp: '00:30 - 01:00',
+        visualCue: 'Tour of architecture diagram and deliverables',
+        spokenLine: 'All documentation and specs were synthesized voice-first in seconds.',
+      },
+      {
+        timestamp: '01:00 - 01:30',
+        visualCue: 'Live voice tweaking and card adjustments demonstration',
+        spokenLine: 'Developers can speak natural language tweaks to update any card instantly.',
+      },
+      {
+        timestamp: '01:30 - 02:00',
+        visualCue: 'Final summary and production bundle download',
+        spokenLine: 'Ready to ship with zero cognitive friction. ShipSpeak built for developers.',
+      },
+    ];
+  }
+
+  return raw.map((item, idx) => {
+    const obj = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+    const timestamp = typeof obj.timestamp === 'string' && obj.timestamp.trim()
+      ? obj.timestamp.trim()
+      : `00:${String(idx * 30).padStart(2, '0')} - 00:${String((idx + 1) * 30).padStart(2, '0')}`;
+    const visualCue = typeof obj.visualCue === 'string' && obj.visualCue.trim()
+      ? obj.visualCue.trim()
+      : 'Walkthrough screen recording';
+    const spokenLine = typeof obj.spokenLine === 'string' && obj.spokenLine.trim()
+      ? obj.spokenLine.trim()
+      : (typeof obj.audio === 'string' && obj.audio.trim()
+          ? obj.audio.trim()
+          : 'Demo audio narration segment');
+
+    return { timestamp, visualCue, spokenLine };
+  });
+}
+
+/**
+ * Generates robust mock fallback data for presets or custom user input.
+ */
+export function getMockFallbackForPreset(presetId?: string, transcript?: string, diff?: string): GenerateApiResponseData {
+  const preset = (presetId ? getPresetById(presetId) : null) || (JUDGE_PRESETS && JUDGE_PRESETS[0]) || null;
 
   if (preset && (!transcript || transcript === preset.voiceTranscript)) {
     const keyChangesList = (preset.deliverables?.pullRequest?.keyChanges || []).map(c => `- ${c}`).join('\n');
@@ -78,23 +166,18 @@ function getMockFallbackForPreset(presetId?: string, transcript?: string, diff?:
     const hashtags = (preset.deliverables?.socialPost?.twitter?.hashtags || ['#buildinpublic']).join(' ');
 
     return {
-      prTitle: preset.deliverables?.pullRequest?.title || 'feat(core): developer shipping pipeline',
+      prTitle: preset.deliverables?.pullRequest?.title || 'feat(auth): developer shipping pipeline',
       commitMessage: preset.deliverables?.pullRequest?.commitMessage || 'feat: developer shipping pipeline',
       prMarkdown: `## Overview\n${preset.deliverables?.pullRequest?.summary || 'Automated PR spec generated from voice and code context.'}\n\n## Detailed Changes\n${keyChangesList || '- Implemented core shipping improvements'}\n\n### Breaking Changes\n${breakingChangesList || '- None'}\n\n## Environment Setup Checklist\n- [ ] Configure environment variables\n- [ ] Run test suite: \`npm test\`\n- [ ] Verify edge deployment passes verification checks`,
-      mermaidSyntax: preset.deliverables?.architecture?.mermaidCode || 'flowchart TD\n  Client --> Gateway',
-      videoScript: scriptSegments.length > 0 ? scriptSegments : [
-        {
-          timestamp: '00:00 - 00:30',
-          visualCue: 'Developer walking through feature implementation',
-          spokenLine: 'Here is what was built and shipped.',
-        },
-      ],
+      mermaidSyntax: cleanMermaidSyntax(preset.deliverables?.architecture?.mermaidCode || 'flowchart TD\n  Client --> Gateway'),
+      videoScript: scriptSegments.length > 0 ? cleanVideoScript(scriptSegments) : cleanVideoScript([]),
       socialPost: `${twitterPost}\n\n${hashtags}`,
     };
   }
 
-  const rawText = transcript || 'Voice-first last-mile shipping engine';
-  const firstLine = rawText.trim().split('\n')[0].slice(0, 60);
+  const rawText = (transcript && transcript.trim()) || (preset?.voiceTranscript) || 'Voice-first last-mile shipping engine';
+  const cleanFirstLine = rawText.trim().split('\n')[0]?.trim();
+  const firstLine = (cleanFirstLine && cleanFirstLine.length > 0 ? cleanFirstLine : 'developer shipping pipeline').slice(0, 60);
 
   return {
     prTitle: `feat(core): ${firstLine}`,
@@ -133,6 +216,62 @@ function getMockFallbackForPreset(presetId?: string, transcript?: string, diff?:
   };
 }
 
+/**
+ * Validates, repairs, and guarantees contract satisfaction for Gemini output.
+ */
+export function validateAndNormalizeData(
+  raw: unknown,
+  fallbackPreset?: string,
+  transcript?: string,
+  diff?: string
+): GenerateApiResponseData {
+  const fallback = getMockFallbackForPreset(fallbackPreset, transcript, diff);
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return fallback;
+  }
+  const obj = raw as Record<string, unknown>;
+
+  const prTitle = typeof obj.prTitle === 'string' && obj.prTitle.trim()
+    ? obj.prTitle.trim()
+    : fallback.prTitle;
+
+  const commitMessage = typeof obj.commitMessage === 'string' && obj.commitMessage.trim()
+    ? obj.commitMessage.trim()
+    : fallback.commitMessage;
+
+  const prMarkdown = typeof obj.prMarkdown === 'string' && obj.prMarkdown.trim()
+    ? obj.prMarkdown.trim()
+    : fallback.prMarkdown;
+
+  const mermaidSyntax = cleanMermaidSyntax(obj.mermaidSyntax) || fallback.mermaidSyntax;
+
+  const videoScript = cleanVideoScript(obj.videoScript);
+
+  const socialPost = typeof obj.socialPost === 'string' && obj.socialPost.trim()
+    ? obj.socialPost.trim()
+    : fallback.socialPost;
+
+  return {
+    prTitle,
+    commitMessage,
+    prMarkdown,
+    mermaidSyntax,
+    videoScript,
+    socialPost,
+  };
+}
+
+export async function GET() {
+  return NextResponse.json({
+    status: 'ok',
+    endpoint: '/api/generate',
+    model: 'gemini-2.5-flash',
+    hasApiKey: Boolean(process.env.GEMINI_API_KEY),
+    maxDiffChars: MAX_DIFF_CHARS,
+    maxTranscriptChars: MAX_TRANSCRIPT_CHARS,
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
     // Safely parse request body handling empty body, null, or malformed JSON
@@ -140,30 +279,34 @@ export async function POST(req: NextRequest) {
     try {
       const text = await req.text();
       if (text && text.trim()) {
-        body = JSON.parse(text);
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          body = parsed;
+        }
       }
     } catch {
       body = {};
     }
 
-    if (!body || typeof body !== 'object') {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
       body = {};
     }
 
-    const transcript = typeof body.transcript === 'string' ? body.transcript : '';
-    const diff = typeof body.diff === 'string' ? body.diff : '';
-    const preset = typeof body.preset === 'string' ? body.preset : undefined;
-    const safeTranscript = transcript.trim();
+    const rawTranscript = typeof body.transcript === 'string' ? body.transcript : '';
+    const rawDiff = typeof body.diff === 'string' ? body.diff : '';
+    const rawPreset = typeof body.preset === 'string' ? body.preset.trim() : undefined;
+    const preset = rawPreset && rawPreset.length <= 100 ? rawPreset : undefined;
 
-    // Handle large diffs safely (e.g. 50,000+ characters)
-    const MAX_DIFF_CHARS = 32000;
-    const safeDiff = typeof diff === 'string'
-      ? (diff.length > MAX_DIFF_CHARS
-          ? diff.slice(0, MAX_DIFF_CHARS) + `\n\n... [Diff truncated: ${diff.length - MAX_DIFF_CHARS} characters omitted for optimal processing]`
-          : diff)
-      : '';
+    // Handle large payloads safely
+    const safeDiff = rawDiff.length > MAX_DIFF_CHARS
+      ? rawDiff.slice(0, MAX_DIFF_CHARS) + `\n\n... [Diff truncated: ${rawDiff.length - MAX_DIFF_CHARS} characters omitted for optimal processing]`
+      : rawDiff;
 
-    // If completely empty payload, smoothly fallback to default preset with HTTP 200
+    const safeTranscript = rawTranscript.length > MAX_TRANSCRIPT_CHARS
+      ? rawTranscript.slice(0, MAX_TRANSCRIPT_CHARS).trim() + `\n\n... [Transcript truncated: ${rawTranscript.length - MAX_TRANSCRIPT_CHARS} characters omitted for optimal processing]`
+      : rawTranscript.trim();
+
+    // If completely empty payload (no transcript, no diff, no preset), smoothly fallback to default preset
     if (!safeTranscript && !safeDiff && !preset) {
       const fallbackData = getMockFallbackForPreset('auth-refactor', '', '');
       return NextResponse.json({
@@ -174,7 +317,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    // If preset is selected and no custom transcript or diff is provided, serve grounded preset directly
+    if (!safeTranscript && !safeDiff && preset) {
+      const fallbackData = getMockFallbackForPreset(preset, '', '');
+      return NextResponse.json({
+        success: true,
+        data: fallbackData,
+        source: 'preset_grounded',
+        message: `Served grounded deliverables for preset '${preset}'`,
+      });
+    }
+
+    const rawHeaderKey = req.headers.get('x-gemini-key');
+    const customHeaderKey = rawHeaderKey && !/[\r\n]/.test(rawHeaderKey) ? rawHeaderKey.trim().slice(0, 256) : null;
+    const customBodyKey = typeof body.apiKey === 'string' && !/[\r\n]/.test(body.apiKey) ? body.apiKey.trim().slice(0, 256) : null;
+    const apiKey = (customHeaderKey && customHeaderKey.length > 0) ? customHeaderKey : ((customBodyKey && customBodyKey.length > 0) ? customBodyKey : process.env.GEMINI_API_KEY);
 
     // If no API key is provided, return rich mock fallback immediately
     if (!apiKey) {
@@ -214,14 +371,15 @@ Generate all four developer deliverables strictly conforming to the requested JS
 
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
-        contents: [
-          { text: systemPrompt },
-          { text: userContent }
-        ],
+        contents: [{ text: userContent }],
         config: {
+          systemInstruction: systemPrompt,
           responseMimeType: 'application/json',
           responseSchema: generateResponseSchema,
           temperature: 0.2,
+          httpOptions: {
+            timeout: 30000,
+          },
         },
       });
 
@@ -231,26 +389,28 @@ Generate all four developer deliverables strictly conforming to the requested JS
       }
 
       // Robust JSON Parsing with fallback
-      let parsedData: GenerateApiResponseData;
+      let rawJson: unknown;
       try {
-        parsedData = JSON.parse(responseText);
+        rawJson = JSON.parse(responseText);
       } catch (parseErr) {
         console.warn('Structured JSON parse failed, attempting regex extraction:', parseErr);
-        const jsonMatch = responseText.match(/```json\s*([\s\S]*?)\s*```/) || responseText.match(/\{[\s\S]*\}/);
+        const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || responseText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          parsedData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+          try {
+            rawJson = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+          } catch {
+            throw new Error('Unable to parse extracted JSON from Gemini output.');
+          }
         } else {
           throw new Error('Unable to extract valid JSON from Gemini output.');
         }
       }
 
-      if (!parsedData || typeof parsedData !== 'object') {
-        throw new Error('Parsed response from Gemini is not an object.');
-      }
+      const validatedData = validateAndNormalizeData(rawJson, preset, safeTranscript, safeDiff);
 
       return NextResponse.json({
         success: true,
-        data: parsedData,
+        data: validatedData,
         source: 'gemini_2.5_flash',
       });
     } catch (geminiError: unknown) {

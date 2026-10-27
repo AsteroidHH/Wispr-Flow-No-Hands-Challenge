@@ -27,6 +27,40 @@ interface ToolingDrawerProps {
   onClose: () => void;
 }
 
+const DEFAULT_SETTINGS = {
+  mermaidAutoRender: true,
+  offlineFallbacks: true,
+  audioHudBloom: true,
+  voiceVadAutoStop: false,
+};
+
+function getSavedSettings(): typeof DEFAULT_SETTINGS {
+  if (typeof window === 'undefined') return DEFAULT_SETTINGS;
+  try {
+    const raw = localStorage.getItem('shipspeak_settings');
+    if (!raw) return DEFAULT_SETTINGS;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return {
+        ...DEFAULT_SETTINGS,
+        ...parsed,
+      };
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_SETTINGS;
+}
+
+function getSavedKey(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return localStorage.getItem('shipspeak_custom_gemini_key') || '';
+  } catch {
+    return '';
+  }
+}
+
 export function ToolingDrawer({
   isOpen,
   activeTab,
@@ -36,32 +70,19 @@ export function ToolingDrawer({
   const { isLight } = useTheme();
   const [copiedKey, setCopiedKey] = useState(false);
   const [customApiKey, setCustomApiKey] = useState('');
-  const [settingsState, setSettingsState] = useState({
-    mermaidAutoRender: true,
-    offlineFallbacks: true,
-    audioHudBloom: true,
-    voiceVadAutoStop: false,
-  });
+  const [settingsState, setSettingsState] = useState(DEFAULT_SETTINGS);
 
-  // Load custom key and settings from localStorage if present
+  // Load custom key and settings from localStorage safely after mount
   useEffect(() => {
-    try {
-      const savedKey = localStorage.getItem('shipspeak_custom_gemini_key');
-      if (savedKey) setCustomApiKey(savedKey);
-
-      const savedSettings = localStorage.getItem('shipspeak_settings');
-      if (savedSettings) {
-        setSettingsState(JSON.parse(savedSettings));
-      }
-    } catch {
-      // ignore
-    }
+    setCustomApiKey(getSavedKey());
+    setSettingsState(getSavedSettings());
   }, []);
 
-  // Listen for Escape key
+  // Listen for Escape key only when drawer is open
   useEffect(() => {
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape') {
         onClose();
       }
     };
@@ -69,34 +90,44 @@ export function ToolingDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  const handleToggleSetting = (key: keyof typeof settingsState) => {
+  const handleToggleSetting = (key: keyof typeof DEFAULT_SETTINGS) => {
     setSettingsState((prev) => {
       const updated = { ...prev, [key]: !prev[key] };
       try {
-        localStorage.setItem('shipspeak_settings', JSON.stringify(updated));
-      } catch {
-        // ignore
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('shipspeak_settings', JSON.stringify(updated));
+        }
+      } catch (err) {
+        console.warn('Failed to persist settings:', err);
       }
       return updated;
     });
   };
 
-  const handleCopyKey = () => {
-    navigator.clipboard.writeText('AIzaSyD-shipspeak-gemini-2.5-flash-key');
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2000);
+  const handleCopyKey = async () => {
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText('AIzaSyD-shipspeak-gemini-2.5-flash-key');
+        setCopiedKey(true);
+        setTimeout(() => setCopiedKey(false), 2000);
+      }
+    } catch (err) {
+      console.warn('Failed to copy key token:', err);
+    }
   };
 
   const handleSaveCustomKey = (val: string) => {
     setCustomApiKey(val);
     try {
-      if (val.trim()) {
-        localStorage.setItem('shipspeak_custom_gemini_key', val.trim());
-      } else {
-        localStorage.removeItem('shipspeak_custom_gemini_key');
+      if (typeof window !== 'undefined') {
+        if (val.trim()) {
+          localStorage.setItem('shipspeak_custom_gemini_key', val.trim());
+        } else {
+          localStorage.removeItem('shipspeak_custom_gemini_key');
+        }
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.warn('Failed to persist custom API key:', err);
     }
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowLeft,
   GitPullRequest,
@@ -9,11 +9,14 @@ import {
   Copy,
   Check,
   GitBranch,
-  Layers,
-  Sparkles,
 } from 'lucide-react';
 import { Deliverables } from '@/lib/types';
 import { useTheme } from '@/lib/ThemeContext';
+import {
+  sanitizeRepoSlug,
+  buildGitHubCompareUrl,
+  safeClipboardCopy,
+} from '@/lib/githubUrl';
 
 interface PullRequestsViewProps {
   deliverables: Deliverables | null;
@@ -28,16 +31,58 @@ export function PullRequestsView({
 }: PullRequestsViewProps) {
   const { isLight } = useTheme();
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [repoPath, setRepoPath] = useState('AsteroidHH/Wispr-Flow-No-Hands-Challenge');
 
-  const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
+  const copiedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Load active repo path from localStorage
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const saved = localStorage.getItem('shipspeak_repo_path');
+        if (saved && typeof saved === 'string') {
+          const sanitized = sanitizeRepoSlug(saved);
+          if (sanitized) setRepoPath(sanitized);
+        }
+      }
+    } catch {
+      // ignore storage access exception
+    }
+
+    return () => {
+      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+    };
+  }, []);
+
+  const handleCopy = async (id: string, text: string) => {
+    if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+    await safeClipboardCopy(text);
     setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
+    copiedTimeoutRef.current = setTimeout(() => setCopiedId(null), 2000);
   };
 
   const currentPr = deliverables?.pullRequest;
-  const currentTitle = currentPr?.title || 'feat(engine): intelligent vector-based agent tool routing & backoff retries';
-  const currentSummary = currentPr?.summary || 'Refactored autonomous agent routing with vector score matching and exponential backoff retry.';
+  const currentTitle =
+    currentPr?.title || 'feat(engine): intelligent vector-based agent tool routing & backoff retries';
+  const currentSummary =
+    currentPr?.summary ||
+    'Refactored autonomous agent routing with vector score matching and exponential backoff retry.';
+
+  const cleanRepo = sanitizeRepoSlug(repoPath) || 'AsteroidHH/Wispr-Flow-No-Hands-Challenge';
+
+  const pr143Url = buildGitHubCompareUrl({
+    repo: cleanRepo,
+    compare: 'main...feat/agent-router-v2',
+    title: currentTitle,
+    body: currentSummary,
+  }).url;
+
+  const pr142Url = buildGitHubCompareUrl({
+    repo: cleanRepo,
+    compare: 'main...security/token-blacklist',
+    title: 'refactor(auth): RS256 token verification & Redis blacklist',
+    body: 'Hardened Auth0 token refresh mechanism with asymmetric RS256 signature verification in middleware/auth.ts. Added Redis token revocation blacklist with 15min TTL.',
+  }).url;
 
   const prList = [
     {
@@ -51,14 +96,15 @@ export function PullRequestsView({
         : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
       tag: 'Edge Verified',
       summary: currentSummary,
-      changes: currentPr?.keyChanges?.length ? currentPr.keyChanges : [
-        'Vector tool score matcher in tools/registry.ts',
-        'Mitigates sub-agent token saturation concurrency lock',
-        'Anthropic & Gemini API 429 exponential backoff strategy',
-      ],
-      deepLink: `https://github.com/AsteroidHH/Wispr-Flow-No-Hands-Challenge/compare/main...feat/agent-router-v2?expand=1&title=${encodeURIComponent(
-        currentTitle
-      )}&body=${encodeURIComponent(currentSummary)}`,
+      changes:
+        Array.isArray(currentPr?.keyChanges) && currentPr.keyChanges.length > 0
+          ? currentPr.keyChanges
+          : [
+              'Vector tool score matcher in tools/registry.ts',
+              'Mitigates sub-agent token saturation concurrency lock',
+              'Anthropic & Gemini API 429 exponential backoff strategy',
+            ],
+      deepLink: pr143Url,
     },
     {
       id: 'pr-142',
@@ -70,13 +116,14 @@ export function PullRequestsView({
         ? 'bg-amber-50 text-amber-800 border-amber-200'
         : 'bg-indigo-500/10 text-[#bdc2ff] border-indigo-500/30',
       tag: 'CI Passed',
-      summary: 'Hardened Auth0 token refresh mechanism with asymmetric RS256 signature verification in middleware/auth.ts. Added Redis token revocation blacklist with 15min TTL.',
+      summary:
+        'Hardened Auth0 token refresh mechanism with asymmetric RS256 signature verification in middleware/auth.ts. Added Redis token revocation blacklist with 15min TTL.',
       changes: [
         'Added RS256 JWKS verification cache with 1hr rotation',
         'Redis session blacklist middleware check on every request',
         'Eliminated zombie session token vulnerability',
       ],
-      deepLink: 'https://github.com/AsteroidHH/Wispr-Flow-No-Hands-Challenge/compare',
+      deepLink: pr142Url,
     },
     {
       id: 'pr-141',
@@ -88,12 +135,13 @@ export function PullRequestsView({
         ? 'bg-zinc-100 text-zinc-700 border-[#E6E6E4]'
         : 'bg-purple-500/10 text-purple-300 border-purple-500/30',
       tag: '0ms Invalidation',
-      summary: 'Replaced stale local cookies with Redis TTLs of 300 seconds and edge middleware session caching.',
+      summary:
+        'Replaced stale local cookies with Redis TTLs of 300 seconds and edge middleware session caching.',
       changes: [
         'Cached auth validation results at edge location for 5 minutes',
         'Sub-millisecond header authorization checks for static routes',
       ],
-      deepLink: 'https://github.com/AsteroidHH/Wispr-Flow-No-Hands-Challenge/pulls',
+      deepLink: `https://github.com/${cleanRepo}/pulls`,
     },
     {
       id: 'pr-140',
@@ -105,19 +153,24 @@ export function PullRequestsView({
         ? 'bg-zinc-100 text-zinc-700 border-[#E6E6E4]'
         : 'bg-purple-500/10 text-purple-300 border-purple-500/30',
       tag: '48kHz Stereo',
-      summary: 'Integrated Web Audio AnalyserNode with 256-band FFT HUD and dynamic ambient aura responding to voice volume.',
+      summary:
+        'Integrated Web Audio AnalyserNode with 256-band FFT HUD and dynamic ambient aura responding to voice volume.',
       changes: [
         'Clean lifecycle management disconnecting AudioContext on unmount',
         'Real-time sound level calculation with zero memory leak',
       ],
-      deepLink: 'https://github.com/AsteroidHH/Wispr-Flow-No-Hands-Challenge/pulls',
+      deepLink: `https://github.com/${cleanRepo}/pulls`,
     },
   ];
 
   return (
     <div className="space-y-6">
       {/* Navigation & Header */}
-      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
+      <div
+        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 ${
+          isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+        }`}
+      >
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -133,7 +186,11 @@ export function PullRequestsView({
           </button>
           <div className={`h-4 w-[1px] ${isLight ? 'bg-[#E6E6E4]' : 'bg-[#292a2b]'}`} />
           <div>
-            <h1 className={`text-sm sm:text-base font-semibold tracking-tight flex items-center gap-2 ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+            <h1
+              className={`text-sm sm:text-base font-semibold tracking-tight flex items-center gap-2 ${
+                isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
+              }`}
+            >
               <GitPullRequest className={`h-4 w-4 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
               Pull Request Release Pipeline
             </h1>
@@ -141,7 +198,9 @@ export function PullRequestsView({
         </div>
 
         <div className="flex items-center gap-2">
-          <span className={`font-mono text-xs ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>4 Artifacts Active</span>
+          <span className={`font-mono text-xs ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+            4 Artifacts Active
+          </span>
           {onExportBundle && (
             <button
               type="button"
@@ -241,7 +300,7 @@ export function PullRequestsView({
                       }`}
                     >
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                      <span className="truncate">{change}</span>
+                      <span className="truncate">{String(change)}</span>
                     </li>
                   ))}
                 </ul>

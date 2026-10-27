@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Share2,
   Copy,
@@ -49,38 +49,99 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
   const { isLight } = useTheme();
   const [platform, setPlatform] = useState<'twitter' | 'linkedin' | 'threads'>('twitter');
   const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const twitterContent = data.twitter?.content || data.rawPost || 'Autonomous LLM agents choke when you pass 40+ tool schemas every call.\n\nJust shipped vector-based sub-agent tool routing with HNSW cosine search. Cut context overhead by 68% and eliminated 429 exhaustion.';
-  const hashtags = Array.isArray(data.twitter?.hashtags) ? data.twitter.hashtags.join(' ') : '#buildinpublic #devin #ShipSpeak';
+  // Clean up copy timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
 
-  const linkedinHook = data.linkedin?.hook || 'Shipped v2 of our autonomous agent pipeline 🚢✨';
-  const linkedinBody = data.linkedin?.body || 'We replaced brittle hardcoded tool routing with dynamic vector tool-match scoring and automatic backoff retries. Concurrent sub-agent latency dropped by 42%.';
-  const takeaways = Array.isArray(data.linkedin?.takeaways) && data.linkedin.takeaways.length > 0
-    ? data.linkedin.takeaways.map((t) => `• ${t}`).join('\n')
+  // Safe extraction with trimmed text and fallbacks
+  const rawTwitter = typeof data?.twitter?.content === 'string' ? data.twitter.content.trim() : '';
+  const rawPost = typeof data?.rawPost === 'string' ? data.rawPost.trim() : '';
+  const defaultTwitter = 'Autonomous LLM agents choke when you pass 40+ tool schemas every call.\n\nJust shipped vector-based sub-agent tool routing with HNSW cosine search. Cut context overhead by 68% and eliminated 429 exhaustion.';
+  const twitterContent = rawTwitter || rawPost || defaultTwitter;
+
+  // Robust hashtag tokenizer: handles arrays, strings, consecutive spaces, trailing punctuation, nulls
+  const rawHashtags = Array.isArray(data?.twitter?.hashtags)
+    ? data.twitter.hashtags
+    : typeof data?.twitter?.hashtags === 'string'
+    ? [data.twitter.hashtags]
+    : data?.twitter?.hashtags === undefined && !data?.rawPost
+    ? ['#buildinpublic', '#devin', '#ShipSpeak']
+    : [];
+
+  const tokenizedHashtags = rawHashtags
+    .flatMap((item) => (typeof item === 'string' ? item.split(/\s+/) : []))
+    .map((tag) => tag.trim())
+    .filter(Boolean)
+    .map((tag) => {
+      // Strip leading #'s and trailing punctuation (commas, periods, semicolons, colons, exclamation marks)
+      const cleaned = tag.replace(/^[#]+/, '').replace(/[,.;:!?]+$/, '');
+      return cleaned ? `#${cleaned}` : '';
+    })
+    .filter(Boolean);
+
+  const hashtagsString = tokenizedHashtags.join(' ');
+
+  // Safe LinkedIn fields
+  const linkedinHook = (typeof data?.linkedin?.hook === 'string' && data.linkedin.hook.trim())
+    || 'Shipped v2 of our autonomous agent pipeline 🚢✨';
+  const linkedinBody = (typeof data?.linkedin?.body === 'string' && data.linkedin.body.trim())
+    || 'We replaced brittle hardcoded tool routing with dynamic vector tool-match scoring and automatic backoff retries. Concurrent sub-agent latency dropped by 42%.';
+
+  const rawTakeaways = Array.isArray(data?.linkedin?.takeaways) ? data.linkedin.takeaways : [];
+  const validTakeaways = rawTakeaways
+    .map((t) => (typeof t === 'string' ? t.trim() : ''))
+    .filter(Boolean);
+  const takeaways = validTakeaways.length > 0
+    ? validTakeaways.map((t) => `• ${t}`).join('\n')
     : '• Vector tool score matcher in tools/registry.ts\n• Mitigates sub-agent token saturation concurrency lock\n• Anthropic & Gemini API 429 exponential backoff strategy';
-  const callToAction = data.linkedin?.callToAction || 'Check out the full PR below and let me know your thoughts on vector-based routing!';
+
+  const callToAction = (typeof data?.linkedin?.callToAction === 'string' && data.linkedin.callToAction.trim())
+    || 'Check out the full PR below and let me know your thoughts on vector-based routing!';
 
   const getCopyText = () => {
-    if (platform === 'twitter') {
-      return `${twitterContent}\n\n${hashtags}`;
+    if (platform === 'twitter' || platform === 'threads') {
+      return hashtagsString ? `${twitterContent}\n\n${hashtagsString}` : twitterContent;
     }
     if (platform === 'linkedin') {
-      return `${linkedinHook}\n\n${linkedinBody}\n\nKey takeaways:\n${takeaways}\n\n${callToAction}`;
+      const parts = [linkedinHook, linkedinBody, `Key takeaways:\n${takeaways}`, callToAction].filter(Boolean);
+      return parts.join('\n\n');
     }
-    return `${twitterContent}\n\n${hashtags}`;
+    return twitterContent;
   };
 
   const currentText = platform === 'linkedin'
-    ? `${linkedinHook}\n\n${linkedinBody}\n\n${takeaways}\n\n${callToAction}`
-    : twitterContent;
+    ? [linkedinHook, linkedinBody, takeaways, callToAction].filter(Boolean).join('\n\n')
+    : (hashtagsString ? `${twitterContent}\n\n${hashtagsString}` : twitterContent);
 
-  const charCount = platform === 'twitter' || platform === 'threads' ? currentText.length : 248;
+  // Platform limits: Twitter 280, Threads 500, LinkedIn 3000
+  const maxChars = platform === 'twitter' ? 280 : platform === 'threads' ? 500 : 3000;
+  const charCount = (currentText || '').length;
+  const isOverLimit = charCount > maxChars;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(getCopyText());
+      const textToCopy = getCopyText();
+      if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(textToCopy);
+      } else if (typeof document !== 'undefined') {
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy', err);
     }
@@ -139,8 +200,16 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
           </div>
 
           <div className="flex items-center gap-2">
-            <span className={`font-mono text-[10px] ${isLight ? 'text-zinc-500' : 'text-[#bdc2ff]'}`}>
-              {charCount} / 280 chars
+            <span
+              className={`font-mono text-[10px] transition-colors ${
+                isOverLimit
+                  ? 'text-rose-500 font-semibold'
+                  : isLight
+                  ? 'text-zinc-500'
+                  : 'text-[#bdc2ff]'
+              }`}
+            >
+              {charCount} / {maxChars} chars
             </span>
           </div>
         </div>
@@ -208,7 +277,7 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
         {/* Card Content with Formatted Post Copy Box matching Stitch */}
         <div className="mt-3 flex-1 max-h-[300px] overflow-y-auto pr-1">
           <div
-            className={`rounded-lg p-3.5 border space-y-3 font-sans text-xs leading-relaxed ${
+            className={`rounded-lg p-3.5 border space-y-3 font-sans text-xs leading-relaxed break-words ${
               isLight
                 ? 'bg-[#FAFAFA] border-[#E6E6E4] text-zinc-700'
                 : 'bg-[#0d0e0f] border-[#292a2b] text-[#e3e2e3]'
@@ -216,10 +285,10 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
           >
             {platform === 'linkedin' ? (
               <div className="space-y-2">
-                <p className={`font-semibold ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{linkedinHook}</p>
-                <p className={`whitespace-pre-line ${isLight ? 'text-zinc-600' : 'text-[#c6c5d5]'}`}>{linkedinBody}</p>
+                <p className={`font-semibold break-words ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{linkedinHook}</p>
+                <p className={`whitespace-pre-line break-words ${isLight ? 'text-zinc-600' : 'text-[#c6c5d5]'}`}>{linkedinBody}</p>
                 <div
-                  className={`p-2.5 rounded border font-mono text-[11px] whitespace-pre-line ${
+                  className={`p-2.5 rounded border font-mono text-[11px] whitespace-pre-line break-words ${
                     isLight
                       ? 'bg-white border-[#E6E6E4] text-zinc-700'
                       : 'bg-[#1b1c1d] border-[#292a2b] text-[#bdc2ff]'
@@ -227,16 +296,14 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
                 >
                   {takeaways}
                 </div>
-                <p className={`italic ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{callToAction}</p>
+                <p className={`italic break-words ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{callToAction}</p>
               </div>
             ) : (
-              <div className="space-y-2.5 whitespace-pre-line select-text">
-                <p className={`font-medium ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{twitterContent}</p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {hashtags
-                    .split(/\s+/)
-                    .filter(Boolean)
-                    .map((tag, idx) => (
+              <div className="space-y-2.5 whitespace-pre-line select-text break-words">
+                <p className={`font-medium break-words ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{twitterContent}</p>
+                {tokenizedHashtags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {tokenizedHashtags.map((tag, idx) => (
                       <span
                         key={idx}
                         className={`font-mono text-[10.5px] font-medium ${
@@ -246,7 +313,8 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
                         {tag}
                       </span>
                     ))}
-                </div>
+                  </div>
+                )}
               </div>
             )}
 

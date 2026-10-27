@@ -6,7 +6,7 @@ import { PullRequestCard } from './cards/PullRequestCard';
 import { ArchitectureCard } from './cards/ArchitectureCard';
 import { VideoScriptCard } from './cards/VideoScriptCard';
 import { SocialPostCard } from './cards/SocialPostCard';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Layers, Sliders } from 'lucide-react';
 import { useTheme } from '@/lib/ThemeContext';
 
 interface BentoGridProps {
@@ -28,6 +28,7 @@ export function BentoGrid({
 }: BentoGridProps) {
   const { isLight } = useTheme();
 
+  // Loading State
   if (isGenerating) {
     return (
       <div
@@ -77,7 +78,16 @@ export function BentoGrid({
     );
   }
 
-  if (!deliverables) {
+  // Null or Partially Populated State Guard
+  const hasAllDeliverables = Boolean(
+    deliverables &&
+    deliverables.pullRequest &&
+    deliverables.architecture &&
+    deliverables.videoScript &&
+    deliverables.socialPost
+  );
+
+  if (!hasAllDeliverables || !deliverables) {
     return (
       <div
         className={`flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl p-8 text-center shadow-xs border transition-colors ${
@@ -86,9 +96,41 @@ export function BentoGrid({
             : 'border-[#292a2b] bg-[#1b1c1d]'
         }`}
       >
-        <p className={`text-xs ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-          Select a scenario preset or hit <span className={`font-mono ${isLight ? 'text-[#18181B] font-semibold' : 'text-[#e3e2e3]'}`}>Generate Ship Artifacts</span> to view output.
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl border shadow-xs ${
+            isLight
+              ? 'bg-[#FAFAFA] border-[#E6E6E4] text-zinc-500'
+              : 'bg-[#0d0e0f] border border-[#292a2b] text-[#908f9e]'
+          }`}
+        >
+          <Layers className="h-5 w-5" />
+        </div>
+        <h3 className={`mt-4 text-sm font-semibold tracking-tight ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+          Awaiting Shipping Context
+        </h3>
+        <p className={`mt-1 max-w-sm text-xs ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+          Select a judge scenario preset or record voice input to synthesize PR, Mermaid diagram, demo script, and social launch draft.
         </p>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2 text-xs font-mono">
+          <span
+            className={`px-2 py-1 rounded border text-[11px] ${
+              isLight
+                ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700'
+                : 'bg-[#0d0e0f] border-[#292a2b] text-[#bdc2ff]'
+            }`}
+          >
+            ⌥1-3 Load Presets
+          </span>
+          <span
+            className={`px-2 py-1 rounded border text-[11px] ${
+              isLight
+                ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700'
+                : 'bg-[#0d0e0f] border-[#292a2b] text-[#bdc2ff]'
+            }`}
+          >
+            ⌘↵ Generate
+          </span>
+        </div>
       </div>
     );
   }

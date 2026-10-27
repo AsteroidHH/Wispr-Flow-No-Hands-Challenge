@@ -8,7 +8,6 @@ import {
   Copy,
   Check,
   Loader2,
-  Download,
   Image as ImageIcon,
   FileCode,
   Maximize2,
@@ -31,6 +30,10 @@ interface ArchitectureCardProps {
   isRefining?: boolean;
 }
 
+const MIN_ZOOM = 0.4;
+const MAX_ZOOM = 2.2;
+const ZOOM_STEP = 0.2;
+
 export function ArchitectureCard({ data, onTweak, isRefining = false }: ArchitectureCardProps) {
   const { isLight } = useTheme();
   const [viewMode, setViewMode] = useState<'diagram' | 'code'>('diagram');
@@ -41,33 +44,55 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
   const [isExportingPng, setIsExportingPng] = useState<boolean>(false);
   const [isExportingSvg, setIsExportingSvg] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  const safeTitle = data?.title || 'Architecture Topology Diagram';
+  const safeDescription = data?.description || 'System architecture topology specification.';
+  const safeMermaidCode = data?.mermaidCode || '';
+
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef<boolean>(true);
   const rawSvgRef = useRef<string>('');
   const svgElementRef = useRef<SVGSVGElement | null>(null);
+
+  // Sync theme preference when system/user theme changes
+  useEffect(() => {
+    setActiveTheme(isLight ? 'slate' : 'obsidian');
+  }, [isLight]);
+
+  // Track mount status
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, []);
 
   const showToast = useCallback((msg: string) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     setToastMessage(msg);
-    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 3000);
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
-    };
+    toastTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        setToastMessage(null);
+      }
+    }, 3000);
   }, []);
 
   // Capture rendered SVG from MermaidRenderer
   const handleSvgRendered = useCallback((svgString: string, element: SVGSVGElement | null) => {
     rawSvgRef.current = svgString;
-    svgElementRef.current = element;
+    if (element && element.isConnected) {
+      svgElementRef.current = element;
+    } else if (!svgElementRef.current || !svgElementRef.current.isConnected) {
+      svgElementRef.current = element;
+    }
   }, []);
 
-  // Zoom helpers
+  // Zoom helpers with strict clamping and NaN protection
   const handleZoomIn = () => {
     setZoom((prev) => {
-      const next = Math.min(2.2, +(prev + 0.2).toFixed(1));
+      const safePrev = Number.isFinite(prev) ? prev : 1;
+      const next = Math.min(MAX_ZOOM, +(safePrev + ZOOM_STEP).toFixed(1));
       showToast(`Zoom: ${Math.round(next * 100)}%`);
       return next;
     });
@@ -75,7 +100,8 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
   const handleZoomOut = () => {
     setZoom((prev) => {
-      const next = Math.max(0.4, +(prev - 0.2).toFixed(1));
+      const safePrev = Number.isFinite(prev) ? prev : 1;
+      const next = Math.max(MIN_ZOOM, +(safePrev - ZOOM_STEP).toFixed(1));
       showToast(`Zoom: ${Math.round(next * 100)}%`);
       return next;
     });
@@ -86,18 +112,27 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
     showToast('Zoom reset to 100%');
   };
 
-  // Close fullscreen on ESC key
+  // Close fullscreen on ESC key and lock body scroll while open
   useEffect(() => {
+    if (!isFullscreen) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isFullscreen) {
+      if (e.key === 'Escape') {
         setIsFullscreen(false);
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = originalOverflow;
+    };
   }, [isFullscreen]);
 
-  // Export as PNG via offscreen HTML Canvas
+  // Export as PNG via offscreen HTML Canvas with 2x Retina clarity
   const handleExportPng = async () => {
     if (!rawSvgRef.current) {
       showToast('Error: No SVG available to export');
@@ -107,20 +142,87 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
     setIsExportingPng(true);
     let blobURL: string | null = null;
     try {
-      const svgText = rawSvgRef.current;
-      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
-      const URL = window.URL || window.webkitURL || window;
-      blobURL = URL.createObjectURL(svgBlob);
+      // 1. Determine accurate dimensions even if SVG element is not yet attached or has 0 dimensions
+      let width = 0;
+      let height = 0;
+
+      // Check connected DOM element bounding box
+      if (svgElementRef.current && svgElementRef.current.isConnected) {
+        const rect = svgElementRef.current.getBoundingClientRect();
+        if (rect.width > 0 && rect.height > 0) {
+          width = Math.round(rect.width);
+          height = Math.round(rect.height);
+        }
+      }
+
+      // Fallback: look up in active document DOM if ref is disconnected
+      if (width <= 0 || height <= 0) {
+        const activeSvg = document.querySelector('.architecture-mermaid-viewport svg') as SVGSVGElement | null;
+        if (activeSvg) {
+          const rect = activeSvg.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            width = Math.round(rect.width);
+            height = Math.round(rect.height);
+            svgElementRef.current = activeSvg;
+          }
+        }
+      }
+
+      // Fallback: parse viewBox from raw SVG text or attribute
+      if (width <= 0 || height <= 0) {
+        const viewBoxStr =
+          svgElementRef.current?.getAttribute('viewBox') ||
+          rawSvgRef.current.match(/viewBox=["']([0-9.\s-]+)["']/i)?.[1];
+
+        if (viewBoxStr) {
+          const parts = viewBoxStr.trim().split(/[\s,]+/).map(Number);
+          if (parts.length === 4 && parts[2] > 0 && parts[3] > 0) {
+            width = Math.round(parts[2]);
+            height = Math.round(parts[3]);
+          }
+        }
+      }
+
+      // Fallback: width/height attributes from raw SVG
+      if (width <= 0 || height <= 0) {
+        const wMatch = rawSvgRef.current.match(/\bwidth=["']([0-9.]+)(?:px)?["']/i);
+        const hMatch = rawSvgRef.current.match(/\bheight=["']([0-9.]+)(?:px)?["']/i);
+        if (wMatch && hMatch) {
+          const w = parseFloat(wMatch[1]);
+          const h = parseFloat(hMatch[1]);
+          if (w > 0 && h > 0) {
+            width = Math.round(w);
+            height = Math.round(h);
+          }
+        }
+      }
+
+      // Safe minimums
+      width = Math.max(900, width);
+      height = Math.max(600, height);
+
+      // Prepare SVG text with explicit xmlns and dimensions
+      let preparedSvg = rawSvgRef.current;
+      if (!preparedSvg.includes('xmlns=')) {
+        preparedSvg = preparedSvg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+      if (!/<svg[^>]*\bwidth=["'][0-9]+/.test(preparedSvg)) {
+        preparedSvg = preparedSvg.replace(/<svg\b/, `<svg width="${width}" height="${height}"`);
+      }
+
+      const svgBlob = new Blob([preparedSvg], { type: 'image/svg+xml;charset=utf-8' });
+      const URLObj = window.URL || window.webkitURL || window;
+      blobURL = URLObj.createObjectURL(svgBlob);
 
       const img = new Image();
       img.onload = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          const scale = 2; // 2x crisp retina resolution
-          const bbox = svgElementRef.current?.getBoundingClientRect();
-          const width = Math.max(900, Math.round(bbox?.width || 900));
-          const height = Math.max(600, Math.round(bbox?.height || 600));
+        // Break closure references to avoid memory retention
+        img.onload = null;
+        img.onerror = null;
 
+        const canvas = document.createElement('canvas');
+        try {
+          const scale = 2; // 2x crisp retina resolution
           canvas.width = width * scale;
           canvas.height = height * scale;
 
@@ -129,8 +231,9 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
             throw new Error('Canvas 2D context not available');
           }
 
-          // Dark background hex #0d0e0f
-          ctx.fillStyle = '#0d0e0f';
+          // Dark background matching active theme
+          const themeBg = (THEME_CONFIGS[activeTheme]?.variables.background as string) || '#0d0e0f';
+          ctx.fillStyle = themeBg;
           ctx.fillRect(0, 0, canvas.width, canvas.height);
 
           // Draw scaled SVG image
@@ -151,24 +254,44 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
           console.error('Canvas export error:', canvasErr);
           showToast('Export failed: Canvas serialization error');
         } finally {
-          if (blobURL) URL.revokeObjectURL(blobURL);
-          setIsExportingPng(false);
+          // Release canvas bitmap memory immediately
+          canvas.width = 0;
+          canvas.height = 0;
+          if (blobURL) {
+            URLObj.revokeObjectURL(blobURL);
+            blobURL = null;
+          }
+          if (isMountedRef.current) {
+            setIsExportingPng(false);
+          }
         }
       };
 
       img.onerror = (err) => {
+        img.onload = null;
+        img.onerror = null;
         console.error('Image load error for PNG export:', err);
         showToast('Export failed: Image rendering error');
-        if (blobURL) URL.revokeObjectURL(blobURL);
-        setIsExportingPng(false);
+        if (blobURL) {
+          URLObj.revokeObjectURL(blobURL);
+          blobURL = null;
+        }
+        if (isMountedRef.current) {
+          setIsExportingPng(false);
+        }
       };
 
       img.src = blobURL;
     } catch (err) {
-      if (blobURL) window.URL.revokeObjectURL(blobURL);
+      if (blobURL) {
+        window.URL.revokeObjectURL(blobURL);
+        blobURL = null;
+      }
       console.error('PNG export error:', err);
       showToast('Failed to export PNG');
-      setIsExportingPng(false);
+      if (isMountedRef.current) {
+        setIsExportingPng(false);
+      }
     }
   };
 
@@ -180,31 +303,44 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
     }
 
     setIsExportingSvg(true);
+    let url: string | null = null;
     try {
-      const svgBlob = new Blob([rawSvgRef.current], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
+      let svgText = rawSvgRef.current;
+      if (!svgText.includes('xmlns=')) {
+        svgText = svgText.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
+      }
+
+      const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+      url = URL.createObjectURL(svgBlob);
       const link = document.createElement('a');
       link.href = url;
       link.download = 'architecture-diagram.svg';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
       showToast('Exported architecture-diagram.svg');
     } catch (err) {
       console.error('SVG export error:', err);
       showToast('Failed to export SVG');
     } finally {
-      setIsExportingSvg(false);
+      if (url) {
+        URL.revokeObjectURL(url);
+        url = null;
+      }
+      if (isMountedRef.current) {
+        setIsExportingSvg(false);
+      }
     }
   };
 
   const handleCopyCode = async () => {
     try {
-      await navigator.clipboard.writeText(data.mermaidCode);
+      await navigator.clipboard.writeText(safeMermaidCode);
       setCopied(true);
       showToast('Mermaid code copied to clipboard');
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => {
+        if (isMountedRef.current) setCopied(false);
+      }, 2000);
     } catch (err) {
       console.error('Failed to copy', err);
     }
@@ -219,9 +355,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
   const renderControlsToolbar = () => (
     <div
       className={`flex flex-wrap items-center justify-between gap-2 rounded-lg p-1.5 border text-xs ${
-        isLight
-          ? 'bg-[#F4F4F5] border-[#E6E6E4]'
-          : 'bg-[#0d0e0f] border-[#292a2b]'
+        isLight ? 'bg-[#F4F4F5] border-[#E6E6E4]' : 'bg-[#0d0e0f] border-[#292a2b]'
       }`}
     >
       {/* Theme Switcher */}
@@ -232,9 +366,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
         </span>
         <div
           className={`flex rounded p-0.5 border ${
-            isLight
-              ? 'bg-white border-[#E6E6E4]'
-              : 'bg-[#1b1c1d] border-[#292a2b]'
+            isLight ? 'bg-white border-[#E6E6E4]' : 'bg-[#1b1c1d] border-[#292a2b]'
           }`}
         >
           {(['obsidian', 'cyberpunk', 'slate'] as MermaidTheme[]).map((thm) => (
@@ -262,16 +394,15 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
       <div className="flex items-center gap-1">
         <div
           className={`flex items-center rounded p-0.5 border ${
-            isLight
-              ? 'bg-white border-[#E6E6E4]'
-              : 'bg-[#1b1c1d] border-[#292a2b]'
+            isLight ? 'bg-white border-[#E6E6E4]' : 'bg-[#1b1c1d] border-[#292a2b]'
           }`}
         >
           <button
             type="button"
             onClick={handleZoomOut}
-            title="Zoom Out"
-            className={`rounded p-1 transition-colors cursor-pointer ${
+            disabled={zoom <= MIN_ZOOM}
+            title={zoom <= MIN_ZOOM ? 'Minimum zoom reached (40%)' : 'Zoom Out'}
+            className={`rounded p-1 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${
               isLight ? 'text-zinc-600 hover:bg-zinc-100' : 'text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3]'
             }`}
           >
@@ -291,8 +422,9 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
           <button
             type="button"
             onClick={handleZoomIn}
-            title="Zoom In"
-            className={`rounded p-1 transition-colors cursor-pointer ${
+            disabled={zoom >= MAX_ZOOM}
+            title={zoom >= MAX_ZOOM ? 'Maximum zoom reached (220%)' : 'Zoom In'}
+            className={`rounded p-1 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer ${
               isLight ? 'text-zinc-600 hover:bg-zinc-100' : 'text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3]'
             }`}
           >
@@ -304,7 +436,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
         <button
           type="button"
           onClick={() => setIsFullscreen((prev) => !prev)}
-          title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Inspection Modal'}
+          title={isFullscreen ? 'Exit Fullscreen (Esc)' : 'Fullscreen Inspection Modal'}
           className={`flex items-center gap-1 rounded border p-1 transition-colors cursor-pointer ${
             isLight
               ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-100'
@@ -365,7 +497,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                     </span>
                   )}
                 </h3>
-                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{data.title}</p>
+                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{safeTitle}</p>
               </div>
             </div>
 
@@ -374,9 +506,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               {/* Diagram / Code Toggle */}
               <div
                 className={`flex rounded-md p-0.5 border mr-1 ${
-                  isLight
-                    ? 'bg-[#F4F4F5] border-[#E6E6E4]'
-                    : 'bg-[#0d0e0f] border border-[#292a2b]'
+                  isLight ? 'bg-[#F4F4F5] border-[#E6E6E4]' : 'bg-[#0d0e0f] border border-[#292a2b]'
                 }`}
               >
                 <button
@@ -417,7 +547,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               <button
                 type="button"
                 onClick={handleExportPng}
-                disabled={isExportingPng}
+                disabled={isExportingPng || !safeMermaidCode.trim()}
                 title="Export as PNG"
                 className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-mono transition-colors disabled:opacity-40 cursor-pointer ${
                   isLight
@@ -437,7 +567,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               <button
                 type="button"
                 onClick={handleExportSvg}
-                disabled={isExportingSvg}
+                disabled={isExportingSvg || !safeMermaidCode.trim()}
                 title="Export as SVG"
                 className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-mono transition-colors disabled:opacity-40 cursor-pointer ${
                   isLight
@@ -473,9 +603,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
           {toastMessage && (
             <div
               className={`mt-2.5 flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-mono border animate-fadeIn ${
-                isLight
-                  ? 'bg-amber-50 text-amber-800 border-amber-200'
-                  : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
+                isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
               }`}
             >
               <Sparkles className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
@@ -492,14 +620,12 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
                 {/* Rendered Mermaid Viewport matching Stitch */}
                 <div
-                  className={`w-full min-h-[280px] max-h-[360px] border rounded-lg p-3 flex items-center justify-center overflow-auto ${
-                    isLight
-                      ? 'bg-[#FAFAFA] border-[#E6E6E4]'
-                      : 'bg-[#0d0e0f] border-[#292a2b]'
+                  className={`architecture-mermaid-viewport w-full min-h-[280px] max-h-[360px] border rounded-lg p-3 flex items-center justify-center overflow-auto ${
+                    isLight ? 'bg-[#FAFAFA] border-[#E6E6E4]' : 'bg-[#0d0e0f] border-[#292a2b]'
                   }`}
                 >
                   <MermaidRenderer
-                    code={data.mermaidCode}
+                    code={safeMermaidCode}
                     theme={activeTheme}
                     zoom={zoom}
                     onSvgRendered={handleSvgRendered}
@@ -510,9 +636,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 {/* Sub-Agents Pool info badge matching Stitch */}
                 <div
                   className={`p-2 rounded border flex items-center justify-between text-xs shadow-xs ${
-                    isLight
-                      ? 'bg-white border-[#E6E6E4]'
-                      : 'bg-[#1b1c1d] border-[#292a2b]'
+                    isLight ? 'bg-white border-[#E6E6E4]' : 'bg-[#1b1c1d] border-[#292a2b]'
                   }`}
                 >
                   <div className={`flex items-center gap-1.5 ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
@@ -531,12 +655,16 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 </div>
 
                 <p className={`mt-1 text-[11px] italic ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-                  {data.description}
+                  {safeDescription}
                 </p>
               </div>
             ) : (
               <div className="flex-1 flex flex-col min-h-0 space-y-2">
-                <div className={`flex items-center justify-between text-xs font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                <div
+                  className={`flex items-center justify-between text-xs font-medium ${
+                    isLight ? 'text-zinc-500' : 'text-[#908f9e]'
+                  }`}
+                >
                   <span>Mermaid specification</span>
                   <span className="font-mono text-[10px]">flowchart</span>
                 </div>
@@ -547,7 +675,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                       : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
                   }`}
                 >
-                  <code>{data.mermaidCode}</code>
+                  <code>{safeMermaidCode}</code>
                 </pre>
               </div>
             )}
@@ -573,14 +701,12 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-[#e3e2e3] flex items-center gap-2">
-                  <span>{data.title}</span>
+                  <span>{safeTitle}</span>
                   <span className="font-mono text-[11px] bg-[#0d0e0f] text-[#bdc2ff] px-2 py-0.5 rounded border border-[#292a2b]">
                     Fullscreen
                   </span>
                 </h2>
-                <p className="text-xs text-[#908f9e]">
-                  System topology viewer • ESC to exit
-                </p>
+                <p className="text-xs text-[#908f9e]">System topology viewer • ESC to exit</p>
               </div>
             </div>
 
@@ -589,8 +715,8 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               <button
                 type="button"
                 onClick={handleExportPng}
-                disabled={isExportingPng}
-                className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1f2021] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] hover:text-white transition-colors"
+                disabled={isExportingPng || !safeMermaidCode.trim()}
+                className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1f2021] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] hover:text-white transition-colors disabled:opacity-40 cursor-pointer"
               >
                 {isExportingPng ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
@@ -603,8 +729,8 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               <button
                 type="button"
                 onClick={handleExportSvg}
-                disabled={isExportingSvg}
-                className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1f2021] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] hover:text-white transition-colors"
+                disabled={isExportingSvg || !safeMermaidCode.trim()}
+                className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1f2021] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] hover:text-white transition-colors disabled:opacity-40 cursor-pointer"
               >
                 {isExportingSvg ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
@@ -617,7 +743,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               <button
                 type="button"
                 onClick={() => setIsFullscreen(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:bg-[#292a2b] hover:text-white transition-colors"
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:bg-[#292a2b] hover:text-white transition-colors cursor-pointer"
                 title="Exit Fullscreen (Esc)"
               >
                 <X className="h-4 w-4" />
@@ -629,9 +755,9 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
           <div className="py-3">{renderControlsToolbar()}</div>
 
           {/* Main Inspection Canvas */}
-          <div className="relative flex-1 overflow-auto rounded-xl border border-[#292a2b] bg-[#0d0e0f] p-6 flex items-center justify-center">
+          <div className="architecture-mermaid-viewport relative flex-1 overflow-auto rounded-xl border border-[#292a2b] bg-[#0d0e0f] p-6 flex items-center justify-center">
             <MermaidRenderer
-              code={data.mermaidCode}
+              code={safeMermaidCode}
               theme={activeTheme}
               zoom={zoom}
               onSvgRendered={handleSvgRendered}
@@ -641,9 +767,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
           {/* Modal Footer */}
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#292a2b] mt-3">
-            <p className="text-xs text-[#908f9e] italic">
-              {data.description}
-            </p>
+            <p className="text-xs text-[#908f9e] italic">{safeDescription}</p>
             <div className="w-full sm:w-auto">
               <VoiceTweakInput
                 cardName="Architecture Diagram"

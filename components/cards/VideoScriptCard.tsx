@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Video,
   Clock,
@@ -31,8 +31,26 @@ export function VideoScriptCard({ data, onTweak, isRefining = false }: VideoScri
   const [isTeleprompterOpen, setIsTeleprompterOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeSegmentIndex, setActiveSegmentIndex] = useState(0);
+  const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const segments = Array.isArray(data.segments) ? data.segments : [];
+  // Safe segments extraction with defensive fallback
+  const segments = Array.isArray(data?.segments) ? data.segments : [];
+
+  // Clamp activeSegmentIndex if segments change or shrink
+  useEffect(() => {
+    if (segments.length === 0) {
+      if (activeSegmentIndex !== 0) setActiveSegmentIndex(0);
+    } else if (activeSegmentIndex >= segments.length) {
+      setActiveSegmentIndex(Math.max(0, segments.length - 1));
+    }
+  }, [segments.length, activeSegmentIndex]);
+
+  // Clean up copy timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
 
   // Auto-scroll simulation in teleprompter modal
   useEffect(() => {
@@ -40,7 +58,11 @@ export function VideoScriptCard({ data, onTweak, isRefining = false }: VideoScri
     if (isTeleprompterOpen && isPlaying && segments.length > 0) {
       const delay = playbackSpeed === '1.2x' ? 3200 : 4000;
       interval = setInterval(() => {
-        setActiveSegmentIndex((prev) => (prev + 1) % segments.length);
+        setActiveSegmentIndex((prev) => {
+          if (segments.length <= 1) return 0;
+          const next = (prev + 1) % segments.length;
+          return Number.isNaN(next) ? 0 : next;
+        });
       }, delay);
     }
     return () => {
@@ -48,15 +70,53 @@ export function VideoScriptCard({ data, onTweak, isRefining = false }: VideoScri
     };
   }, [isTeleprompterOpen, isPlaying, playbackSpeed, segments.length]);
 
+  // Close teleprompter and halt playback safely
+  const handleCloseTeleprompter = useCallback(() => {
+    setIsTeleprompterOpen(false);
+    setIsPlaying(false);
+  }, []);
+
+  // Keyboard shortcut listener (Escape to close, Space to toggle play/pause)
+  useEffect(() => {
+    if (!isTeleprompterOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleCloseTeleprompter();
+      } else if (e.key === ' ') {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+          return;
+        }
+        e.preventDefault();
+        setIsPlaying((p) => !p);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isTeleprompterOpen, handleCloseTeleprompter]);
+
+  // Clamped current segment index
+  const currentSegmentIndex = segments.length > 0
+    ? Math.min(Math.max(0, activeSegmentIndex), segments.length - 1)
+    : -1;
+  const currentSegment = currentSegmentIndex >= 0 ? segments[currentSegmentIndex] : null;
+
   const getFullScriptMarkdown = () => {
-    return `# ${data.title || 'Demo Video Script'}
-Duration: ${data.totalDuration || '02:00'}
+    const title = data?.title || 'Demo Video Script';
+    const totalDuration = data?.totalDuration || '02:00';
+
+    if (segments.length === 0) {
+      return `# ${title}\nDuration: ${totalDuration}\n\n*No script segments recorded.*`;
+    }
+
+    return `# ${title}
+Duration: ${totalDuration}
 
 ${segments
   .map(
-    (seg) => `### [${seg.timestamp || '00:00'}] ${seg.stage || 'Segment'}
-**Audio (Spoken):** "${seg.spokenLine || seg.audio || ''}"
-**Visual Cue:** ${seg.visualCue || 'Screen view'}
+    (seg, idx) => `### [${seg?.timestamp || '00:00'}] ${seg?.stage || `Segment ${idx + 1}`}
+**Audio (Spoken):** "${seg?.spokenLine || seg?.audio || 'No audio specified'}"
+**Visual Cue:** ${seg?.visualCue || 'Screen view'}
 `
   )
   .join('\n')}`;
@@ -64,9 +124,23 @@ ${segments
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(getFullScriptMarkdown());
+      const textToCopy = getFullScriptMarkdown();
+      if (typeof navigator !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(textToCopy);
+      } else if (typeof document !== 'undefined') {
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy', err);
     }
@@ -119,7 +193,9 @@ ${segments
                     </span>
                   )}
                 </h3>
-                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{data.title}</p>
+                <p className={`text-[11px] mt-0.5 truncate max-w-[200px] ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                  {data?.title || 'Demo Video Script'}
+                </p>
               </div>
             </div>
 
@@ -132,7 +208,7 @@ ${segments
                 }`}
               >
                 <Clock className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#ffb867]'}`} />
-                <span>{data.totalDuration || '02:00 Total'}</span>
+                <span>{data?.totalDuration || '02:00 Total'}</span>
               </div>
 
               <button
@@ -156,50 +232,62 @@ ${segments
 
           {/* Clean Teleprompter Script Segments matching Stitch */}
           <div className="mt-3.5 flex-1 max-h-[340px] overflow-y-auto pr-1 space-y-2.5">
-            {segments.map((seg, idx) => (
+            {segments.length === 0 ? (
               <div
-                key={idx}
-                className={`rounded-lg p-3 transition-colors border ${
+                className={`p-6 rounded-lg border text-center text-xs italic ${
                   isLight
-                    ? 'bg-[#FAFAFA] border-[#E6E6E4] hover:border-zinc-300'
-                    : 'bg-[#0d0e0f] border-[#292a2b] hover:border-[#343536]'
+                    ? 'border-[#E6E6E4] text-zinc-400 bg-zinc-50'
+                    : 'border-[#292a2b] text-[#908f9e] bg-[#0d0e0f]'
                 }`}
               >
-                <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span
-                    className={`font-mono text-[10.5px] font-semibold ${
-                      isLight
-                        ? 'text-amber-700'
-                        : 'text-[#bdc2ff] rounded bg-[#1f2021] px-2 py-0.5 border border-[#292a2b]'
-                    }`}
-                  >
-                    [{seg.timestamp}] {seg.stage}
-                  </span>
-                </div>
-
-                <div className="mt-1.5 space-y-1.5">
-                  <div
-                    className={`flex items-start gap-1.5 text-xs leading-snug ${
-                      isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'
-                    }`}
-                  >
-                    <Mic className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                    <p className="italic">&ldquo;{seg.spokenLine || seg.audio}&rdquo;</p>
-                  </div>
-
-                  <div
-                    className={`flex items-start gap-1.5 rounded px-2.5 py-1 text-[11px] border ${
-                      isLight
-                        ? 'bg-white border-[#E6E6E4] text-zinc-600'
-                        : 'bg-[#1b1c1d] border-[#292a2b] text-[#c6c5d5]'
-                    }`}
-                  >
-                    <Eye className={`h-3 w-3 mt-0.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                    <p className="font-mono">{seg.visualCue}</p>
-                  </div>
-                </div>
+                No video script segments available.
               </div>
-            ))}
+            ) : (
+              segments.map((seg, idx) => (
+                <div
+                  key={idx}
+                  className={`rounded-lg p-3 transition-colors border ${
+                    isLight
+                      ? 'bg-[#FAFAFA] border-[#E6E6E4] hover:border-zinc-300'
+                      : 'bg-[#0d0e0f] border-[#292a2b] hover:border-[#343536]'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span
+                      className={`font-mono text-[10.5px] font-semibold ${
+                        isLight
+                          ? 'text-amber-700'
+                          : 'text-[#bdc2ff] rounded bg-[#1f2021] px-2 py-0.5 border border-[#292a2b]'
+                      }`}
+                    >
+                      [{seg?.timestamp || '00:00'}] {seg?.stage || `Segment ${idx + 1}`}
+                    </span>
+                  </div>
+
+                  <div className="mt-1.5 space-y-1.5">
+                    <div
+                      className={`flex items-start gap-1.5 text-xs leading-snug break-words ${
+                        isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'
+                      }`}
+                    >
+                      <Mic className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+                      <p className="italic">&ldquo;{seg?.spokenLine || seg?.audio || 'No spoken audio line provided.'}&rdquo;</p>
+                    </div>
+
+                    <div
+                      className={`flex items-start gap-1.5 rounded px-2.5 py-1 text-[11px] border break-words ${
+                        isLight
+                          ? 'bg-white border-[#E6E6E4] text-zinc-600'
+                          : 'bg-[#1b1c1d] border-[#292a2b] text-[#c6c5d5]'
+                      }`}
+                    >
+                      <Eye className={`h-3 w-3 mt-0.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+                      <p className="font-mono">{seg?.visualCue || 'Camera view'}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
 
           {/* STITCH TELEPROMPTER ACTIONS BAR */}
@@ -244,17 +332,29 @@ ${segments
 
             <button
               type="button"
+              disabled={segments.length === 0}
               onClick={() => {
+                if (segments.length === 0) return;
                 setIsTeleprompterOpen(true);
                 setIsPlaying(true);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-medium text-xs transition-colors shadow-xs cursor-pointer ${
-                isLight
-                  ? 'bg-zinc-100 hover:bg-zinc-200 border-[#E6E6E4] text-[#18181B]'
-                  : 'bg-[#1f2021] hover:bg-[#292a2b] text-[#e3e2e3] hover:text-white border-[#292a2b]'
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-medium text-xs transition-colors shadow-xs ${
+                segments.length === 0
+                  ? isLight
+                    ? 'bg-zinc-50 border-[#E6E6E4] text-zinc-400 cursor-not-allowed opacity-60'
+                    : 'bg-[#141516] border-[#292a2b] text-[#63626e] cursor-not-allowed opacity-60'
+                  : isLight
+                  ? 'bg-zinc-100 hover:bg-zinc-200 border-[#E6E6E4] text-[#18181B] cursor-pointer'
+                  : 'bg-[#1f2021] hover:bg-[#292a2b] text-[#e3e2e3] hover:text-white border-[#292a2b] cursor-pointer'
               }`}
             >
-              <Play className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600 fill-amber-600' : 'text-[#5e6ad2] fill-[#5e6ad2]'}`} />
+              <Play className={`h-3.5 w-3.5 ${
+                segments.length === 0
+                  ? 'text-zinc-400 fill-zinc-400'
+                  : isLight
+                  ? 'text-amber-600 fill-amber-600'
+                  : 'text-[#5e6ad2] fill-[#5e6ad2]'
+              }`} />
               <span>Launch Teleprompter</span>
             </button>
           </div>
@@ -270,7 +370,15 @@ ${segments
 
       {/* Teleprompter Fullscreen Studio Overlay */}
       {isTeleprompterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-fadeIn">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Studio Teleprompter HUD"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md animate-fadeIn"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleCloseTeleprompter();
+          }}
+        >
           <div
             className={`w-full max-w-2xl rounded-2xl border p-6 shadow-2xl flex flex-col gap-4 ${
               isLight
@@ -293,7 +401,7 @@ ${segments
                 <div>
                   <h3 className="text-sm font-semibold">Studio Teleprompter HUD</h3>
                   <p className={`text-xs ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-                    {data.title} • {data.totalDuration || '02:00'}
+                    {data?.title || 'Demo Video'} • {data?.totalDuration || '02:00'}
                   </p>
                 </div>
               </div>
@@ -301,6 +409,7 @@ ${segments
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  disabled={segments.length === 0}
                   onClick={() => setIsPlaying((p) => !p)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold cursor-pointer ${
                     isPlaying
@@ -327,8 +436,9 @@ ${segments
 
                 <button
                   type="button"
-                  onClick={() => setIsTeleprompterOpen(false)}
-                  className={`p-1.5 rounded-lg ${isLight ? 'text-zinc-500 hover:bg-zinc-100' : 'text-[#908f9e] hover:bg-[#292a2b]'}`}
+                  onClick={handleCloseTeleprompter}
+                  className={`p-1.5 rounded-lg cursor-pointer ${isLight ? 'text-zinc-500 hover:bg-zinc-100' : 'text-[#908f9e] hover:bg-[#292a2b]'}`}
+                  title="Close teleprompter"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -343,24 +453,24 @@ ${segments
                   : 'bg-[#0d0e0f] border-[#292a2b]'
               }`}
             >
-              {segments[activeSegmentIndex] ? (
-                <div className="space-y-3 animate-fadeIn">
+              {currentSegment ? (
+                <div className="space-y-3 animate-fadeIn w-full max-w-xl mx-auto">
                   <div className="flex items-center justify-center gap-2">
                     <span className={`px-2 py-0.5 rounded font-mono text-xs font-semibold ${isLight ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-[#5e6ad2]/20 text-[#bdc2ff] border border-[#5e6ad2]/30'}`}>
-                      {segments[activeSegmentIndex].timestamp}
+                      {currentSegment.timestamp || '00:00'}
                     </span>
                     <span className={`text-xs uppercase tracking-wider font-semibold ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-                      {segments[activeSegmentIndex].stage}
+                      {currentSegment.stage || `Segment ${currentSegmentIndex + 1}`}
                     </span>
                   </div>
 
-                  <p className="text-xl sm:text-2xl font-serif font-medium leading-relaxed max-w-xl mx-auto">
-                    &ldquo;{segments[activeSegmentIndex].spokenLine || segments[activeSegmentIndex].audio}&rdquo;
+                  <p className="text-xl sm:text-2xl font-serif font-medium leading-relaxed max-w-xl mx-auto break-words">
+                    &ldquo;{currentSegment.spokenLine || currentSegment.audio || 'No spoken audio line provided.'}&rdquo;
                   </p>
 
-                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-xs border ${isLight ? 'bg-white border-[#E6E6E4] text-zinc-600' : 'bg-[#1b1c1d] border-[#292a2b] text-[#c6c5d5]'}`}>
-                    <Eye className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                    <span>Visual Cue: {segments[activeSegmentIndex].visualCue}</span>
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-mono text-xs border max-w-full truncate ${isLight ? 'bg-white border-[#E6E6E4] text-zinc-600' : 'bg-[#1b1c1d] border-[#292a2b] text-[#c6c5d5]'}`}>
+                    <Eye className={`h-3.5 w-3.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+                    <span className="truncate">Visual Cue: {currentSegment.visualCue || 'Screen view'}</span>
                   </div>
                 </div>
               ) : (
@@ -378,7 +488,7 @@ ${segments
                   type="button"
                   onClick={() => setActiveSegmentIndex(i)}
                   className={`flex-1 py-1.5 px-2 rounded-md font-mono text-[11px] transition-colors border cursor-pointer truncate ${
-                    activeSegmentIndex === i
+                    currentSegmentIndex === i
                       ? isLight
                         ? 'bg-amber-600 text-white border-amber-600 font-semibold'
                         : 'bg-[#5e6ad2] text-white border-[#5e6ad2] font-semibold'
@@ -387,7 +497,7 @@ ${segments
                       : 'bg-[#0d0e0f] border-[#292a2b] text-[#908f9e] hover:bg-[#1f2021]'
                   }`}
                 >
-                  {seg.timestamp}
+                  {seg?.timestamp || `0${i + 1}:00`}
                 </button>
               ))}
             </div>

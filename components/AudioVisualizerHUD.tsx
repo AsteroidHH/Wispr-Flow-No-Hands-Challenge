@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Activity, Mic, MicOff, AlertCircle, Info } from 'lucide-react';
+import { Activity, AlertCircle, Info } from 'lucide-react';
 
 interface AudioVisualizerHUDProps {
   isActive: boolean;
@@ -29,10 +29,12 @@ export function AudioVisualizerHUD({
     onVolumeChangeRef.current = onVolumeChange;
   }, [onVolumeChange]);
 
-  // Stop & Clean up audio stream and context
+  // Stop & Clean up audio stream, nodes, and context
   const cleanupAudio = useCallback(() => {
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
+    if (animationFrameRef.current !== null) {
+      if (typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
       animationFrameRef.current = null;
     }
 
@@ -65,23 +67,37 @@ export function AudioVisualizerHUD({
       analyserRef.current = null;
     }
 
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-      try {
-        audioContextRef.current.close();
-      } catch {
-        // ignore
+    if (audioContextRef.current) {
+      if (audioContextRef.current.state !== 'closed') {
+        try {
+          audioContextRef.current.close().catch(() => {});
+        } catch {
+          // ignore
+        }
       }
       audioContextRef.current = null;
     }
 
     setCurrentLevel(0);
-    if (onVolumeChangeRef.current) onVolumeChangeRef.current(0);
+    if (onVolumeChangeRef.current) {
+      try {
+        onVolumeChangeRef.current(0);
+      } catch {
+        // ignore
+      }
+    }
 
-    // Clear canvas
+    // Clear canvas safely
     const canvas = canvasRef.current;
     if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      try {
+        const ctx = canvas.getContext('2d');
+        if (ctx && canvas.width > 0 && canvas.height > 0) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+      } catch {
+        // ignore
+      }
     }
   }, []);
 
@@ -98,9 +114,26 @@ export function AudioVisualizerHUD({
       try {
         setPermissionError(null);
 
+        // SSR / Browser environment guard
+        if (typeof window === 'undefined') {
+          return;
+        }
+
         // Check mediaDevices support
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (
+          typeof navigator === 'undefined' ||
+          !navigator.mediaDevices ||
+          typeof navigator.mediaDevices.getUserMedia !== 'function'
+        ) {
           throw new Error('Browser mediaDevices API not supported');
+        }
+
+        const AudioContextClass =
+          window.AudioContext ||
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+
+        if (!AudioContextClass) {
+          throw new Error('Web Audio API not supported in this browser');
         }
 
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -113,16 +146,29 @@ export function AudioVisualizerHUD({
         });
 
         if (!isMounted) {
-          stream.getTracks().forEach((t) => t.stop());
+          stream.getTracks().forEach((t) => {
+            try {
+              t.stop();
+            } catch {
+              // ignore
+            }
+          });
           return;
         }
 
         streamRef.current = stream;
 
-        const AudioContextClass =
-          window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         const audioCtx = new AudioContextClass();
         audioContextRef.current = audioCtx;
+
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume().catch(() => {});
+        }
+
+        if (!isMounted) {
+          cleanupAudio();
+          return;
+        }
 
         const analyser = audioCtx.createAnalyser();
         analyser.fftSize = 64; // 32 frequency bins for responsive UI
@@ -136,55 +182,127 @@ export function AudioVisualizerHUD({
         const bufferLength = analyser.frequencyBinCount;
         const dataArray = new Uint8Array(bufferLength);
 
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
+        // Track last dispatched levels to throttle redundant React state updates
+        let lastUiPercentage = -1;
+        let lastCallbackVol = -1;
+        let lastUiUpdateMs = 0;
+        let lastCallbackUpdateMs = 0;
 
         function draw() {
-          if (!analyserRef.current || !canvas || !ctx) return;
+          if (!isMounted || !analyserRef.current) return;
 
-          analyserRef.current.getByteFrequencyData(dataArray);
-
-          // Calculate average volume level (0 to 1)
-          let sum = 0;
-          for (let i = 0; i < bufferLength; i++) {
-            sum += dataArray[i];
+          const canvas = canvasRef.current;
+          if (!canvas) {
+            animationFrameRef.current = requestAnimationFrame(draw);
+            return;
           }
-          const avg = sum / bufferLength;
-          const normalizedVol = Math.min(1, avg / 128); // 0 to ~1
 
-          setCurrentLevel(normalizedVol);
-          if (onVolumeChangeRef.current) onVolumeChangeRef.current(normalizedVol);
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            animationFrameRef.current = requestAnimationFrame(draw);
+            return;
+          }
 
-          // Clear canvas
+          try {
+            analyserRef.current.getByteFrequencyData(dataArray);
+          } catch {
+            // Analyser closed or inaccessible
+            return;
+          }
+
+          // Calculate average volume level (0 to 1) safely
+          let sum = 0;
+          let validSamples = 0;
+          for (let i = 0; i < bufferLength; i++) {
+            const val = dataArray[i];
+            if (Number.isFinite(val)) {
+              sum += val;
+              validSamples++;
+            }
+          }
+
+          const avg = validSamples > 0 ? sum / validSamples : 0;
+          const normalizedVol = Number.isFinite(avg)
+            ? Math.min(1, Math.max(0, avg / 128))
+            : 0;
+
+          const now = Date.now();
+          const currentPercentage = Math.round(normalizedVol * 100);
+
+          // Update HUD percentage text only if changed and throttled (~60ms) or dropped to 0
+          if (
+            (currentPercentage !== lastUiPercentage && now - lastUiUpdateMs > 60) ||
+            (normalizedVol === 0 && lastUiPercentage !== 0)
+          ) {
+            lastUiPercentage = currentPercentage;
+            lastUiUpdateMs = now;
+            setCurrentLevel(normalizedVol);
+          }
+
+          // Trigger onVolumeChange callback throttled (~30ms) or on significant change / silence
+          if (
+            onVolumeChangeRef.current &&
+            ((Math.abs(normalizedVol - lastCallbackVol) > 0.01 && now - lastCallbackUpdateMs > 30) ||
+              (normalizedVol === 0 && lastCallbackVol !== 0))
+          ) {
+            lastCallbackVol = normalizedVol;
+            lastCallbackUpdateMs = now;
+            try {
+              onVolumeChangeRef.current(normalizedVol);
+            } catch {
+              // ignore callback errors
+            }
+          }
+
+          // Clear canvas (guard against width=0, height=0)
+          if (canvas.width <= 0 || canvas.height <= 0) {
+            animationFrameRef.current = requestAnimationFrame(draw);
+            return;
+          }
+
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
           const barCount = 24;
-          const barWidth = Math.floor((canvas.width - barCount * 2) / barCount);
-          let x = 2;
+          const gap = 2;
+          const totalGaps = (barCount + 1) * gap;
+          const availableWidth = canvas.width - totalGaps;
 
-          for (let i = 0; i < barCount; i++) {
-            // Map bar index to frequency bin
-            const binIdx = Math.floor((i / barCount) * bufferLength);
-            const rawVal = dataArray[binIdx] || 0;
-            const barHeight = Math.max(3, Math.floor((rawVal / 255) * canvas.height));
+          // If canvas width is too narrow to fit all bars, compute safe bar width
+          if (availableWidth > 0 && canvas.height > 0) {
+            const barWidth = Math.max(1, Math.floor(availableWidth / barCount));
+            let x = gap;
 
-            // Restrained Indigo to Cyan gradient
+            // Restrained Indigo to Cyan gradient - created once per frame
             const gradient = ctx.createLinearGradient(0, canvas.height, 0, 0);
             gradient.addColorStop(0, '#5e6ad2');
             gradient.addColorStop(1, '#38bdf8');
-
             ctx.fillStyle = gradient;
-            ctx.beginPath();
-            if (typeof ctx.roundRect === 'function') {
-              ctx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, [2, 2, 0, 0]);
-            } else {
-              ctx.rect(x, canvas.height - barHeight, barWidth, barHeight);
-            }
-            ctx.fill();
 
-            x += barWidth + 2;
+            for (let i = 0; i < barCount; i++) {
+              // Map bar index to frequency bin safely
+              const binIdx = bufferLength > 0 ? Math.floor((i / barCount) * bufferLength) : 0;
+              const rawVal = Number.isFinite(dataArray[binIdx]) ? dataArray[binIdx] : 0;
+              const barHeight = Math.max(
+                2,
+                Math.min(canvas.height, Math.floor((rawVal / 255) * canvas.height))
+              );
+              const y = Math.max(0, canvas.height - barHeight);
+
+              ctx.beginPath();
+              const radius = Math.min(2, Math.floor(barWidth / 2), Math.floor(barHeight / 2));
+              if (radius > 0 && typeof ctx.roundRect === 'function') {
+                try {
+                  ctx.roundRect(x, y, barWidth, barHeight, [radius, radius, 0, 0]);
+                } catch {
+                  ctx.rect(x, y, barWidth, barHeight);
+                }
+              } else {
+                ctx.rect(x, y, barWidth, barHeight);
+              }
+              ctx.fill();
+
+              x += barWidth + gap;
+            }
           }
 
           animationFrameRef.current = requestAnimationFrame(draw);
@@ -194,10 +312,20 @@ export function AudioVisualizerHUD({
       } catch (err: unknown) {
         console.warn('Microphone stream access error:', err);
         if (isMounted) {
-          const msg =
-            err instanceof Error && err.name === 'NotAllowedError'
-              ? 'Microphone permission denied. Allow mic access in browser settings.'
-              : 'Could not connect to microphone.';
+          let msg = 'Could not connect to microphone.';
+          if (err instanceof Error) {
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+              msg = 'Microphone permission denied. Allow mic access in browser settings.';
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+              msg = 'No microphone device found. Please connect a microphone.';
+            } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+              msg = 'Microphone is already in use by another application.';
+            } else if (err.name === 'SecurityError') {
+              msg = 'Microphone access is restricted by security policy.';
+            } else if (err.message) {
+              msg = err.message;
+            }
+          }
           setPermissionError(msg);
           cleanupAudio();
         }

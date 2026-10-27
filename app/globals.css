@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+:root,
+html.light {
   --bg-lowest: #FBFBFA;
   --surface: #FFFFFF;
   --surface-low: #F4F4F5;

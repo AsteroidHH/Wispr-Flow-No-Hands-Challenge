@@ -1,15 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Mic,
-  Radio,
   Activity,
-  Code2,
   RefreshCw,
   Sparkles,
   GitBranch,
-  Trash2,
   ShieldCheck,
   Cpu,
   Trophy,
@@ -32,12 +29,12 @@ interface InputControlCenterProps {
 export function InputControlCenter({
   activePresetId,
   onSelectPreset,
-  voiceTranscript,
+  voiceTranscript = '',
   setVoiceTranscript,
-  gitDiff,
+  gitDiff = '',
   setGitDiff,
   onGenerate,
-  isGenerating,
+  isGenerating = false,
 }: InputControlCenterProps) {
   const { isLight } = useTheme();
   const [activeDiffFile, setActiveDiffFile] = useState<'tools/registry.ts' | 'services/agent_runner.py' | 'raw'>('tools/registry.ts');
@@ -45,25 +42,52 @@ export function InputControlCenter({
   const [isAudioReactive, setIsAudioReactive] = useState<boolean>(false);
   const [audioLevel, setAudioLevel] = useState<number>(0);
 
+  // Ref to hold simulation timer to prevent memory leaks on unmount
+  const simulationTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Keep a stable ref for onSelectPreset to prevent unnecessary listener rebinding
+  const onSelectPresetRef = useRef(onSelectPreset);
+  useEffect(() => {
+    onSelectPresetRef.current = onSelectPreset;
+  }, [onSelectPreset]);
+
+  // Clean up any pending voice simulation on unmount
+  useEffect(() => {
+    return () => {
+      if (simulationTimerRef.current) {
+        clearTimeout(simulationTimerRef.current);
+        simulationTimerRef.current = null;
+      }
+    };
+  }, []);
+
   // Keyboard shortcut listener for ⌥1, ⌥2, ⌥3 / Alt+1, Alt+2, Alt+3
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Prevent flood from held-down repeat keys
+      if (e.repeat) return;
+
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
-        if ((e.key === '1' || e.code === 'Digit1') && JUDGE_PRESETS[0]) {
+        // Support macOS Option keys ('¡', '™', '£'), standard digits, and numpad digits
+        const isPreset1 = e.key === '1' || e.key === '¡' || e.code === 'Digit1' || e.code === 'Numpad1';
+        const isPreset2 = e.key === '2' || e.key === '™' || e.code === 'Digit2' || e.code === 'Numpad2';
+        const isPreset3 = e.key === '3' || e.key === '£' || e.code === 'Digit3' || e.code === 'Numpad3';
+
+        if (isPreset1 && JUDGE_PRESETS[0]?.id) {
           e.preventDefault();
-          onSelectPreset(JUDGE_PRESETS[0].id);
-        } else if ((e.key === '2' || e.code === 'Digit2') && JUDGE_PRESETS[1]) {
+          onSelectPresetRef.current(JUDGE_PRESETS[0].id);
+        } else if (isPreset2 && JUDGE_PRESETS[1]?.id) {
           e.preventDefault();
-          onSelectPreset(JUDGE_PRESETS[1].id);
-        } else if ((e.key === '3' || e.code === 'Digit3') && JUDGE_PRESETS[2]) {
+          onSelectPresetRef.current(JUDGE_PRESETS[1].id);
+        } else if (isPreset3 && JUDGE_PRESETS[2]?.id) {
           e.preventDefault();
-          onSelectPreset(JUDGE_PRESETS[2].id);
+          onSelectPresetRef.current(JUDGE_PRESETS[2].id);
         }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onSelectPreset]);
+  }, []);
 
   // Icon mapping for presets
   const getPresetIcon = (id: string) => {
@@ -80,31 +104,56 @@ export function InputControlCenter({
   };
 
   const handleSimulateWisprVoice = () => {
-    setIsRecording((prev) => !prev);
-    if (!isRecording && !voiceTranscript) {
-      setTimeout(() => {
-        setVoiceTranscript(
-          "Refactored our autonomous agent tool routing pipeline. Replaced brittle hardcoded switch statements with dynamic vector tool-match scoring in tools/registry.ts. Fixed the token exhaustion race condition when concurrent sub-agents spawn parallel research loops and added exponential jittered backoff on agent_runner.py. PR target is ready for main."
-        );
-        setIsRecording(false);
-      }, 1500);
+    // Cancel any active simulation if already running
+    if (simulationTimerRef.current) {
+      clearTimeout(simulationTimerRef.current);
+      simulationTimerRef.current = null;
     }
+
+    if (isRecording) {
+      setIsRecording(false);
+      return;
+    }
+
+    setIsRecording(true);
+    simulationTimerRef.current = setTimeout(() => {
+      setVoiceTranscript(
+        "Refactored our autonomous agent tool routing pipeline. Replaced brittle hardcoded switch statements with dynamic vector tool-match scoring in tools/registry.ts. Fixed the token exhaustion race condition when concurrent sub-agents spawn parallel research loops and added exponential jittered backoff on agent_runner.py. PR target is ready for main."
+      );
+      setIsRecording(false);
+      simulationTimerRef.current = null;
+    }, 1500);
   };
 
   const handleSyncPr142 = () => {
-    if (JUDGE_PRESETS[1]) {
-      onSelectPreset(JUDGE_PRESETS[1].id);
+    // Robust preset lookup for PR #142 (ai-agent-pipeline) with safe fallbacks
+    const pr142Preset =
+      JUDGE_PRESETS.find((p) => p.id === 'ai-agent-pipeline') ??
+      JUDGE_PRESETS[1] ??
+      JUDGE_PRESETS[0];
+
+    if (pr142Preset?.id) {
+      onSelectPreset(pr142Preset.id);
     }
   };
 
-  const wordCount = voiceTranscript.trim() ? voiceTranscript.trim().split(/\s+/).length : 0;
-  const isSoundActive = isAudioReactive && audioLevel > 0.04;
+  // Sanitize audioLevel to safe numeric range [0, 1] - guards against NaN, -1, Infinity, overflow
+  const safeAudioLevel =
+    typeof audioLevel === 'number' && Number.isFinite(audioLevel)
+      ? Math.max(0, Math.min(1, audioLevel))
+      : 0;
+
+  const isSoundActive = isAudioReactive && safeAudioLevel > 0.04;
+
+  // Calculate box-shadow blur radius and glow alpha with guaranteed bounds
+  const blurRadius = Math.round(12 + safeAudioLevel * (isLight ? 20 : 24));
+  const glowAlpha = Math.min(1, Math.max(0, 0.25 + safeAudioLevel * (isLight ? 0.3 : 0.35))).toFixed(3);
 
   const ambientAuraStyle = isSoundActive
     ? {
         boxShadow: isLight
-          ? `0 0 ${12 + audioLevel * 20}px rgba(217, 119, 6, ${0.25 + audioLevel * 0.3})`
-          : `0 0 ${12 + audioLevel * 24}px rgba(94, 106, 210, ${0.25 + audioLevel * 0.35})`,
+          ? `0 0 ${blurRadius}px rgba(217, 119, 6, ${glowAlpha})`
+          : `0 0 ${blurRadius}px rgba(94, 106, 210, ${glowAlpha})`,
         borderColor: isLight ? 'rgba(217, 119, 6, 0.4)' : 'rgba(94, 106, 210, 0.4)',
         transition: 'box-shadow 0.08s ease-out, border-color 0.15s ease-out',
       }
@@ -114,6 +163,24 @@ export function InputControlCenter({
 
   // Static waveform baseline heights matching Stitch
   const waveformHeights = [8, 14, 20, 10, 16, 12, 6, 18, 20, 12, 8, 16, 20, 10, 4, 8, 4, 8, 4, 4, 4, 4, 4];
+
+  // Dynamic word count and estimated speech duration
+  const trimmedTranscript = (voiceTranscript || '').trim();
+  const wordCount = trimmedTranscript ? trimmedTranscript.split(/\s+/).length : 0;
+  const estSeconds = Math.max(0, Math.round(wordCount / 2.2));
+  const estMinutesFormatted = String(Math.floor(estSeconds / 60)).padStart(2, '0');
+  const estSecondsFormatted = String(estSeconds % 60).padStart(2, '0');
+  const durationDisplay = wordCount > 0 ? `${estMinutesFormatted}:${estSecondsFormatted}` : '01:24';
+
+  // Master CTA disabled check: locked if generating or if neither voice transcript nor git diff has content
+  const hasContent = Boolean(voiceTranscript?.trim() || gitDiff?.trim());
+  const canGenerate = !isGenerating && hasContent;
+
+  const handleGenerateClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!canGenerate) return;
+    onGenerate();
+  };
 
   return (
     <div
@@ -235,7 +302,7 @@ export function InputControlCenter({
             Speech-to-Artifact Stream
           </span>
           <span className={`font-mono text-[10px] ${isLight ? 'text-zinc-400' : 'text-[#908f9e]'}`}>
-            Raw Transcript ({wordCount} words, 01:24)
+            Raw Transcript ({wordCount} {wordCount === 1 ? 'word' : 'words'}, {durationDisplay})
           </span>
         </div>
 
@@ -286,7 +353,7 @@ export function InputControlCenter({
             >
               Vector Routing Pinpointed
             </span>
-            <span>01:24</span>
+            <span>{durationDisplay}</span>
           </div>
 
           {/* Waveform Bars */}
@@ -298,7 +365,10 @@ export function InputControlCenter({
             }`}
           >
             {waveformHeights.map((h, i) => {
-              const dynamicHeight = isSoundActive ? Math.min(24, Math.round(h * (1 + audioLevel * 1.5))) : h;
+              // Bound dynamic height strictly between 4px and 24px
+              const dynamicHeight = isSoundActive
+                ? Math.max(4, Math.min(24, Math.round(h * (1 + safeAudioLevel * 1.5))))
+                : Math.max(4, Math.min(24, h));
               const isHighlight = i < 18;
               return (
                 <div
@@ -338,16 +408,7 @@ export function InputControlCenter({
           >
             <Mic className={`h-3.5 w-3.5 ${isRecording ? 'text-rose-400 animate-pulse' : (isLight ? 'text-amber-500' : 'text-[#ffb867]')}`} />
             <span>
-              Tap or hold{' '}
-              <kbd
-                className={`font-mono text-[10px] px-1 py-0.5 rounded ml-0.5 ${
-                  isLight
-                    ? 'bg-zinc-800 text-zinc-300'
-                    : 'bg-[#0d0e0f] text-[#bdc2ff] border border-[#292a2b]'
-                }`}
-              >
-                Space
-              </kbd>
+              {isRecording ? 'Simulating recording...' : 'Simulate Wispr Voice'}
             </span>
           </button>
 
@@ -371,7 +432,7 @@ export function InputControlCenter({
                 ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
                 : 'border-[#292a2b] bg-[#1b1c1d] hover:bg-[#1f2021] text-[#e3e2e3]'
             }`}
-            title="Sync PR #142 preset"
+            title="Sync PR #142 preset (AI Agent Pipeline)"
           >
             <RefreshCw className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
             <span>Sync PR #142</span>
@@ -395,10 +456,18 @@ export function InputControlCenter({
           <div className="flex items-center gap-1.5">
             <GitBranch className={`h-3.5 w-3.5 ${isLight ? 'text-zinc-600' : 'text-[#5e6ad2]'}`} />
             <span className={`font-semibold ${isLight ? 'text-zinc-800' : 'text-[#e3e2e3]'}`}>
-              feat/agent-router-v2
+              {activePresetId === 'auth-refactor'
+                ? 'feat/oauth2-pkce-edge'
+                : activePresetId === 'hackathon-project'
+                ? 'feat/whispr-flow-v1'
+                : 'feat/agent-router-v2'}
             </span>
             <span className={isLight ? 'text-zinc-500 text-[10px]' : 'text-[#908f9e] text-[10px]'}>
-              (+84 -29, 2 files)
+              {activePresetId === 'auth-refactor'
+                ? '(+30 -6, 2 files)'
+                : activePresetId === 'hackathon-project'
+                ? '(+142 -12, 3 files)'
+                : '(+84 -29, 2 files)'}
             </span>
           </div>
 
@@ -429,6 +498,19 @@ export function InputControlCenter({
               }`}
             >
               agent_runner.py
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveDiffFile('raw')}
+              className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer ${
+                activeDiffFile === 'raw'
+                  ? isLight
+                    ? 'bg-white border border-[#E6E6E4] text-zinc-800'
+                    : 'bg-[#1f2021] border border-[#292a2b] text-[#e3e2e3]'
+                  : 'text-zinc-500 hover:text-zinc-800'
+              }`}
+            >
+              raw diff
             </button>
           </div>
         </div>
@@ -469,7 +551,7 @@ export function InputControlCenter({
               +   if (toolScore &gt; threshold) return this.dispatchVectorNode(tool);
             </div>
           </div>
-        ) : (
+        ) : activeDiffFile === 'services/agent_runner.py' ? (
           <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-tight">
             <div className={isLight ? 'text-zinc-400' : 'text-[#908f9e]'}>
               @@ -58,6 +58,12 @@ def execute_agent_loop(context):
@@ -502,6 +584,42 @@ export function InputControlCenter({
               +   telemetry.record_latency(result.duration_ms)
             </div>
           </div>
+        ) : (
+          <div className="flex flex-col gap-0.5 font-mono text-[10px] leading-tight max-h-36 overflow-y-auto">
+            {gitDiff ? (
+              gitDiff.split('\n').map((line, idx) => {
+                const isAdd = line.startsWith('+') && !line.startsWith('+++');
+                const isDel = line.startsWith('-') && !line.startsWith('---');
+                const isHunk = line.startsWith('@@');
+                return (
+                  <div
+                    key={idx}
+                    className={`px-1 py-0.5 font-mono truncate ${
+                      isAdd
+                        ? isLight
+                          ? 'bg-[#DCFCE7] text-[#166534]'
+                          : 'bg-emerald-500/10 text-emerald-400'
+                        : isDel
+                        ? isLight
+                          ? 'bg-[#FEE2E2] text-[#991B1B]'
+                          : 'bg-red-500/10 text-red-400'
+                        : isHunk
+                        ? isLight
+                          ? 'text-zinc-400'
+                          : 'text-[#908f9e]'
+                        : isLight
+                        ? 'text-zinc-600'
+                        : 'text-zinc-400'
+                    }`}
+                  >
+                    {line}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-zinc-500 italic py-1">// No git diff provided</div>
+            )}
+          </div>
         )}
       </div>
 
@@ -509,8 +627,8 @@ export function InputControlCenter({
       <div className="flex flex-col gap-1.5 pt-1">
         <button
           type="button"
-          onClick={onGenerate}
-          disabled={isGenerating || (!voiceTranscript.trim() && !gitDiff.trim())}
+          onClick={handleGenerateClick}
+          disabled={!canGenerate}
           className={`w-full font-semibold py-2.5 px-4 rounded-lg shadow-sm hover:shadow transition-all flex items-center justify-center gap-2 cursor-pointer text-xs disabled:opacity-40 disabled:cursor-not-allowed ${
             isLight
               ? 'bg-[#18181B] hover:bg-black text-white'
