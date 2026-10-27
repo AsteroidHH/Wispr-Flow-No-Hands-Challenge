@@ -13,9 +13,12 @@ import {
   Cpu,
   Trophy,
   SlidersHorizontal,
-  Volume2
+  Volume2,
+  Radio,
+  Activity
 } from 'lucide-react';
 import { JUDGE_PRESETS } from '@/lib/presets';
+import { AudioVisualizerHUD } from '@/components/AudioVisualizerHUD';
 
 interface InputControlCenterProps {
   activePresetId: string | null;
@@ -40,6 +43,8 @@ export function InputControlCenter({
 }: InputControlCenterProps) {
   const [isDiffDrawerOpen, setIsDiffDrawerOpen] = useState<boolean>(false);
   const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [isAudioReactive, setIsAudioReactive] = useState<boolean>(false);
+  const [audioLevel, setAudioLevel] = useState<number>(0);
 
   // Icon mapping for presets
   const getPresetIcon = (id: string) => {
@@ -69,6 +74,18 @@ export function InputControlCenter({
 
   const wordCount = voiceTranscript.trim() ? voiceTranscript.trim().split(/\s+/).length : 0;
   const diffLines = gitDiff.trim() ? gitDiff.trim().split('\n').length : 0;
+
+  // Compute ambient aura dynamic styles when sound levels rise above silence (> 0.04)
+  const isSoundActive = isAudioReactive && audioLevel > 0.04;
+  const ambientAuraStyle = isSoundActive
+    ? {
+        boxShadow: `0 0 ${16 + audioLevel * 36}px rgba(99, 102, 241, ${0.35 + audioLevel * 0.5}), 0 0 ${28 + audioLevel * 50}px rgba(6, 182, 212, ${0.25 + audioLevel * 0.45})`,
+        borderColor: '#06b6d4',
+        transition: 'box-shadow 0.08s ease-out, border-color 0.15s ease-out',
+      }
+    : {
+        transition: 'box-shadow 0.25s ease-out, border-color 0.25s ease-out',
+      };
 
   return (
     <div className="flex flex-col gap-5 rounded-2xl border border-neutral-800 bg-neutral-900/50 p-5 shadow-xl backdrop-blur-md">
@@ -127,17 +144,17 @@ export function InputControlCenter({
 
       {/* Primary Voice Transcript Area */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span
                 className={`absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                  isRecording ? 'animate-ping bg-red-400' : 'bg-emerald-400'
+                  isRecording || isSoundActive ? 'animate-ping bg-cyan-400' : 'bg-emerald-400'
                 }`}
               ></span>
               <span
                 className={`relative inline-flex h-2 w-2 rounded-full ${
-                  isRecording ? 'bg-red-500' : 'bg-emerald-500'
+                  isRecording || isSoundActive ? 'bg-cyan-500' : 'bg-emerald-500'
                 }`}
               ></span>
             </span>
@@ -150,6 +167,26 @@ export function InputControlCenter({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Audio-Reactive HUD Mode Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsAudioReactive(prev => !prev)}
+              title="ambient visualizer for your Wispr Flow voice stream."
+              className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-mono transition-all border ${
+                isAudioReactive
+                  ? 'border-cyan-500/50 bg-cyan-950/40 text-cyan-300 shadow-[0_0_12px_rgba(6,182,212,0.3)]'
+                  : 'border-neutral-800 bg-neutral-900 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+              }`}
+            >
+              <Activity className={`h-3 w-3 ${isAudioReactive ? 'animate-pulse text-cyan-400' : 'text-neutral-400'}`} />
+              <span>Audio HUD</span>
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  isAudioReactive ? 'bg-cyan-400 animate-ping' : 'bg-neutral-600'
+                }`}
+              />
+            </button>
+
             {voiceTranscript && (
               <button
                 type="button"
@@ -166,6 +203,15 @@ export function InputControlCenter({
             </span>
           </div>
         </div>
+
+        {/* Live Audio Visualizer HUD (When Enabled) */}
+        {isAudioReactive && (
+          <AudioVisualizerHUD
+            isActive={isAudioReactive}
+            onVolumeChange={setAudioLevel}
+            className="animate-fadeIn"
+          />
+        )}
 
         {/* Persistent Indicator Banner */}
         <div className="flex items-center justify-between rounded-lg border border-purple-500/20 bg-purple-950/20 px-3 py-2 text-xs text-purple-300">
@@ -189,15 +235,15 @@ export function InputControlCenter({
           </button>
         </div>
 
-        {/* Textarea */}
-        <div className="relative">
+        {/* Textarea with Ambient Aura */}
+        <div className="relative rounded-xl overflow-hidden" style={ambientAuraStyle}>
           <textarea
             id="voice-transcript"
             rows={7}
             value={voiceTranscript}
             onChange={(e) => setVoiceTranscript(e.target.value)}
             placeholder="Talk about what you built, what was refactored, breaking changes, architecture decisions, and demo highlights..."
-            className="w-full rounded-xl border border-neutral-800 bg-neutral-950/80 p-3.5 text-xs text-neutral-200 placeholder:text-neutral-500 focus:border-indigo-500 focus:bg-neutral-950 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-sans leading-relaxed"
+            className="w-full rounded-xl border border-neutral-800 bg-neutral-950/80 p-3.5 text-xs text-neutral-200 placeholder:text-neutral-500 focus:border-indigo-500 focus:bg-neutral-950 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-sans leading-relaxed transition-all"
           />
         </div>
       </div>
