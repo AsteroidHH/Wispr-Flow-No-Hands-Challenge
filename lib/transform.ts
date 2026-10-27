@@ -1,7 +1,8 @@
-import { Deliverables, GenerateApiResponseData } from './types';
+import { Deliverables, GenerateApiResponseData, VideoScriptSegment } from './types';
 
-export function transformApiResponseToDeliverables(data: GenerateApiResponseData): Deliverables {
-  const prMarkdown = data.prMarkdown || '';
+export function transformApiResponseToDeliverables(data: GenerateApiResponseData | null | undefined): Deliverables {
+  const safeData = data && typeof data === 'object' ? data : ({} as Partial<GenerateApiResponseData>);
+  const prMarkdown = typeof safeData.prMarkdown === 'string' ? safeData.prMarkdown : '';
   const lines = prMarkdown ? prMarkdown.split('\n') : [];
   const bulletLines = lines
     .filter(line => line.trim().startsWith('- ') || line.trim().startsWith('* '))
@@ -19,15 +20,18 @@ export function transformApiResponseToDeliverables(data: GenerateApiResponseData
 
   // Extract first paragraph for summary
   const summaryParagraph = lines.find(line => line.trim().length > 20 && !line.startsWith('#')) 
-    || `${data.prTitle || 'Feature Implementation'}: Synthesized from voice transcript and git diff context.`;
+    || `${safeData.prTitle || 'Feature Implementation'}: Synthesized from voice transcript and git diff context.`;
 
-  const rawSocial = data.socialPost || '🚀 Shipping updates built with ShipSpeak';
-  const scriptSegments = Array.isArray(data.videoScript) ? data.videoScript : [];
+  const rawSocial = typeof safeData.socialPost === 'string' && safeData.socialPost.trim()
+    ? safeData.socialPost
+    : '🚀 Shipping updates built with ShipSpeak';
+
+  const scriptSegments = Array.isArray(safeData.videoScript) ? safeData.videoScript : [];
 
   return {
     pullRequest: {
-      title: data.prTitle || 'feat: automated feature delivery',
-      commitMessage: data.commitMessage || 'feat: update implementation',
+      title: safeData.prTitle || 'feat: automated feature delivery',
+      commitMessage: safeData.commitMessage || 'feat: update implementation',
       summary: summaryParagraph,
       keyChanges,
       breakingChanges,
@@ -35,19 +39,22 @@ export function transformApiResponseToDeliverables(data: GenerateApiResponseData
     },
     architecture: {
       title: 'Architecture Topology',
-      mermaidCode: data.mermaidSyntax || 'flowchart TD\n  Client --> Gateway\n  Gateway --> Backend',
+      mermaidCode: safeData.mermaidSyntax || 'flowchart TD\n  Client --> Gateway\n  Gateway --> Backend',
       description: 'Flowchart rendered dynamically from structured Gemini pipeline output.',
     },
     videoScript: {
       title: '2-Minute Hackathon Demo Script',
       totalDuration: '02:00',
-      segments: scriptSegments.map((seg, idx) => ({
-        timestamp: seg.timestamp || `00:${idx * 30} - 00:${(idx + 1) * 30}`,
-        stage: `Segment ${idx + 1}`,
-        audio: seg.spokenLine || 'Demo narration segment',
-        spokenLine: seg.spokenLine || 'Demo narration segment',
-        visualCue: seg.visualCue || 'Screen view',
-      })),
+      segments: scriptSegments.map((seg, idx) => {
+        const safeSeg: Partial<VideoScriptSegment> = seg && typeof seg === 'object' ? seg : {};
+        return {
+          timestamp: safeSeg.timestamp || `00:${idx * 30} - 00:${(idx + 1) * 30}`,
+          stage: `Segment ${idx + 1}`,
+          audio: safeSeg.spokenLine || safeSeg.audio || 'Demo narration segment',
+          spokenLine: safeSeg.spokenLine || safeSeg.audio || 'Demo narration segment',
+          visualCue: safeSeg.visualCue || 'Screen view',
+        };
+      }),
     },
     socialPost: {
       rawPost: rawSocial,

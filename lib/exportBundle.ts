@@ -67,14 +67,16 @@ ${segments.length > 0
   // 4. Social_thread.md
   const social = deliverables.socialPost || {};
   const twitter = social.twitter || { content: 'Shipping update', charCount: 15, hashtags: ['#buildinpublic'] };
+  const twitterContent = typeof twitter.content === 'string' ? twitter.content : '';
+  const twitterCharCount = typeof twitter.charCount === 'number' ? twitter.charCount : twitterContent.length;
   const linkedin = social.linkedin || { hook: 'Engineering update', body: '', takeaways: [], callToAction: '' };
   const hashtags = Array.isArray(twitter.hashtags) ? twitter.hashtags.join(' ') : '#buildinpublic';
   const takeaways = Array.isArray(linkedin.takeaways) ? linkedin.takeaways.map(t => `• ${t}`).join('\n') : '';
 
   const socialContent = `# Build-in-Public Launch Deliverables
 
-## Twitter / X Post (${twitter.charCount || twitter.content.length}/280)
-${twitter.content || ''}
+## Twitter / X Post (${twitterCharCount}/280)
+${twitterContent}
 
 ${hashtags}
 

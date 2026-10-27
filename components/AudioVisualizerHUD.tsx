@@ -177,7 +177,11 @@ export function AudioVisualizerHUD({
 
             ctx.fillStyle = gradient;
             ctx.beginPath();
-            ctx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, [2, 2, 0, 0]);
+            if (typeof ctx.roundRect === 'function') {
+              ctx.roundRect(x, canvas.height - barHeight, barWidth, barHeight, [2, 2, 0, 0]);
+            } else {
+              ctx.rect(x, canvas.height - barHeight, barWidth, barHeight);
+            }
             ctx.fill();
 
             x += barWidth + 2;

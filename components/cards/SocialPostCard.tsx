@@ -233,16 +233,19 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
               <div className="space-y-2.5 whitespace-pre-line select-text">
                 <p className={`font-medium ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{twitterContent}</p>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {hashtags.split(' ').map((tag, idx) => (
-                    <span
-                      key={idx}
-                      className={`font-mono text-[10.5px] font-medium ${
-                        isLight ? 'text-amber-800' : 'text-[#5e6ad2]'
-                      }`}
-                    >
-                      {tag}
-                    </span>
-                  ))}
+                  {hashtags
+                    .split(/\s+/)
+                    .filter(Boolean)
+                    .map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className={`font-mono text-[10.5px] font-medium ${
+                          isLight ? 'text-amber-800' : 'text-[#5e6ad2]'
+                        }`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
                 </div>
               </div>
             )}

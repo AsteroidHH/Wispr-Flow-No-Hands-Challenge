@@ -343,7 +343,7 @@ ${segments
                   : 'bg-[#0d0e0f] border-[#292a2b]'
               }`}
             >
-              {segments[activeSegmentIndex] && (
+              {segments[activeSegmentIndex] ? (
                 <div className="space-y-3 animate-fadeIn">
                   <div className="flex items-center justify-center gap-2">
                     <span className={`px-2 py-0.5 rounded font-mono text-xs font-semibold ${isLight ? 'bg-amber-100 text-amber-900 border border-amber-200' : 'bg-[#5e6ad2]/20 text-[#bdc2ff] border border-[#5e6ad2]/30'}`}>
@@ -363,6 +363,10 @@ ${segments
                     <span>Visual Cue: {segments[activeSegmentIndex].visualCue}</span>
                   </div>
                 </div>
+              ) : (
+                <p className={`text-xs italic ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                  No video script segments available.
+                </p>
               )}
             </div>
 

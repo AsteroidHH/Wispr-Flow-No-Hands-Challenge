@@ -41,13 +41,21 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
   const [isExportingPng, setIsExportingPng] = useState<boolean>(false);
   const [isExportingSvg, setIsExportingSvg] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const rawSvgRef = useRef<string>('');
   const svgElementRef = useRef<SVGSVGElement | null>(null);
 
   const showToast = useCallback((msg: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 3000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
   }, []);
 
   // Capture rendered SVG from MermaidRenderer

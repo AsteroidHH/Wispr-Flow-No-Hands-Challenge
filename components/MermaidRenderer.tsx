@@ -79,6 +79,11 @@ export function MermaidRenderer({
   onSvgRendered,
 }: MermaidRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const onSvgRenderedRef = useRef(onSvgRendered);
+  useEffect(() => {
+    onSvgRenderedRef.current = onSvgRendered;
+  }, [onSvgRendered]);
+
   const [svgContent, setSvgContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -107,7 +112,7 @@ export function MermaidRenderer({
         if (isMounted) {
           setSvgContent('');
           setIsLoading(false);
-          if (onSvgRendered) onSvgRendered('', null);
+          if (onSvgRenderedRef.current) onSvgRenderedRef.current('', null);
         }
         return;
       }
@@ -124,12 +129,12 @@ export function MermaidRenderer({
           setSvgContent(svg);
           setIsLoading(false);
 
-          if (onSvgRendered) {
+          if (onSvgRenderedRef.current) {
             // Give DOM a microtask to attach before querying
             setTimeout(() => {
               if (isMounted) {
                 const svgEl = containerRef.current?.querySelector('svg') || null;
-                onSvgRendered(svg, svgEl as SVGSVGElement | null);
+                onSvgRenderedRef.current?.(svg, svgEl as SVGSVGElement | null);
               }
             }, 50);
           }
@@ -155,7 +160,7 @@ export function MermaidRenderer({
     return () => {
       isMounted = false;
     };
-  }, [code, theme, onSvgRendered]);
+  }, [code, theme]);
 
   if (error) {
     return (

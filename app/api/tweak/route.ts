@@ -113,7 +113,7 @@ function getFallbackTweak(cardKey: string, currentContent: any, instruction: str
 export async function POST(req: NextRequest) {
   try {
     // Safely parse request body handling empty body, null, or malformed JSON
-    let body: any = {};
+    let body: Record<string, unknown> = {};
     try {
       const text = await req.text();
       if (text && text.trim()) {
@@ -127,7 +127,9 @@ export async function POST(req: NextRequest) {
       body = {};
     }
 
-    const { cardKey, currentContent, instruction } = body;
+    const cardKey = typeof body.cardKey === 'string' ? body.cardKey : '';
+    const currentContent = body.currentContent;
+    const instruction = typeof body.instruction === 'string' ? body.instruction : '';
 
     // Validate cardKey
     const validCardKeys = ['pullRequest', 'architecture', 'videoScript', 'socialPost'];
@@ -207,6 +209,10 @@ Rules:
         } else {
           throw new Error('Failed to parse Gemini refinement response as JSON.');
         }
+      }
+
+      if (!parsedResult || typeof parsedResult !== 'object') {
+        throw new Error('Refined response from Gemini is not an object.');
       }
 
       return NextResponse.json({

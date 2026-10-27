@@ -59,6 +59,7 @@ export function PullRequestCard({
   const [repoPath, setRepoPath] = useState('AsteroidHH/Wispr-Flow-No-Hands-Challenge');
   const [compareBranch, setCompareBranch] = useState('main...feature');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const toastTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Load saved repo path from localStorage if present
   useEffect(() => {
@@ -68,11 +69,15 @@ export function PullRequestCard({
     } catch {
       // ignore
     }
+    return () => {
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
   }, []);
 
   const showToast = (msg: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    toastTimeoutRef.current = setTimeout(() => setToastMessage(null), 3000);
   };
 
   const getFullMarkdown = () => {

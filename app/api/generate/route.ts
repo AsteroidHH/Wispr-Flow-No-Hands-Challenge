@@ -136,7 +136,7 @@ function getMockFallbackForPreset(presetId?: string, transcript?: string, diff?:
 export async function POST(req: NextRequest) {
   try {
     // Safely parse request body handling empty body, null, or malformed JSON
-    let body: any = {};
+    let body: Record<string, unknown> = {};
     try {
       const text = await req.text();
       if (text && text.trim()) {
@@ -150,8 +150,10 @@ export async function POST(req: NextRequest) {
       body = {};
     }
 
-    const { transcript = '', diff = '', preset } = body;
-    const safeTranscript = typeof transcript === 'string' ? transcript.trim() : '';
+    const transcript = typeof body.transcript === 'string' ? body.transcript : '';
+    const diff = typeof body.diff === 'string' ? body.diff : '';
+    const preset = typeof body.preset === 'string' ? body.preset : undefined;
+    const safeTranscript = transcript.trim();
 
     // Handle large diffs safely (e.g. 50,000+ characters)
     const MAX_DIFF_CHARS = 32000;
@@ -240,6 +242,10 @@ Generate all four developer deliverables strictly conforming to the requested JS
         } else {
           throw new Error('Unable to extract valid JSON from Gemini output.');
         }
+      }
+
+      if (!parsedData || typeof parsedData !== 'object') {
+        throw new Error('Parsed response from Gemini is not an object.');
       }
 
       return NextResponse.json({
