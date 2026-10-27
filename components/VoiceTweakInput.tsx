@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Mic, ArrowRight, Loader2, Sparkles } from 'lucide-react';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface VoiceTweakInputProps {
   cardName: string;
@@ -16,6 +17,7 @@ export function VoiceTweakInput({
   isRefining = false,
   placeholder = 'Hold Wispr to refine this card.'
 }: VoiceTweakInputProps) {
+  const { isLight } = useTheme();
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export function VoiceTweakInput({
   };
 
   return (
-    <div className="pt-3 mt-auto border-t border-[#292a2b]">
+    <div className={`pt-3 mt-auto border-t ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         {/* Subtle Mic Button */}
         <button
@@ -61,9 +63,11 @@ export function VoiceTweakInput({
           onClick={handleMicClick}
           disabled={isRefining}
           title="Hold Wispr to dictate refinement"
-          className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors ${
+          className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors cursor-pointer ${
             isListening
-              ? 'border-rose-500/50 bg-rose-950/40 text-rose-300'
+              ? 'border-rose-500/50 bg-rose-500/10 text-rose-500'
+              : isLight
+              ? 'border-[#E6E6E4] bg-white text-zinc-600 hover:text-black hover:bg-zinc-50 shadow-xs'
               : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#292a2b]'
           } disabled:opacity-40 disabled:cursor-not-allowed`}
         >
@@ -73,7 +77,7 @@ export function VoiceTweakInput({
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
             </span>
           )}
-          <Mic className={`h-3.5 w-3.5 ${isListening ? 'animate-pulse text-rose-400' : ''}`} />
+          <Mic className={`h-3.5 w-3.5 ${isListening ? 'animate-pulse text-rose-500' : isLight ? 'text-amber-600' : ''}`} />
         </button>
 
         {/* Quiet Integrated Input */}
@@ -84,7 +88,11 @@ export function VoiceTweakInput({
             disabled={isRefining}
             onChange={(e) => setInput(e.target.value)}
             placeholder={isRefining ? `Refining ${cardName}...` : placeholder}
-            className="w-full rounded-md border border-[#292a2b] bg-[#0d0e0f] px-3 py-1.5 text-xs text-[#e3e2e3] placeholder:text-[#908f9e] focus:border-[#5e6ad2] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2] font-sans transition-colors disabled:opacity-50"
+            className={`w-full rounded-md border px-3 py-1.5 text-xs font-sans transition-colors focus:outline-none disabled:opacity-50 ${
+              isLight
+                ? 'bg-[#FAFAFA] border-[#E6E6E4] text-[#18181B] placeholder:text-zinc-400 focus:border-amber-600'
+                : 'border-[#292a2b] bg-[#0d0e0f] text-[#e3e2e3] placeholder:text-[#908f9e] focus:border-[#5e6ad2]'
+            }`}
           />
         </div>
 
@@ -92,28 +100,28 @@ export function VoiceTweakInput({
         <button
           type="submit"
           disabled={!input.trim() || isRefining}
-          className="flex h-7 items-center gap-1 rounded-md border border-[#292a2b] bg-[#1f2021] px-2.5 text-xs font-medium text-[#e3e2e3] transition-colors hover:bg-[#292a2b] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+          className={`flex h-7 items-center gap-1 rounded-md border px-2.5 text-xs font-medium transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${
+            isLight
+              ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-50 shadow-xs'
+              : 'border-[#292a2b] bg-[#1f2021] text-[#e3e2e3] hover:bg-[#292a2b] hover:text-white'
+          }`}
         >
           {isRefining ? (
-            <Loader2 className="h-3 w-3 animate-spin text-[#bdc2ff]" />
+            <Loader2 className={`h-3 w-3 animate-spin ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`} />
           ) : (
             <>
-              <span className="text-[11px] hidden sm:inline">Refine</span>
-              <ArrowRight className="h-3 w-3 text-[#908f9e]" />
+              <span className="text-[11px]">Tweak</span>
+              <ArrowRight className="h-3 w-3" />
             </>
           )}
         </button>
       </form>
 
-      {/* Visual Feedback Line */}
-      {(feedback || isRefining) && (
-        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] font-mono text-[#bdc2ff] animate-fadeIn">
-          {isRefining ? (
-            <Loader2 className="h-3 w-3 animate-spin text-[#5e6ad2]" />
-          ) : (
-            <Sparkles className="h-3 w-3 text-[#bdc2ff]" />
-          )}
-          <span>{isRefining ? `Refining ${cardName}...` : feedback}</span>
+      {/* Ephemeral Feedback */}
+      {feedback && (
+        <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-amber-700 font-mono animate-fadeIn">
+          <Sparkles className="h-2.5 w-2.5 text-amber-600" />
+          <span>{feedback}</span>
         </div>
       )}
     </div>

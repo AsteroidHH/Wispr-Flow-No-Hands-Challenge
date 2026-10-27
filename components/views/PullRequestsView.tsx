@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Deliverables } from '@/lib/types';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface PullRequestsViewProps {
   deliverables: Deliverables | null;
@@ -25,6 +26,7 @@ export function PullRequestsView({
   onBack,
   onExportBundle,
 }: PullRequestsViewProps) {
+  const { isLight } = useTheme();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const handleCopy = (id: string, text: string) => {
@@ -44,7 +46,9 @@ export function PullRequestsView({
       branch: 'feat/agent-router-v2',
       base: 'main',
       status: 'Ready to Merge',
-      statusColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      statusColor: isLight
+        ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+        : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
       tag: 'Edge Verified',
       summary: currentSummary,
       changes: currentPr?.keyChanges?.length ? currentPr.keyChanges : [
@@ -62,7 +66,9 @@ export function PullRequestsView({
       branch: 'security/token-blacklist',
       base: 'main',
       status: 'Staging Verified',
-      statusColor: 'bg-indigo-500/10 text-[#bdc2ff] border-indigo-500/30',
+      statusColor: isLight
+        ? 'bg-amber-50 text-amber-800 border-amber-200'
+        : 'bg-indigo-500/10 text-[#bdc2ff] border-indigo-500/30',
       tag: 'CI Passed',
       summary: 'Hardened Auth0 token refresh mechanism with asymmetric RS256 signature verification in middleware/auth.ts. Added Redis token revocation blacklist with 15min TTL.',
       changes: [
@@ -78,7 +84,9 @@ export function PullRequestsView({
       branch: 'perf/edge-cache-ttl',
       base: 'main',
       status: 'Merged #141',
-      statusColor: 'bg-purple-500/10 text-purple-300 border-purple-500/30',
+      statusColor: isLight
+        ? 'bg-zinc-100 text-zinc-700 border-[#E6E6E4]'
+        : 'bg-purple-500/10 text-purple-300 border-purple-500/30',
       tag: '0ms Invalidation',
       summary: 'Replaced stale local cookies with Redis TTLs of 300 seconds and edge middleware session caching.',
       changes: [
@@ -93,7 +101,9 @@ export function PullRequestsView({
       branch: 'feat/audio-visualizer',
       base: 'main',
       status: 'Merged #140',
-      statusColor: 'bg-purple-500/10 text-purple-300 border-purple-500/30',
+      statusColor: isLight
+        ? 'bg-zinc-100 text-zinc-700 border-[#E6E6E4]'
+        : 'bg-purple-500/10 text-purple-300 border-purple-500/30',
       tag: '48kHz Stereo',
       summary: 'Integrated Web Audio AnalyserNode with 256-band FFT HUD and dynamic ambient aura responding to voice volume.',
       changes: [
@@ -107,32 +117,40 @@ export function PullRequestsView({
   return (
     <div className="space-y-6">
       {/* Navigation & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#292a2b] pb-4">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 rounded-lg border border-[#292a2b] bg-[#1b1c1d] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] transition-colors"
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+              isLight
+                ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-50 shadow-xs'
+                : 'border-[#292a2b] bg-[#1b1c1d] text-[#e3e2e3] hover:bg-[#292a2b]'
+            }`}
           >
-            <ArrowLeft className="h-3.5 w-3.5 text-[#5e6ad2]" />
+            <ArrowLeft className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
             <span>Back to Cockpit Overview</span>
           </button>
-          <div className="h-4 w-[1px] bg-[#292a2b]" />
+          <div className={`h-4 w-[1px] ${isLight ? 'bg-[#E6E6E4]' : 'bg-[#292a2b]'}`} />
           <div>
-            <h1 className="text-sm sm:text-base font-semibold tracking-tight text-[#e3e2e3] flex items-center gap-2">
-              <GitPullRequest className="h-4 w-4 text-[#5e6ad2]" />
+            <h1 className={`text-sm sm:text-base font-semibold tracking-tight flex items-center gap-2 ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+              <GitPullRequest className={`h-4 w-4 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
               Pull Request Release Pipeline
             </h1>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="font-mono text-xs text-[#908f9e]">4 Artifacts Active</span>
+          <span className={`font-mono text-xs ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>4 Artifacts Active</span>
           {onExportBundle && (
             <button
               type="button"
               onClick={onExportBundle}
-              className="flex items-center gap-1.5 rounded bg-[#1f2021] border border-[#292a2b] px-2.5 py-1 text-xs text-[#bdc2ff] hover:bg-[#292a2b] font-mono transition-colors"
+              className={`flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-mono transition-colors cursor-pointer shadow-xs ${
+                isLight
+                  ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-50'
+                  : 'bg-[#1f2021] border-[#292a2b] text-[#bdc2ff] hover:bg-[#292a2b]'
+              }`}
             >
               Export ZIP
             </button>
@@ -145,82 +163,120 @@ export function PullRequestsView({
         {prList.map((pr) => (
           <div
             key={pr.id}
-            className="rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-5 shadow-sm hover:border-[#343536] transition-all flex flex-col justify-between gap-4"
+            className={`rounded-xl border p-5 shadow-xs transition-all flex flex-col justify-between gap-4 ${
+              isLight
+                ? 'bg-white border-[#E6E6E4] hover:border-zinc-300'
+                : 'bg-[#1b1c1d] border-[#292a2b] hover:border-[#343536]'
+            }`}
           >
             <div className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0d0e0f] text-[#5e6ad2] border border-[#292a2b]">
-                    <GitPullRequest className="h-4 w-4 text-[#5e6ad2]" />
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg border ${
+                      isLight
+                        ? 'bg-[#18181B] text-white border-[#18181B]'
+                        : 'bg-[#0d0e0f] text-[#5e6ad2] border border-[#292a2b]'
+                    }`}
+                  >
+                    <GitPullRequest className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#e3e2e3] tracking-tight">
+                    <h3 className={`text-sm font-semibold tracking-tight ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
                       {pr.title}
                     </h3>
-                    <div className="flex items-center gap-2 mt-0.5 font-mono text-[11px] text-[#908f9e]">
+                    <div className={`flex items-center gap-2 mt-0.5 font-mono text-[11px] ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
                       <span className="flex items-center gap-1">
-                        <GitBranch className="h-3 w-3 text-[#bdc2ff]" />
-                        <span className="text-[#e3e2e3]">{pr.branch}</span>
+                        <GitBranch className="h-3 w-3 text-amber-600" />
+                        <span>{pr.base}</span>
+                        <span>←</span>
+                        <span className={isLight ? 'text-zinc-800 font-medium' : 'text-[#bdc2ff]'}>{pr.branch}</span>
                       </span>
-                      <span>→</span>
-                      <span>{pr.base}</span>
+                      <span>•</span>
+                      <span>{pr.id}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded text-[11px] font-mono border ${pr.statusColor}`}>
+                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-medium border ${pr.statusColor}`}>
                     {pr.status}
                   </span>
-                  <span className="px-2 py-0.5 rounded text-[11px] font-mono bg-[#0d0e0f] text-[#bdc2ff] border border-[#292a2b]">
+                  <span
+                    className={`font-mono text-[10px] px-2 py-0.5 rounded border ${
+                      isLight
+                        ? 'bg-[#F4F4F5] text-zinc-600 border-[#E6E6E4]'
+                        : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
+                    }`}
+                  >
                     {pr.tag}
                   </span>
                 </div>
               </div>
 
-              <p className="text-xs text-[#908f9e] leading-relaxed">
+              {/* Summary Description Box */}
+              <div
+                className={`rounded-lg p-3 border text-xs leading-relaxed ${
+                  isLight
+                    ? 'bg-[#FAFAFA] border-[#E6E6E4] text-zinc-700'
+                    : 'bg-[#0d0e0f] border border-[#292a2b] text-[#c6c5d5]'
+                }`}
+              >
                 {pr.summary}
-              </p>
+              </div>
 
               {/* Key Changes Checklist */}
-              <div className="rounded-lg bg-[#0d0e0f] border border-[#292a2b] p-3 space-y-1.5 font-mono text-xs text-[#e3e2e3]">
-                {pr.changes.map((change, idx) => (
-                  <div key={idx} className="flex items-start gap-2">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-[#5e6ad2] shrink-0 mt-0.5" />
-                    <span className="text-[11px] text-[#e3e2e3]">{change}</span>
-                  </div>
-                ))}
+              <div>
+                <span className={`text-[11px] font-mono uppercase tracking-wider block mb-1.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                  Key Artifact Enhancements
+                </span>
+                <ul className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                  {pr.changes.map((change, idx) => (
+                    <li
+                      key={idx}
+                      className={`flex items-center gap-2 text-xs rounded-md p-2 border ${
+                        isLight
+                          ? 'bg-white border-[#E6E6E4] text-zinc-700'
+                          : 'bg-[#0d0e0f]/60 border border-[#292a2b] text-[#e3e2e3]'
+                      }`}
+                    >
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <span className="truncate">{change}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
 
-            {/* Actions Bar */}
-            <div className="flex items-center justify-between pt-3 border-t border-[#292a2b]">
-              <button
-                type="button"
-                onClick={() => handleCopy(pr.id, `${pr.title}\n\n${pr.summary}`)}
-                className="flex items-center gap-1 text-xs text-[#908f9e] hover:text-[#e3e2e3] transition-colors"
-              >
-                {copiedId === pr.id ? (
-                  <>
-                    <Check className="h-3.5 w-3.5 text-emerald-400" />
-                    <span className="text-emerald-400">Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-3.5 w-3.5" />
-                    <span>Copy Markdown Spec</span>
-                  </>
-                )}
-              </button>
+            {/* Actions Footer */}
+            <div className={`flex flex-wrap items-center justify-between gap-2 pt-3 border-t ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleCopy(pr.id, `${pr.title}\n\n${pr.summary}`)}
+                  className={`flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs transition-colors cursor-pointer ${
+                    isLight
+                      ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-50'
+                      : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:text-[#e3e2e3]'
+                  }`}
+                >
+                  {copiedId === pr.id ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+                  <span>{copiedId === pr.id ? 'Copied' : 'Copy Spec'}</span>
+                </button>
+              </div>
 
               <a
                 href={pr.deepLink}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 rounded-md bg-[#5e6ad2] hover:bg-[#4f5ac4] px-3 py-1.5 text-xs font-semibold text-white transition-all shadow-sm"
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-xs ${
+                  isLight
+                    ? 'bg-amber-600 hover:bg-amber-700'
+                    : 'bg-[#5e6ad2] hover:bg-[#4f5abf]'
+                }`}
               >
-                <span>Open PR on GitHub</span>
-                <ExternalLink className="h-3.5 w-3.5" />
+                <span>Open on GitHub</span>
+                <ExternalLink className="h-3 w-3" />
               </a>
             </div>
           </div>

@@ -12,6 +12,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { Deliverables } from '@/lib/types';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface ChangelogAiViewProps {
   voiceTranscript: string;
@@ -26,6 +27,7 @@ export function ChangelogAiView({
   deliverables,
   onBack,
 }: ChangelogAiViewProps) {
+  const { isLight } = useTheme();
   const [copied, setCopied] = useState(false);
 
   // Generate a dynamic, rich markdown changelog based on the current session state
@@ -58,7 +60,7 @@ ${breakingChanges.map((b) => `- ${b}`).join('\n')}
 
 ## 📦 Verified Deliverables
 - **Pull Request Spec:** ${pr?.title || 'Automated Engine PR'}
-- **Visual Topology Diagram:** Mermaid Obsidian Architecture Diagram
+- **Visual Topology Diagram:** Mermaid Architecture Diagram
 - **Sprint Teleprompter Script:** 02:00 Demo Video Script
 - **Social Launch Announcement:** Twitter, LinkedIn & Threads draft
 
@@ -86,21 +88,25 @@ ${breakingChanges.map((b) => `- ${b}`).join('\n')}
   return (
     <div className="space-y-6">
       {/* Navigation & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#292a2b] pb-4">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 rounded-lg border border-[#292a2b] bg-[#1b1c1d] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] transition-colors"
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+              isLight
+                ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-50 shadow-xs'
+                : 'border-[#292a2b] bg-[#1b1c1d] text-[#e3e2e3] hover:bg-[#292a2b]'
+            }`}
           >
-            <ArrowLeft className="h-3.5 w-3.5 text-[#5e6ad2]" />
+            <ArrowLeft className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
             <span>Back to Cockpit Overview</span>
           </button>
-          <div className="h-4 w-[1px] bg-[#292a2b]" />
+          <div className={`h-4 w-[1px] ${isLight ? 'bg-[#E6E6E4]' : 'bg-[#292a2b]'}`} />
           <div>
-            <h1 className="text-sm sm:text-base font-semibold tracking-tight text-[#e3e2e3] flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[#5e6ad2]" />
-              AI-Generated Release Changelog
+            <h1 className={`text-sm sm:text-base font-semibold tracking-tight flex items-center gap-2 ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+              <Sparkles className={`h-4 w-4 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+              Changelog AI Copilot
             </h1>
           </div>
         </div>
@@ -109,47 +115,55 @@ ${breakingChanges.map((b) => `- ${b}`).join('\n')}
           <button
             type="button"
             onClick={handleCopy}
-            className="flex items-center gap-1.5 rounded bg-[#1f2021] border border-[#292a2b] px-3 py-1.5 text-xs text-[#e3e2e3] hover:bg-[#292a2b] transition-colors"
+            className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-mono transition-colors cursor-pointer shadow-xs ${
+              isLight
+                ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-50'
+                : 'border-[#292a2b] bg-[#1f2021] text-[#bdc2ff] hover:bg-[#292a2b]'
+            }`}
           >
-            {copied ? (
-              <>
-                <Check className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="h-3.5 w-3.5" />
-                <span>Copy Changelog</span>
-              </>
-            )}
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+            <span>{copied ? 'Copied Markdown' : 'Copy Changelog'}</span>
           </button>
-
           <button
             type="button"
             onClick={handleDownload}
-            className="flex items-center gap-1.5 rounded bg-[#5e6ad2] hover:bg-[#4f5ac4] px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
+            className={`flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-mono transition-colors cursor-pointer shadow-xs ${
+              isLight
+                ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-50'
+                : 'border-[#292a2b] bg-[#1f2021] text-[#e3e2e3] hover:bg-[#292a2b]'
+            }`}
           >
             <Download className="h-3.5 w-3.5" />
-            <span>Download CHANGELOG.md</span>
+            <span>Download .md</span>
           </button>
         </div>
       </div>
 
-      {/* Changelog Markdown Container */}
-      <div className="rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between text-xs font-mono text-[#908f9e] border-b border-[#292a2b] pb-3">
+      {/* Changelog Document Canvas */}
+      <div
+        className={`rounded-xl border p-6 shadow-xs max-w-4xl mx-auto space-y-5 transition-colors ${
+          isLight
+            ? 'bg-white border-[#E6E6E4] text-[#18181B]'
+            : 'bg-[#1b1c1d] border-[#292a2b] text-[#e3e2e3]'
+        }`}
+      >
+        <div className={`flex items-center justify-between border-b pb-3 ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
           <div className="flex items-center gap-2">
-            <Tag className="h-3.5 w-3.5 text-[#ffb867]" />
-            <span className="text-[#e3e2e3] font-semibold">Release v2.5.0-edge</span>
-            <span>•</span>
-            <span>Grounding: Active Session</span>
+            <Tag className={`h-4 w-4 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+            <span className="font-mono text-xs font-semibold">v2.5.0-edge Automated Release</span>
           </div>
-          <span className="text-[#bdc2ff]">Markdown GFM Format</span>
+          <span className={`font-mono text-xs ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>Generated Just Now</span>
         </div>
 
-        <div className="rounded-lg bg-[#0d0e0f] border border-[#292a2b] p-5 font-mono text-xs text-[#e3e2e3] leading-relaxed whitespace-pre-wrap overflow-x-auto select-text">
+        <pre
+          className={`font-mono text-xs p-4 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed border ${
+            isLight
+              ? 'bg-[#FAFAFA] border-[#E6E6E4] text-zinc-800'
+              : 'bg-[#0d0e0f] border-[#292a2b] text-[#e3e2e3]'
+          }`}
+        >
           {markdownChangelog}
-        </div>
+        </pre>
       </div>
     </div>
   );

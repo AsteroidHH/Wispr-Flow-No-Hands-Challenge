@@ -16,8 +16,10 @@ import { transformApiResponseToDeliverables } from '@/lib/transform';
 import { exportArtifactsBundle } from '@/lib/exportBundle';
 import { Deliverables } from '@/lib/types';
 import { Mic, Zap, Sparkles, CheckCircle2, Sliders } from 'lucide-react';
+import { useTheme } from '@/lib/ThemeContext';
 
 export default function Home() {
+  const { isLight } = useTheme();
   const defaultPreset = getDefaultPreset();
   const [activePresetId, setActivePresetId] = useState<string>(defaultPreset.id);
   const [voiceTranscript, setVoiceTranscript] = useState<string>(defaultPreset.voiceTranscript);
@@ -239,7 +241,11 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#0d0e0f] text-[#e3e2e3]">
+    <div
+      className={`flex min-h-screen flex-col transition-colors ${
+        isLight ? 'bg-[#FBFBFA] text-[#18181B]' : 'bg-[#0d0e0f] text-[#e3e2e3]'
+      }`}
+    >
       {/* Sticky Top Navigation Bar */}
       <Navbar
         badgeText="Wispr Flow Challenge"
@@ -277,22 +283,32 @@ export default function Home() {
       <div className="flex-1 lg:pl-60 transition-all flex flex-col justify-between">
         <main className="w-full flex-1 px-4 py-5 sm:px-6">
         {/* Top Cockpit Sub-Header / Ambient Context Bar (from Stitch) */}
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#292a2b] pb-4">
+        <div
+          className={`mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b ${
+            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          }`}
+        >
           <div className="flex flex-wrap items-center gap-2.5">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#5e6ad2] animate-pulse"></span>
-              <h1 className="text-sm sm:text-base font-semibold tracking-tight text-[#e3e2e3]">
+              <span className={`w-2 h-2 rounded-full animate-pulse ${isLight ? 'bg-amber-600' : 'bg-[#5e6ad2]'}`}></span>
+              <h1 className={`text-sm sm:text-base font-semibold tracking-tight ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
                 Cockpit Studio
               </h1>
             </div>
-            <span className="text-[#908f9e] text-xs">/</span>
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#1b1c1d] border border-[#292a2b] text-[#908f9e] font-mono text-[11px]">
-              <span className="text-[#5e6ad2]">terminal:</span>
-              <span className="text-[#e3e2e3]">#ss-9821-rtx</span>
+            <span className={isLight ? 'text-zinc-300 text-xs' : 'text-[#908f9e] text-xs'}>/</span>
+            <div
+              className={`flex items-center gap-1.5 px-2 py-0.5 rounded font-mono text-[11px] border ${
+                isLight
+                  ? 'bg-white border-[#E6E6E4] text-zinc-600 shadow-xs'
+                  : 'bg-[#1b1c1d] border-[#292a2b] text-[#908f9e]'
+              }`}
+            >
+              <span className={isLight ? 'text-amber-700 font-medium' : 'text-[#5e6ad2]'}>session_id:</span>
+              <span className={isLight ? 'text-zinc-800' : 'text-[#e3e2e3]'}>#ss-9821-rtx</span>
             </div>
-            <div className="hidden md:flex items-center gap-1.5 text-[#908f9e] font-mono text-[11px]">
+            <div className={`hidden md:flex items-center gap-1.5 font-mono text-[11px] ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
               <span>Git Head:</span>
-              <span className="text-[#e3e2e3]">0x8efb34</span>
+              <span className={isLight ? 'text-zinc-700 font-semibold' : 'text-[#e3e2e3]'}>0x8efb34</span>
             </div>
           </div>
 
@@ -302,10 +318,14 @@ export default function Home() {
               type="button"
               onClick={() => handleOpenTooling('telemetry')}
               title="Open Telemetry Inspector"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1b1c1d] hover:bg-[#292a2b] border border-[#292a2b] text-[#e3e2e3] font-mono text-xs transition-colors cursor-pointer"
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-mono text-xs transition-colors cursor-pointer shadow-xs ${
+                isLight
+                  ? 'bg-white hover:bg-zinc-50 border-[#E6E6E4] text-zinc-600'
+                  : 'bg-[#1b1c1d] hover:bg-[#292a2b] border-[#292a2b] text-[#e3e2e3]'
+              }`}
             >
-              <Zap className="h-3.5 w-3.5 text-[#ffb867]" />
-              <span>Latency: <strong className="text-[#e3e2e3] font-medium">18ms</strong></span>
+              <Zap className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#ffb867]'}`} />
+              <span>Latency: <strong className={isLight ? 'text-zinc-800 font-semibold' : 'text-[#e3e2e3] font-medium'}>18ms</strong></span>
             </button>
 
             {/* Generation Engine Status Pill */}
@@ -313,10 +333,14 @@ export default function Home() {
               type="button"
               onClick={() => handleOpenTooling('api-keys')}
               title="View Model & API Credentials"
-              className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] hover:bg-[#292a2b] px-2.5 py-1 text-xs text-[#908f9e] font-mono transition-colors cursor-pointer"
+              className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-mono transition-colors cursor-pointer shadow-xs ${
+                isLight
+                  ? 'border-[#FDE68A] bg-[#FEF3C7] text-[#92400E] font-medium'
+                  : 'border-[#292a2b] bg-[#1b1c1d] hover:bg-[#292a2b] text-[#908f9e]'
+              }`}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              <span className="text-[#e3e2e3]">
+              <span>
                 {generationSource === 'gemini_2.5_flash'
                   ? 'Gemini 2.5 Flash'
                   : 'Wispr Audio + Gemini 2.5'}
@@ -328,11 +352,21 @@ export default function Home() {
               type="button"
               onClick={() => handleOpenTooling('settings')}
               title="Cockpit Configuration (⌥S)"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1b1c1d] hover:bg-[#292a2b] text-[#e3e2e3] border border-[#292a2b] font-mono text-xs transition-colors cursor-pointer"
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-mono text-xs transition-colors cursor-pointer shadow-xs ${
+                isLight
+                  ? 'bg-white hover:bg-zinc-50 text-zinc-700 border-[#E6E6E4]'
+                  : 'bg-[#1b1c1d] hover:bg-[#292a2b] text-[#e3e2e3] border-[#292a2b]'
+              }`}
             >
-              <Sliders className="h-3.5 w-3.5 text-[#bdc2ff]" />
+              <Sliders className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`} />
               <span>Config</span>
-              <span className="rounded bg-[#0d0e0f] px-1 py-0.2 text-[9px] text-[#908f9e] border border-[#292a2b]">
+              <span
+                className={`rounded px-1 py-0.2 text-[9px] border ${
+                  isLight
+                    ? 'bg-zinc-100 border-[#E6E6E4] text-zinc-600'
+                    : 'bg-[#0d0e0f] border-[#292a2b] text-[#908f9e]'
+                }`}
+              >
                 ⌥S
               </span>
             </button>
@@ -341,8 +375,14 @@ export default function Home() {
 
         {/* Dynamic Notification Banner */}
         {notification && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#292a2b] bg-[#1b1c1d] px-3.5 py-2 text-xs font-mono text-[#e3e2e3] animate-fadeIn shadow-sm">
-            <CheckCircle2 className="h-3.5 w-3.5 text-[#5e6ad2] shrink-0" />
+          <div
+            className={`mb-4 flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-mono animate-fadeIn shadow-xs border ${
+              isLight
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : 'bg-[#1b1c1d] text-[#e3e2e3] border-[#292a2b]'
+            }`}
+          >
+            <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
             <span>{notification}</span>
           </div>
         )}
@@ -412,28 +452,62 @@ export default function Home() {
         )}
 
         {/* Bottom Global Terminal / Status Bar (from Stitch) */}
-        <div className="mt-6 p-3 rounded-lg bg-[#1b1c1d] border border-[#292a2b] flex flex-wrap items-center justify-between gap-3 text-xs text-[#908f9e] font-mono shadow-sm">
+        <div
+          className={`mt-6 p-3 rounded-lg border flex flex-wrap items-center justify-between gap-3 text-xs font-mono shadow-xs transition-colors ${
+            isLight
+              ? 'bg-white border-[#E6E6E4] text-zinc-500'
+              : 'bg-[#1b1c1d] border-[#292a2b] text-[#908f9e]'
+          }`}
+        >
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#5e6ad2]"></span>
-              <span className="text-[#e3e2e3]">Daemon v2.4 Active</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${isLight ? 'bg-emerald-500' : 'bg-[#5e6ad2]'}`}></span>
+              <span className={isLight ? 'text-zinc-800 font-medium' : 'text-[#e3e2e3]'}>Daemon v2.4 Active</span>
             </div>
-            <span className="text-[#292a2b]">|</span>
-            <span>Branch: <strong className="text-[#bdc2ff]">feat/agent-router-v2</strong></span>
-            <span className="text-[#292a2b]">|</span>
-            <span>Engine Memory: <strong className="text-[#e3e2e3]">248MB</strong></span>
+            <span className={isLight ? 'text-zinc-300' : 'text-[#292a2b]'}>|</span>
+            <span>
+              Branch: <strong className={isLight ? 'text-zinc-700 font-normal' : 'text-[#bdc2ff]'}>feat/agent-router-v2</strong>
+            </span>
+            <span className={isLight ? 'text-zinc-300' : 'text-[#292a2b]'}>|</span>
+            <span>
+              Engine Memory: <strong className={isLight ? 'text-zinc-700 font-normal' : 'text-[#e3e2e3]'}>248MB</strong>
+            </span>
           </div>
           <div className="flex items-center gap-3 text-[11px]">
             <div className="flex items-center gap-1">
-              <span className="px-1.5 py-0.5 rounded bg-[#0d0e0f] text-[#e3e2e3] border border-[#292a2b]">⌥1-3</span>
+              <span
+                className={`px-1.5 py-0.5 rounded border ${
+                  isLight
+                    ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700'
+                    : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
+                }`}
+              >
+                ⌥1-3
+              </span>
               <span>Presets</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="px-1.5 py-0.5 rounded bg-[#0d0e0f] text-[#e3e2e3] border border-[#292a2b]">⌘↵</span>
+              <span
+                className={`px-1.5 py-0.5 rounded border ${
+                  isLight
+                    ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700'
+                    : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
+                }`}
+              >
+                ⌘↵
+              </span>
               <span>Generate</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="px-1.5 py-0.5 rounded bg-[#0d0e0f] text-[#e3e2e3] border border-[#292a2b]">Esc</span>
+              <span
+                className={`px-1.5 py-0.5 rounded border ${
+                  isLight
+                    ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700'
+                    : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
+                }`}
+              >
+                Esc
+              </span>
               <span>Clear</span>
             </div>
           </div>
@@ -455,13 +529,19 @@ export default function Home() {
       />
 
         {/* Footer */}
-        <footer className="mt-auto border-t border-[#292a2b] bg-[#121315] py-4 text-center text-xs text-[#908f9e]">
+        <footer
+          className={`mt-auto py-4 text-center text-xs transition-colors border-t ${
+            isLight
+              ? 'border-[#E6E6E4] bg-white text-zinc-500'
+              : 'border-[#292a2b] bg-[#121315] text-[#908f9e]'
+          }`}
+        >
           <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-            <p className="flex items-center gap-1.5 font-mono text-[11px] text-[#e3e2e3]">
-              <Sparkles className="h-3 w-3 text-[#5e6ad2]" />
+            <p className={`flex items-center gap-1.5 font-mono text-[11px] ${isLight ? 'text-zinc-800' : 'text-[#e3e2e3]'}`}>
+              <Sparkles className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
               ShipSpeak • The Voice-First Last-Mile Engine for Developers
             </p>
-            <p className="font-mono text-[11px] text-[#908f9e]">
+            <p className="font-mono text-[11px]">
               Wispr Flow Challenge • Hold Wispr to refine any card
             </p>
           </div>

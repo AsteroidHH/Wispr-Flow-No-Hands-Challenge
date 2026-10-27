@@ -7,6 +7,7 @@ import { ArchitectureCard } from './cards/ArchitectureCard';
 import { VideoScriptCard } from './cards/VideoScriptCard';
 import { SocialPostCard } from './cards/SocialPostCard';
 import { Sparkles } from 'lucide-react';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface BentoGridProps {
   deliverables: Deliverables | null;
@@ -25,34 +26,50 @@ export function BentoGrid({
   onExportBundle,
   isExportingBundle = false,
 }: BentoGridProps) {
+  const { isLight } = useTheme();
+
   if (isGenerating) {
     return (
-      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-8 text-center shadow-sm">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0d0e0f] border border-[#292a2b] text-[#5e6ad2]">
+      <div
+        className={`flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl p-8 text-center shadow-xs border transition-colors ${
+          isLight
+            ? 'bg-white border-[#E6E6E4]'
+            : 'border-[#292a2b] bg-[#1b1c1d]'
+        }`}
+      >
+        <div
+          className={`flex h-12 w-12 items-center justify-center rounded-xl border shadow-xs ${
+            isLight
+              ? 'bg-[#FAFAFA] border-[#E6E6E4] text-amber-600'
+              : 'bg-[#0d0e0f] border border-[#292a2b] text-[#5e6ad2]'
+          }`}
+        >
           <Sparkles className="h-5 w-5 animate-spin" />
         </div>
-        <h3 className="mt-4 text-sm font-semibold text-[#e3e2e3] tracking-tight">Synthesizing deliverables</h3>
-        <p className="mt-1 max-w-sm text-xs text-[#908f9e]">
+        <h3 className={`mt-4 text-sm font-semibold tracking-tight ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+          Synthesizing deliverables
+        </h3>
+        <p className={`mt-1 max-w-sm text-xs ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
           Converting unstructured voice brain dump and git context into 4 developer-grade assets...
         </p>
-        <div className="mt-5 flex items-center gap-3 font-mono text-[11px] text-[#908f9e]">
+        <div className={`mt-5 flex items-center gap-3 font-mono text-[11px] ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#5e6ad2]"></span>
+            <span className={`h-1.5 w-1.5 rounded-full ${isLight ? 'bg-amber-600' : 'bg-[#5e6ad2]'}`} />
             PR Spec
           </span>
           <span>•</span>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#bdc2ff]"></span>
+            <span className={`h-1.5 w-1.5 rounded-full ${isLight ? 'bg-amber-500' : 'bg-[#bdc2ff]'}`} />
             Mermaid Diagram
           </span>
           <span>•</span>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#ffb867]"></span>
+            <span className={`h-1.5 w-1.5 rounded-full ${isLight ? 'bg-amber-700' : 'bg-[#ffb867]'}`} />
             Demo Script
           </span>
           <span>•</span>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#e2e2e2]"></span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
             Social Post
           </span>
         </div>
@@ -62,9 +79,15 @@ export function BentoGrid({
 
   if (!deliverables) {
     return (
-      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-8 text-center shadow-sm">
-        <p className="text-xs text-[#908f9e]">
-          Select a judge preset or hit <span className="font-mono text-[#e3e2e3]">Generate Ship Artifacts</span> to view output.
+      <div
+        className={`flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl p-8 text-center shadow-xs border transition-colors ${
+          isLight
+            ? 'bg-white border-[#E6E6E4]'
+            : 'border-[#292a2b] bg-[#1b1c1d]'
+        }`}
+      >
+        <p className={`text-xs ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+          Select a scenario preset or hit <span className={`font-mono ${isLight ? 'text-[#18181B] font-semibold' : 'text-[#e3e2e3]'}`}>Generate Ship Artifacts</span> to view output.
         </p>
       </div>
     );
@@ -75,12 +98,18 @@ export function BentoGrid({
       {/* Bento Grid Header */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#5e6ad2] animate-pulse"></span>
-          <span className="text-xs font-medium text-[#e3e2e3]">
+          <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${isLight ? 'bg-amber-600' : 'bg-[#5e6ad2]'}`} />
+          <span className={`text-xs font-medium ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
             Generated Deliverables
           </span>
         </div>
-        <span className="font-mono text-[11px] bg-[#1f2021] text-[#bdc2ff] px-2 py-0.5 rounded border border-[#292a2b]">
+        <span
+          className={`font-mono text-[11px] px-2 py-0.5 rounded border ${
+            isLight
+              ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-600'
+              : 'bg-[#1f2021] text-[#bdc2ff] border-[#292a2b]'
+          }`}
+        >
           4 Artifacts • Voice-Tweakable
         </span>
       </div>

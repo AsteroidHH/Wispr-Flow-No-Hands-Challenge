@@ -13,17 +13,20 @@ import {
   Activity,
   CheckCircle2,
 } from 'lucide-react';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface ReleaseMatrixViewProps {
   onBack: () => void;
 }
 
 export function ReleaseMatrixView({ onBack }: ReleaseMatrixViewProps) {
+  const { isLight } = useTheme();
+
   const environments = [
     {
       name: 'Production Edge',
       status: 'Healthy (2ms)',
-      statusColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      statusColor: isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
       region: 'Global Anycast (iad1, sfo1, cdg1, hnd1)',
       commit: '0x8efb34',
       uptime: '99.99%',
@@ -33,7 +36,7 @@ export function ReleaseMatrixView({ onBack }: ReleaseMatrixViewProps) {
     {
       name: 'Preview Staging',
       status: 'Healthy (4ms)',
-      statusColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      statusColor: isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
       region: 'iad1 (US-East)',
       commit: '0x8efb34 (v2.4.9-rc3)',
       uptime: '100.0%',
@@ -43,7 +46,7 @@ export function ReleaseMatrixView({ onBack }: ReleaseMatrixViewProps) {
     {
       name: 'Canary Deployment',
       status: 'Healthy (3ms)',
-      statusColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      statusColor: isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
       region: 'Weighted Edge Split (10%)',
       commit: '0x8efb34',
       uptime: '99.98%',
@@ -53,7 +56,7 @@ export function ReleaseMatrixView({ onBack }: ReleaseMatrixViewProps) {
     {
       name: 'Edge Worker Pool',
       status: 'Healthy (1ms)',
-      statusColor: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+      statusColor: isLight ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
       region: '12 Global Worker Nodes',
       commit: 'v2.4.9 Worker Daemon',
       uptime: '100.0%',
@@ -65,28 +68,32 @@ export function ReleaseMatrixView({ onBack }: ReleaseMatrixViewProps) {
   return (
     <div className="space-y-6">
       {/* Navigation & Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#292a2b] pb-4">
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4 ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBack}
-            className="flex items-center gap-1.5 rounded-lg border border-[#292a2b] bg-[#1b1c1d] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] transition-colors"
+            className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
+              isLight
+                ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-50 shadow-xs'
+                : 'border-[#292a2b] bg-[#1b1c1d] text-[#e3e2e3] hover:bg-[#292a2b]'
+            }`}
           >
-            <ArrowLeft className="h-3.5 w-3.5 text-[#5e6ad2]" />
+            <ArrowLeft className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
             <span>Back to Cockpit Overview</span>
           </button>
-          <div className="h-4 w-[1px] bg-[#292a2b]" />
+          <div className={`h-4 w-[1px] ${isLight ? 'bg-[#E6E6E4]' : 'bg-[#292a2b]'}`} />
           <div>
-            <h1 className="text-sm sm:text-base font-semibold tracking-tight text-[#e3e2e3] flex items-center gap-2">
-              <Rocket className="h-4 w-4 text-[#ffb867]" />
-              ShipSpeak Release Matrix & Edge Deployments
+            <h1 className={`text-sm sm:text-base font-semibold tracking-tight flex items-center gap-2 ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+              <Rocket className={`h-4 w-4 ${isLight ? 'text-amber-600' : 'text-[#ffb867]'}`} />
+              ShipSpeak Release Matrix &amp; Edge Deployments
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-mono text-[#908f9e]">
-          <span className="flex items-center gap-1.5 text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="flex items-center gap-2 text-xs font-mono">
+          <span className="flex items-center gap-1.5 text-emerald-600 font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             All 4 Environments Operational
           </span>
         </div>
@@ -97,54 +104,67 @@ export function ReleaseMatrixView({ onBack }: ReleaseMatrixViewProps) {
         {environments.map((env) => (
           <div
             key={env.name}
-            className="rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-5 shadow-sm hover:border-[#343536] transition-all flex flex-col justify-between gap-4"
+            className={`rounded-xl border p-5 shadow-xs transition-all flex flex-col justify-between gap-4 ${
+              isLight
+                ? 'bg-white border-[#E6E6E4] hover:border-zinc-300'
+                : 'bg-[#1b1c1d] border-[#292a2b] hover:border-[#343536]'
+            }`}
           >
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0d0e0f] text-[#5e6ad2] border border-[#292a2b]">
-                    <Server className="h-4 w-4 text-[#bdc2ff]" />
+                <div className="flex items-center gap-2">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg border ${
+                      isLight
+                        ? 'bg-[#18181B] text-white border-[#18181B]'
+                        : 'bg-[#0d0e0f] text-[#5e6ad2] border border-[#292a2b]'
+                    }`}
+                  >
+                    <Server className="h-4 w-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-[#e3e2e3] tracking-tight">
+                    <h3 className={`text-sm font-semibold tracking-tight ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
                       {env.name}
                     </h3>
-                    <span className="font-mono text-[11px] text-[#908f9e]">
-                      {env.region}
-                    </span>
+                    <p className={`text-[11px] font-mono ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{env.region}</p>
                   </div>
                 </div>
 
-                <span className={`px-2 py-0.5 rounded text-[11px] font-mono border ${env.statusColor} flex items-center gap-1`}>
-                  <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-medium border ${env.statusColor}`}>
                   {env.status}
                 </span>
               </div>
 
-              <p className="text-xs text-[#908f9e] leading-relaxed">
-                {env.details}
-              </p>
+              <p className={`text-xs leading-relaxed ${isLight ? 'text-zinc-600' : 'text-[#c6c5d5]'}`}>{env.details}</p>
 
-              {/* Technical Metrics Metadata */}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#292a2b] font-mono text-[11px]">
-                <div className="rounded bg-[#0d0e0f] p-2 border border-[#292a2b]">
-                  <span className="text-[#908f9e] block text-[10px]">Head Commit</span>
-                  <span className="text-[#e3e2e3] font-medium truncate block">{env.commit}</span>
+              <div
+                className={`grid grid-cols-3 gap-2 rounded-lg p-2.5 font-mono text-[11px] border ${
+                  isLight
+                    ? 'bg-[#FAFAFA] border-[#E6E6E4] text-zinc-700'
+                    : 'bg-[#0d0e0f] border border-[#292a2b] text-[#bdc2ff]'
+                }`}
+              >
+                <div>
+                  <span className={`text-[10px] block ${isLight ? 'text-zinc-400' : 'text-[#908f9e]'}`}>Commit</span>
+                  <span className="font-medium truncate block">{env.commit}</span>
                 </div>
-                <div className="rounded bg-[#0d0e0f] p-2 border border-[#292a2b]">
-                  <span className="text-[#908f9e] block text-[10px]">Uptime SLA</span>
-                  <span className="text-emerald-400 font-medium block">{env.uptime}</span>
+                <div>
+                  <span className={`text-[10px] block ${isLight ? 'text-zinc-400' : 'text-[#908f9e]'}`}>Uptime</span>
+                  <span className="text-emerald-600 font-semibold">{env.uptime}</span>
                 </div>
-                <div className="rounded bg-[#0d0e0f] p-2 border border-[#292a2b]">
-                  <span className="text-[#908f9e] block text-[10px]">Security</span>
-                  <span className="text-[#bdc2ff] font-medium block">{env.tls}</span>
+                <div>
+                  <span className={`text-[10px] block ${isLight ? 'text-zinc-400' : 'text-[#908f9e]'}`}>Security</span>
+                  <span className="font-medium truncate block">{env.tls}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-[11px] font-mono text-[#908f9e] pt-2 border-t border-[#292a2b]">
-              <span>Last health ping: 3s ago</span>
-              <span className="text-[#bdc2ff]">Zero-Downtime Live</span>
+            <div className={`flex items-center justify-between pt-3 border-t text-xs font-mono ${isLight ? 'border-[#E6E6E4] text-zinc-500' : 'border-[#292a2b] text-[#908f9e]'}`}>
+              <span className="flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                <span>Zero Downtime Edge Ingress</span>
+              </span>
+              <span className="text-[11px]">Next probe: 30s</span>
             </div>
           </div>
         ))}

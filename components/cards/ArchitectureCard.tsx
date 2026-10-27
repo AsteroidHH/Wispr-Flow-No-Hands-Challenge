@@ -23,6 +23,7 @@ import {
 import { ArchitectureDeliverable } from '@/lib/types';
 import { MermaidRenderer, MermaidTheme, THEME_CONFIGS } from '@/components/MermaidRenderer';
 import { VoiceTweakInput } from '@/components/VoiceTweakInput';
+import { useTheme } from '@/lib/ThemeContext';
 
 interface ArchitectureCardProps {
   data: ArchitectureDeliverable;
@@ -31,9 +32,10 @@ interface ArchitectureCardProps {
 }
 
 export function ArchitectureCard({ data, onTweak, isRefining = false }: ArchitectureCardProps) {
+  const { isLight } = useTheme();
   const [viewMode, setViewMode] = useState<'diagram' | 'code'>('diagram');
   const [copied, setCopied] = useState(false);
-  const [activeTheme, setActiveTheme] = useState<MermaidTheme>('obsidian');
+  const [activeTheme, setActiveTheme] = useState<MermaidTheme>(isLight ? 'slate' : 'obsidian');
   const [zoom, setZoom] = useState<number>(1);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [isExportingPng, setIsExportingPng] = useState<boolean>(false);
@@ -207,22 +209,38 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
   // Common diagram view controls toolbar
   const renderControlsToolbar = () => (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#0d0e0f] p-1.5 border border-[#292a2b] text-xs">
+    <div
+      className={`flex flex-wrap items-center justify-between gap-2 rounded-lg p-1.5 border text-xs ${
+        isLight
+          ? 'bg-[#F4F4F5] border-[#E6E6E4]'
+          : 'bg-[#0d0e0f] border-[#292a2b]'
+      }`}
+    >
       {/* Theme Switcher */}
       <div className="flex items-center gap-1.5">
-        <span className="flex items-center gap-1 text-[11px] text-[#908f9e] mr-1">
-          <Palette className="h-3 w-3 text-[#5e6ad2]" />
+        <span className={`flex items-center gap-1 text-[11px] mr-1 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+          <Palette className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
           Theme:
         </span>
-        <div className="flex rounded bg-[#1b1c1d] p-0.5 border border-[#292a2b]">
+        <div
+          className={`flex rounded p-0.5 border ${
+            isLight
+              ? 'bg-white border-[#E6E6E4]'
+              : 'bg-[#1b1c1d] border-[#292a2b]'
+          }`}
+        >
           {(['obsidian', 'cyberpunk', 'slate'] as MermaidTheme[]).map((thm) => (
             <button
               key={thm}
               type="button"
               onClick={() => handleThemeChange(thm)}
-              className={`rounded px-2 py-0.5 text-[10px] font-mono transition-colors ${
+              className={`rounded px-2 py-0.5 text-[10px] font-mono transition-colors cursor-pointer ${
                 activeTheme === thm
-                  ? 'bg-[#1f2021] text-white font-medium shadow-xs border border-[#343536]'
+                  ? isLight
+                    ? 'bg-amber-100 text-amber-900 font-semibold shadow-xs'
+                    : 'bg-[#1f2021] text-white font-medium shadow-xs border border-[#343536]'
+                  : isLight
+                  ? 'text-zinc-600 hover:text-black'
                   : 'text-[#908f9e] hover:text-[#e3e2e3]'
               }`}
             >
@@ -234,12 +252,20 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
       {/* Zoom and Navigation Controls */}
       <div className="flex items-center gap-1">
-        <div className="flex items-center rounded bg-[#1b1c1d] p-0.5 border border-[#292a2b]">
+        <div
+          className={`flex items-center rounded p-0.5 border ${
+            isLight
+              ? 'bg-white border-[#E6E6E4]'
+              : 'bg-[#1b1c1d] border-[#292a2b]'
+          }`}
+        >
           <button
             type="button"
             onClick={handleZoomOut}
             title="Zoom Out"
-            className="rounded p-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3] transition-colors"
+            className={`rounded p-1 transition-colors cursor-pointer ${
+              isLight ? 'text-zinc-600 hover:bg-zinc-100' : 'text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3]'
+            }`}
           >
             <ZoomOut className="h-3.5 w-3.5" />
           </button>
@@ -247,16 +273,20 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
             type="button"
             onClick={handleResetZoom}
             title="Reset Zoom (100%)"
-            className="flex items-center gap-0.5 px-1.5 py-0.5 font-mono text-[10px] text-[#e3e2e3] hover:bg-[#292a2b] rounded transition-colors"
+            className={`flex items-center gap-0.5 px-1.5 py-0.5 font-mono text-[10px] rounded transition-colors cursor-pointer ${
+              isLight ? 'text-zinc-800 hover:bg-zinc-100' : 'text-[#e3e2e3] hover:bg-[#292a2b]'
+            }`}
           >
-            <RotateCcw className="h-2.5 w-2.5 text-[#908f9e]" />
+            <RotateCcw className="h-2.5 w-2.5 text-zinc-400" />
             <span>{Math.round(zoom * 100)}%</span>
           </button>
           <button
             type="button"
             onClick={handleZoomIn}
             title="Zoom In"
-            className="rounded p-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3] transition-colors"
+            className={`rounded p-1 transition-colors cursor-pointer ${
+              isLight ? 'text-zinc-600 hover:bg-zinc-100' : 'text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3]'
+            }`}
           >
             <ZoomIn className="h-3.5 w-3.5" />
           </button>
@@ -265,9 +295,13 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
         {/* Fullscreen Button */}
         <button
           type="button"
-          onClick={() => setIsFullscreen(prev => !prev)}
+          onClick={() => setIsFullscreen((prev) => !prev)}
           title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Inspection Modal'}
-          className="flex items-center gap-1 rounded border border-[#292a2b] bg-[#1f2021] p-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3] transition-colors"
+          className={`flex items-center gap-1 rounded border p-1 transition-colors cursor-pointer ${
+            isLight
+              ? 'border-[#E6E6E4] bg-white text-zinc-700 hover:bg-zinc-100'
+              : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3]'
+          }`}
         >
           {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
@@ -277,48 +311,76 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
   return (
     <>
-      {/* Standard Card Container */}
+      {/* Standard Card Container matching Stitch */}
       <div
-        className={`flex flex-col h-full justify-between bg-[#1b1c1d] border rounded-xl p-5 transition-all shadow-sm overflow-hidden ${
-          isRefining
-            ? 'border-[#5e6ad2]/70 ring-1 ring-[#5e6ad2]/40 shadow-[#5e6ad2]/10'
-            : 'border-[#292a2b] hover:border-[#343536]'
+        className={`flex flex-col h-full justify-between border rounded-xl p-5 transition-all shadow-xs overflow-hidden ${
+          isLight
+            ? isRefining
+              ? 'bg-white border-amber-500/70 ring-1 ring-amber-500/40'
+              : 'bg-white border-[#E6E6E4] hover:border-zinc-300'
+            : isRefining
+            ? 'bg-[#1b1c1d] border-[#5e6ad2]/70 ring-1 ring-[#5e6ad2]/40 shadow-[#5e6ad2]/10'
+            : 'bg-[#1b1c1d] border-[#292a2b] hover:border-[#343536]'
         }`}
       >
         <div className="flex-1 flex flex-col min-h-0">
-          {/* Card Header */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#292a2b]">
+          {/* Card Header matching Stitch */}
+          <div
+            className={`flex flex-wrap items-center justify-between gap-2 pb-3 border-b ${
+              isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+            }`}
+          >
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]">
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
+                  isLight
+                    ? 'bg-[#18181B] text-amber-500 border-[#18181B]'
+                    : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
+                }`}
+              >
                 {isRefining ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                  <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
                 ) : (
-                  <Workflow className="h-3.5 w-3.5 text-[#5e6ad2]" />
+                  <Workflow className="h-3.5 w-3.5" />
                 )}
               </div>
               <div>
-                <h3 className="text-sm font-semibold text-[#e3e2e3] tracking-tight flex items-center gap-2">
-                  Architecture Topology
+                <h3
+                  className={`text-xs font-semibold tracking-tight flex items-center gap-2 ${
+                    isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
+                  }`}
+                >
+                  Architecture Topology Diagram
                   {isRefining && (
-                    <span className="text-[10px] font-mono text-[#bdc2ff]">
+                    <span className={`text-[10px] font-mono ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
                       Refining...
                     </span>
                   )}
                 </h3>
-                <p className="text-xs text-[#908f9e] mt-0.5">{data.title}</p>
+                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{data.title}</p>
               </div>
             </div>
 
-            {/* Header Action Buttons - Minimal Ghost Toolbar */}
+            {/* Header Action Buttons */}
             <div className="flex items-center gap-1">
               {/* Diagram / Code Toggle */}
-              <div className="flex rounded-md bg-[#0d0e0f] p-0.5 border border-[#292a2b] mr-1">
+              <div
+                className={`flex rounded-md p-0.5 border mr-1 ${
+                  isLight
+                    ? 'bg-[#F4F4F5] border-[#E6E6E4]'
+                    : 'bg-[#0d0e0f] border border-[#292a2b]'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => setViewMode('diagram')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
                     viewMode === 'diagram'
-                      ? 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                      ? isLight
+                        ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
+                        : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                      : isLight
+                      ? 'text-zinc-600 hover:text-[#18181B]'
                       : 'text-[#908f9e] hover:text-[#e3e2e3]'
                   }`}
                 >
@@ -328,9 +390,13 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 <button
                   type="button"
                   onClick={() => setViewMode('code')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
                     viewMode === 'code'
-                      ? 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                      ? isLight
+                        ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
+                        : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                      : isLight
+                      ? 'text-zinc-600 hover:text-[#18181B]'
                       : 'text-[#908f9e] hover:text-[#e3e2e3]'
                   }`}
                 >
@@ -344,15 +410,19 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 type="button"
                 onClick={handleExportPng}
                 disabled={isExportingPng}
-                title="Export as PNG (retina canvas)"
-                className="flex items-center gap-1 p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] bg-[#1f2021] hover:bg-[#292a2b] border border-[#292a2b] transition-colors text-xs disabled:opacity-40"
+                title="Export as PNG"
+                className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-mono transition-colors disabled:opacity-40 cursor-pointer ${
+                  isLight
+                    ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700 hover:bg-white'
+                    : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+                }`}
               >
                 {isExportingPng ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                  <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
                 ) : (
                   <ImageIcon className="h-3.5 w-3.5" />
                 )}
-                <span className="hidden sm:inline text-[11px]">PNG</span>
+                <span className="text-[10px]">PNG</span>
               </button>
 
               {/* Export as SVG Button */}
@@ -360,15 +430,19 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 type="button"
                 onClick={handleExportSvg}
                 disabled={isExportingSvg}
-                title="Export as raw SVG markup"
-                className="flex items-center gap-1 p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] bg-[#1f2021] hover:bg-[#292a2b] border border-[#292a2b] transition-colors text-xs disabled:opacity-40"
+                title="Export as SVG"
+                className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-mono transition-colors disabled:opacity-40 cursor-pointer ${
+                  isLight
+                    ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700 hover:bg-white'
+                    : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+                }`}
               >
                 {isExportingSvg ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                  <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
                 ) : (
                   <FileCode className="h-3.5 w-3.5" />
                 )}
-                <span className="hidden sm:inline text-[11px]">SVG</span>
+                <span className="text-[10px]">SVG</span>
               </button>
 
               {/* Copy Code Button */}
@@ -376,30 +450,46 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 type="button"
                 onClick={handleCopyCode}
                 title="Copy Mermaid code"
-                className="flex items-center p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] bg-[#1f2021] hover:bg-[#292a2b] border border-[#292a2b] transition-colors text-xs"
+                className={`flex items-center p-1.5 rounded-md border transition-colors text-xs cursor-pointer ${
+                  isLight
+                    ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700 shadow-xs'
+                    : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+                }`}
               >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+                {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
               </button>
             </div>
           </div>
 
           {/* Toast Feedback Notification */}
           {toastMessage && (
-            <div className="mt-2.5 flex items-center gap-1.5 rounded-md bg-[#0d0e0f] px-2.5 py-1 text-[11px] font-mono text-[#bdc2ff] border border-[#292a2b] animate-fadeIn">
-              <Sparkles className="h-3 w-3 text-[#5e6ad2]" />
+            <div
+              className={`mt-2.5 flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-mono border animate-fadeIn ${
+                isLight
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
+              }`}
+            >
+              <Sparkles className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
               <span>{toastMessage}</span>
             </div>
           )}
 
-          {/* Card Content with Height Equalization */}
+          {/* Card Content */}
           <div className="mt-3.5 flex-1 flex flex-col min-h-0 space-y-2.5">
             {viewMode === 'diagram' ? (
               <div className="w-full flex-1 flex flex-col min-h-0 space-y-2">
                 {/* Navigation and Theme Toolbar */}
                 {renderControlsToolbar()}
 
-                {/* Rendered Mermaid Viewport */}
-                <div className="w-full min-h-[280px] max-h-[360px] bg-[#0d0e0f] border border-[#292a2b] rounded-lg p-3 flex items-center justify-center overflow-auto">
+                {/* Rendered Mermaid Viewport matching Stitch */}
+                <div
+                  className={`w-full min-h-[280px] max-h-[360px] border rounded-lg p-3 flex items-center justify-center overflow-auto ${
+                    isLight
+                      ? 'bg-[#FAFAFA] border-[#E6E6E4]'
+                      : 'bg-[#0d0e0f] border-[#292a2b]'
+                  }`}
+                >
                   <MermaidRenderer
                     code={data.mermaidCode}
                     theme={activeTheme}
@@ -409,17 +499,46 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                   />
                 </div>
 
-                <p className="mt-1 text-[11px] text-[#908f9e] italic">
+                {/* Sub-Agents Pool info badge matching Stitch */}
+                <div
+                  className={`p-2 rounded border flex items-center justify-between text-xs shadow-xs ${
+                    isLight
+                      ? 'bg-white border-[#E6E6E4]'
+                      : 'bg-[#1b1c1d] border-[#292a2b]'
+                  }`}
+                >
+                  <div className={`flex items-center gap-1.5 ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
+                    <Workflow className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+                    <span className="font-medium text-[11px]">Sub-Agents Pool</span>
+                  </div>
+                  <span
+                    className={`font-mono text-[10px] px-1.5 py-0.5 rounded font-medium border ${
+                      isLight
+                        ? 'text-amber-800 bg-amber-100/70 border-amber-200'
+                        : 'text-[#bdc2ff] bg-[#1f2021] border-[#292a2b]'
+                    }`}
+                  >
+                    Concurrent x4
+                  </span>
+                </div>
+
+                <p className={`mt-1 text-[11px] italic ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
                   {data.description}
                 </p>
               </div>
             ) : (
               <div className="flex-1 flex flex-col min-h-0 space-y-2">
-                <div className="flex items-center justify-between text-xs text-[#908f9e] font-medium">
+                <div className={`flex items-center justify-between text-xs font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
                   <span>Mermaid specification</span>
-                  <span className="font-mono text-[10px] text-[#908f9e]">flowchart</span>
+                  <span className="font-mono text-[10px]">flowchart</span>
                 </div>
-                <pre className="flex-1 min-h-[280px] max-h-[360px] overflow-x-auto rounded-lg bg-[#0d0e0f] p-4 font-mono text-xs text-[#e3e2e3] border border-[#292a2b] leading-relaxed">
+                <pre
+                  className={`flex-1 min-h-[280px] max-h-[360px] overflow-x-auto rounded-lg p-4 font-mono text-xs border leading-relaxed ${
+                    isLight
+                      ? 'bg-[#FAFAFA] text-zinc-800 border-[#E6E6E4]'
+                      : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
+                  }`}
+                >
                   <code>{data.mermaidCode}</code>
                 </pre>
               </div>

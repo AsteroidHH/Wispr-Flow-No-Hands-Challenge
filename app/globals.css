@@ -1,6 +1,22 @@
 @import "tailwindcss";
 
 :root {
+  --bg-lowest: #FBFBFA;
+  --surface: #FFFFFF;
+  --surface-low: #F4F4F5;
+  --surface-container: #FAFAFA;
+  --surface-high: #E6E6E4;
+  --surface-highest: #D4D4D2;
+  --primary-accent: #D97706;
+  --primary-tint: #FEF3C7;
+  --accent-tertiary: #92400E;
+  --text-main: #18181B;
+  --text-muted: #71717A;
+  --text-variant: #52525B;
+  --border-subtle: #E6E6E4;
+}
+
+html.dark {
   --bg-lowest: #0d0e0f;
   --surface: #121315;
   --surface-low: #1b1c1d;
@@ -21,6 +37,7 @@ body {
   color: var(--text-main);
   font-family: 'Inter', var(--font-geist-sans), -apple-system, BlinkMacSystemFont, sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* Custom Sleek Scrollbar */
@@ -30,7 +47,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--bg-lowest);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {

@@ -14,10 +14,11 @@ import {
   ExternalLink,
   Archive,
   Sparkles,
-  X
+  X,
 } from 'lucide-react';
 import { PullRequestDeliverable } from '@/lib/types';
 import { VoiceTweakInput } from '@/components/VoiceTweakInput';
+import { useTheme } from '@/lib/ThemeContext';
 
 function GithubIcon({ className = 'h-3.5 w-3.5' }: { className?: string }) {
   return (
@@ -51,6 +52,7 @@ export function PullRequestCard({
   onExportBundle,
   isExportingBundle = false,
 }: PullRequestCardProps) {
+  const { isLight } = useTheme();
   const [copied, setCopied] = useState(false);
   const [viewTab, setViewTab] = useState<'structured' | 'markdown'>('structured');
   const [isRepoModalOpen, setIsRepoModalOpen] = useState(false);
@@ -128,7 +130,6 @@ ${breakingChangesList || '- None'}`;
     const titleParam = encodeURIComponent(data.title || 'ShipSpeak: Deliverables PR');
     const fullMarkdown = getFullMarkdown();
 
-    // Guard URL length against browser and GitHub server query limits (~4500 chars)
     const MAX_PARAM_LENGTH = 4000;
     let safeMarkdown = fullMarkdown;
     let wasTruncated = false;
@@ -145,7 +146,6 @@ ${breakingChangesList || '- None'}`;
 
     const bodyParam = encodeURIComponent(safeMarkdown);
     const compare = encodeURIComponent(compareBranch.trim() || 'main...feature');
-
     const githubPrUrl = `https://github.com/${cleanRepo}/compare/${compare}?quick_pull=1&title=${titleParam}&body=${bodyParam}`;
 
     window.open(githubPrUrl, '_blank', 'noopener,noreferrer');
@@ -156,52 +156,88 @@ ${breakingChangesList || '- None'}`;
   return (
     <>
       <div
-        className={`flex flex-col h-full justify-between bg-[#1b1c1d] border rounded-xl p-5 transition-all shadow-sm overflow-hidden ${
-          isRefining
-            ? 'border-[#5e6ad2]/70 ring-1 ring-[#5e6ad2]/40 shadow-[#5e6ad2]/10'
-            : 'border-[#292a2b] hover:border-[#343536]'
+        className={`flex flex-col h-full justify-between border rounded-xl p-5 transition-all shadow-xs overflow-hidden ${
+          isLight
+            ? isRefining
+              ? 'bg-white border-amber-500/70 ring-1 ring-amber-500/40'
+              : 'bg-white border-[#E6E6E4] hover:border-zinc-300'
+            : isRefining
+            ? 'bg-[#1b1c1d] border-[#5e6ad2]/70 ring-1 ring-[#5e6ad2]/40 shadow-[#5e6ad2]/10'
+            : 'bg-[#1b1c1d] border-[#292a2b] hover:border-[#343536]'
         }`}
       >
         <div className="flex-1 flex flex-col min-h-0">
-          {/* Card Header */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#292a2b]">
+          {/* Card Header matching Stitch */}
+          <div
+            className={`flex flex-wrap items-center justify-between gap-2 pb-3 border-b ${
+              isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+            }`}
+          >
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]">
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
+                  isLight
+                    ? 'bg-[#18181B] text-amber-500 border-[#18181B]'
+                    : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
+                }`}
+              >
                 {isRefining ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                  <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
                 ) : (
-                  <GitPullRequest className="h-3.5 w-3.5 text-[#5e6ad2]" />
+                  <GitPullRequest className="h-3.5 w-3.5" />
                 )}
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-[#e3e2e3] tracking-tight">
-                    Pull Request
+                  <h3
+                    className={`text-xs font-semibold tracking-tight ${
+                      isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
+                    }`}
+                  >
+                    GitHub Pull Request &amp; Commit
                   </h3>
                   {/* Target Branch Tag Pill */}
-                  <span className="font-mono text-[11px] bg-[#0d0e0f] text-[#bdc2ff] px-2 py-0.5 rounded border border-[#292a2b] hidden sm:inline-block">
+                  <span
+                    className={`font-mono text-[10px] px-2 py-0.5 rounded border hidden sm:inline-block ${
+                      isLight
+                        ? 'bg-[#F4F4F5] text-zinc-600 border-[#E6E6E4]'
+                        : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
+                    }`}
+                  >
                     Target: {compareBranch.replace('...', ' → ')}
                   </span>
                   {isRefining && (
-                    <span className="text-[10px] font-mono text-[#bdc2ff]">
+                    <span className={`text-[10px] font-mono ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
                       Refining...
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-[#908f9e] mt-0.5">Automated Engine PR</p>
+                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                  Automated Engine PR
+                </p>
               </div>
             </div>
 
             {/* Ghost Toolbar & Actions */}
             <div className="flex items-center gap-1.5">
               {/* View Tab Toggle */}
-              <div className="flex rounded-md bg-[#0d0e0f] p-0.5 border border-[#292a2b]">
+              <div
+                className={`flex rounded-md p-0.5 border ${
+                  isLight
+                    ? 'bg-[#F4F4F5] border-[#E6E6E4]'
+                    : 'bg-[#0d0e0f] border border-[#292a2b]'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => setViewTab('structured')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
                     viewTab === 'structured'
-                      ? 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                      ? isLight
+                        ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
+                        : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                      : isLight
+                      ? 'text-zinc-600 hover:text-[#18181B]'
                       : 'text-[#908f9e] hover:text-[#e3e2e3]'
                   }`}
                 >
@@ -211,9 +247,13 @@ ${breakingChangesList || '- None'}`;
                 <button
                   type="button"
                   onClick={() => setViewTab('markdown')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
+                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
                     viewTab === 'markdown'
-                      ? 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                      ? isLight
+                        ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
+                        : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                      : isLight
+                      ? 'text-zinc-600 hover:text-[#18181B]'
                       : 'text-[#908f9e] hover:text-[#e3e2e3]'
                   }`}
                 >
@@ -227,10 +267,14 @@ ${breakingChangesList || '- None'}`;
                 type="button"
                 onClick={handleCopy}
                 title="Copy markdown spec"
-                className="flex items-center p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] bg-[#1f2021] hover:bg-[#292a2b] border border-[#292a2b] transition-colors text-xs"
+                className={`flex items-center p-1.5 rounded-md border transition-colors text-xs cursor-pointer ${
+                  isLight
+                    ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-600'
+                    : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+                }`}
               >
                 {copied ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  <Check className="h-3.5 w-3.5 text-emerald-600" />
                 ) : (
                   <Copy className="h-3.5 w-3.5" />
                 )}
@@ -243,10 +287,14 @@ ${breakingChangesList || '- None'}`;
                   onClick={onExportBundle}
                   disabled={isExportingBundle}
                   title="Export complete deliverables bundle (.zip)"
-                  className="flex items-center p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] bg-[#1f2021] hover:bg-[#292a2b] border border-[#292a2b] transition-colors text-xs disabled:opacity-40 cursor-pointer"
+                  className={`flex items-center p-1.5 rounded-md border transition-colors text-xs disabled:opacity-40 cursor-pointer ${
+                    isLight
+                      ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-600'
+                      : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+                  }`}
                 >
                   {isExportingBundle ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                    <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
                   ) : (
                     <Archive className="h-3.5 w-3.5" />
                   )}
@@ -257,8 +305,14 @@ ${breakingChangesList || '- None'}`;
 
           {/* Toast Notification */}
           {toastMessage && (
-            <div className="mt-2.5 flex items-center gap-1.5 rounded-md bg-[#0d0e0f] px-2.5 py-1 text-[11px] font-mono text-[#bdc2ff] border border-[#292a2b] animate-fadeIn">
-              <Sparkles className="h-3 w-3 text-[#5e6ad2]" />
+            <div
+              className={`mt-2.5 flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-mono border animate-fadeIn ${
+                isLight
+                  ? 'bg-amber-50 text-amber-800 border-amber-200'
+                  : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
+              }`}
+            >
+              <Sparkles className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
               <span>{toastMessage}</span>
             </div>
           )}
@@ -266,40 +320,64 @@ ${breakingChangesList || '- None'}`;
           {/* Tab Content */}
           {viewTab === 'structured' ? (
             <div className="mt-3.5 flex-1 max-h-[340px] overflow-y-auto pr-1 space-y-3">
-              <div className="rounded-lg bg-[#0d0e0f] p-3 border border-[#292a2b]">
-                <div className="flex items-center gap-1.5 text-xs font-medium text-[#bdc2ff]">
-                  <GitCommit className="h-3.5 w-3.5 text-[#5e6ad2] shrink-0" />
+              <div
+                className={`rounded-lg p-3 border ${
+                  isLight
+                    ? 'bg-[#FAFAFA] border-[#E6E6E4]'
+                    : 'bg-[#0d0e0f] border border-[#292a2b]'
+                }`}
+              >
+                <div
+                  className={`flex items-center gap-1.5 text-xs font-medium ${
+                    isLight ? 'text-zinc-700' : 'text-[#bdc2ff]'
+                  }`}
+                >
+                  <GitCommit className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'} shrink-0`} />
                   <span>Commit message</span>
                 </div>
-                <p className="mt-1 font-mono text-xs text-[#e3e2e3] select-all break-all">
+                <p
+                  className={`mt-1 font-mono text-xs select-all break-all ${
+                    isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
+                  }`}
+                >
                   {data.commitMessage}
                 </p>
               </div>
 
               <div>
-                <span className="text-xs font-medium text-[#908f9e]">
+                <span className={`text-xs font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
                   PR title
                 </span>
-                <p className="text-sm font-medium text-[#e3e2e3] mt-0.5">{data.title}</p>
+                <p className={`text-sm font-medium mt-0.5 ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+                  {data.title}
+                </p>
               </div>
 
               <div>
-                <span className="text-xs font-medium text-[#908f9e]">
+                <span className={`text-xs font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
                   Executive summary
                 </span>
-                <p className="text-xs text-[#c6c5d5] leading-relaxed mt-0.5">{data.summary}</p>
+                <p className={`text-xs leading-relaxed mt-0.5 ${isLight ? 'text-zinc-600' : 'text-[#c6c5d5]'}`}>
+                  {data.summary}
+                </p>
               </div>
 
               {/* Stitch Checkmark Change List */}
               <div>
-                <div className="flex items-center gap-1.5 text-xs font-medium text-[#908f9e] mb-1.5">
+                <div className={`flex items-center gap-1.5 text-xs font-medium mb-1.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
                   <Layers className="h-3 w-3" />
                   <span>Key changes ({(data.keyChanges || []).length})</span>
                 </div>
                 <ul className="space-y-1.5">
                   {(data.keyChanges || []).map((change, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-xs text-[#e3e2e3]">
-                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#5e6ad2]/15 text-[#bdc2ff]">
+                    <li key={idx} className={`flex items-start gap-2 text-xs ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
+                      <span
+                        className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                          isLight
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-[#5e6ad2]/15 text-[#bdc2ff]'
+                        }`}
+                      >
                         <Check className="h-2.5 w-2.5 stroke-[2.5]" />
                       </span>
                       <span className="leading-snug">{change}</span>
@@ -308,17 +386,23 @@ ${breakingChangesList || '- None'}`;
                 </ul>
               </div>
 
-              {/* Breaking Changes */}
+              {/* Breaking Changes Alert Box matching Stitch */}
               {data.breakingChanges && data.breakingChanges.length > 0 && (
-                <div className="rounded-lg border border-red-500/30 bg-[#0d0e0f] p-3">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-red-400">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                <div
+                  className={`rounded-lg p-3 border ${
+                    isLight
+                      ? 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
+                      : 'border-red-500/30 bg-[#0d0e0f]'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-xs font-medium">
+                    <AlertTriangle className={`h-3.5 w-3.5 shrink-0 ${isLight ? 'text-amber-700' : 'text-red-400'}`} />
                     <span>Breaking changes detected</span>
                   </div>
                   <ul className="mt-1.5 space-y-1">
                     {data.breakingChanges.map((bChange, idx) => (
-                      <li key={idx} className="text-xs text-red-200/90 flex items-start gap-1.5">
-                        <span className="text-red-400 font-bold">•</span>
+                      <li key={idx} className={`text-xs flex items-start gap-1.5 ${isLight ? 'text-amber-800' : 'text-red-200/90'}`}>
+                        <span className={`font-bold ${isLight ? 'text-amber-700' : 'text-red-400'}`}>•</span>
                         <span>{bChange}</span>
                       </li>
                     ))}
@@ -328,43 +412,51 @@ ${breakingChangesList || '- None'}`;
             </div>
           ) : (
             <div className="mt-3.5 flex-1 flex flex-col min-h-0 space-y-2">
-              <div className="flex items-center justify-between text-xs text-[#908f9e] font-medium">
-                <span className="flex items-center gap-1 text-[#e3e2e3]">
-                  <CheckSquare className="h-3 w-3 text-[#5e6ad2]" />
+              <div className={`flex items-center justify-between text-xs font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                <span className={`flex items-center gap-1 ${isLight ? 'text-zinc-800' : 'text-[#e3e2e3]'}`}>
+                  <CheckSquare className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
                   Overview • Changes • Checklist
                 </span>
-                <span className="font-mono text-[10px] text-[#908f9e]">Markdown</span>
+                <span className="font-mono text-[10px]">Markdown</span>
               </div>
-              <pre className="flex-1 max-h-[340px] overflow-y-auto rounded-lg bg-[#0d0e0f] p-3.5 font-mono text-xs text-[#e3e2e3] border border-[#292a2b] whitespace-pre-wrap leading-relaxed">
+              <pre
+                className={`flex-1 max-h-[340px] overflow-y-auto rounded-lg p-3.5 font-mono text-xs whitespace-pre-wrap leading-relaxed border ${
+                  isLight
+                    ? 'bg-[#FAFAFA] text-zinc-800 border-[#E6E6E4]'
+                    : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
+                }`}
+              >
                 {getFullMarkdown()}
               </pre>
             </div>
           )}
 
           {/* Stitch PR Actions Footer */}
-          <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#292a2b]">
+          <div
+            className={`flex items-center justify-between pt-3 mt-3 border-t ${
+              isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+            }`}
+          >
             <button
               type="button"
               onClick={handleCopy}
-              className="flex items-center gap-1.5 text-xs font-mono text-[#908f9e] hover:text-[#e3e2e3] transition-colors cursor-pointer"
+              className={`py-1.5 px-2.5 rounded-lg border text-xs font-medium shadow-xs transition-colors cursor-pointer ${
+                isLight
+                  ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
+                  : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:text-[#e3e2e3]'
+              }`}
             >
-              {copied ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-emerald-400" />
-                  <span className="text-emerald-400">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" />
-                  <span>Copy Markdown</span>
-                </>
-              )}
+              {copied ? 'Copied!' : 'Copy Markdown'}
             </button>
 
             <button
               type="button"
               onClick={() => setIsRepoModalOpen(true)}
-              className="flex items-center justify-center gap-2 bg-[#5e6ad2] hover:bg-[#4f5abf] text-white font-semibold py-2 px-4 rounded-lg text-xs transition-colors shadow-sm cursor-pointer"
+              className={`flex items-center justify-center gap-1.5 font-medium py-1.5 px-3 rounded-lg text-xs shadow-xs transition-colors cursor-pointer ${
+                isLight
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                  : 'bg-[#5e6ad2] hover:bg-[#4f5abf] text-white font-semibold'
+              }`}
             >
               <GithubIcon className="h-3.5 w-3.5" />
               <span>Create PR on GitHub</span>
@@ -384,21 +476,37 @@ ${breakingChangesList || '- None'}`;
       {/* Zero-OAuth "Open on GitHub" Modal Popover */}
       {isRepoModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-md rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-5 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#292a2b] pb-3">
+          <div
+            className={`w-full max-w-md rounded-xl border p-5 shadow-2xl ${
+              isLight
+                ? 'bg-white border-[#E6E6E4] text-[#18181B]'
+                : 'bg-[#1b1c1d] border-[#292a2b] text-[#e3e2e3]'
+            }`}
+          >
+            <div className={`flex items-center justify-between border-b pb-3 ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
               <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#0d0e0f] text-[#e3e2e3] border border-[#292a2b]">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg border ${
+                    isLight
+                      ? 'bg-[#18181B] text-white border-[#18181B]'
+                      : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
+                  }`}
+                >
                   <GithubIcon className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-[#e3e2e3]">Open PR on GitHub</h3>
-                  <p className="text-[11px] text-[#908f9e] font-mono">Zero-OAuth instant pull request</p>
+                  <h3 className={`text-sm font-semibold ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+                    Open PR on GitHub
+                  </h3>
+                  <p className={`text-[11px] font-mono ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                    Zero-OAuth instant pull request
+                  </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsRepoModalOpen(false)}
-                className="rounded-md p-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-white"
+                className={`rounded-md p-1 ${isLight ? 'text-zinc-500 hover:bg-zinc-100 hover:text-black' : 'text-[#908f9e] hover:bg-[#292a2b] hover:text-white'}`}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -406,7 +514,7 @@ ${breakingChangesList || '- None'}`;
 
             <form onSubmit={handleLaunchGitHubPR} className="mt-4 space-y-3.5">
               <div>
-                <label className="block text-xs font-medium text-[#e3e2e3] mb-1">
+                <label className={`block text-xs font-medium mb-1 ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
                   Target repository (`owner/repo`)
                 </label>
                 <input
@@ -415,12 +523,16 @@ ${breakingChangesList || '- None'}`;
                   value={repoPath}
                   onChange={(e) => setRepoPath(e.target.value)}
                   placeholder="e.g. AsteroidHH/Wispr-Flow-No-Hands-Challenge"
-                  className="w-full rounded-md border border-[#292a2b] bg-[#0d0e0f] px-3 py-2 text-xs font-mono text-[#e3e2e3] placeholder:text-[#908f9e] focus:border-[#5e6ad2] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]"
+                  className={`w-full rounded-md border px-3 py-2 text-xs font-mono focus:outline-none ${
+                    isLight
+                      ? 'bg-[#FAFAFA] border-[#E6E6E4] text-[#18181B] placeholder:text-zinc-400 focus:border-amber-600'
+                      : 'bg-[#0d0e0f] border-[#292a2b] text-[#e3e2e3] placeholder:text-[#908f9e] focus:border-[#5e6ad2]'
+                  }`}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-[#e3e2e3] mb-1">
+                <label className={`block text-xs font-medium mb-1 ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
                   Compare branch path
                 </label>
                 <input
@@ -428,27 +540,43 @@ ${breakingChangesList || '- None'}`;
                   value={compareBranch}
                   onChange={(e) => setCompareBranch(e.target.value)}
                   placeholder="main...feature"
-                  className="w-full rounded-md border border-[#292a2b] bg-[#0d0e0f] px-3 py-2 text-xs font-mono text-[#e3e2e3] placeholder:text-[#908f9e] focus:border-[#5e6ad2] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]"
+                  className={`w-full rounded-md border px-3 py-2 text-xs font-mono focus:outline-none ${
+                    isLight
+                      ? 'bg-[#FAFAFA] border-[#E6E6E4] text-[#18181B] placeholder:text-zinc-400 focus:border-amber-600'
+                      : 'bg-[#0d0e0f] border-[#292a2b] text-[#e3e2e3] placeholder:text-[#908f9e] focus:border-[#5e6ad2]'
+                  }`}
                 />
               </div>
 
-              <div className="rounded-lg bg-[#0d0e0f] p-2.5 border border-[#292a2b] text-xs text-[#908f9e] leading-relaxed font-sans">
+              <div
+                className={`rounded-lg p-2.5 border text-xs leading-relaxed font-sans ${
+                  isLight
+                    ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-600'
+                    : 'bg-[#0d0e0f] border-[#292a2b] text-[#908f9e]'
+                }`}
+              >
                 <p>
                   🚀 <strong>Zero OAuth required:</strong> Pre-populates GitHub’s native PR review interface with your generated title, commit message, and Markdown spec.
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#292a2b]">
+              <div className={`flex items-center justify-end gap-2 pt-2 border-t ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
                 <button
                   type="button"
                   onClick={() => setIsRepoModalOpen(false)}
-                  className="rounded-md border border-[#292a2b] bg-[#1f2021] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] hover:text-white"
+                  className={`rounded-md border px-3 py-1.5 text-xs font-medium ${
+                    isLight
+                      ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
+                      : 'border-[#292a2b] bg-[#1f2021] text-[#e3e2e3] hover:bg-[#292a2b]'
+                  }`}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 rounded-md bg-[#5e6ad2] hover:bg-[#5e6ad2]/90 text-white px-3.5 py-1.5 text-xs font-semibold transition-colors shadow-sm"
+                  className={`flex items-center gap-1.5 rounded-md px-3.5 py-1.5 text-xs font-semibold transition-colors shadow-sm text-white ${
+                    isLight ? 'bg-amber-600 hover:bg-amber-700' : 'bg-[#5e6ad2] hover:bg-[#5e6ad2]/90'
+                  }`}
                 >
                   <span>Launch GitHub PR</span>
                   <ExternalLink className="h-3 w-3" />

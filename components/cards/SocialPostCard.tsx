@@ -5,7 +5,6 @@ import {
   Share2,
   Copy,
   Check,
-  Hash,
   Loader2,
   MessageCircle,
   Repeat,
@@ -14,6 +13,7 @@ import {
 } from 'lucide-react';
 import { SocialPostDeliverable } from '@/lib/types';
 import { VoiceTweakInput } from '@/components/VoiceTweakInput';
+import { useTheme } from '@/lib/ThemeContext';
 
 function TwitterIcon({ className = 'h-3.5 w-3.5' }: { className?: string }) {
   return (
@@ -46,11 +46,12 @@ interface SocialPostCardProps {
 }
 
 export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPostCardProps) {
+  const { isLight } = useTheme();
   const [platform, setPlatform] = useState<'twitter' | 'linkedin' | 'threads'>('twitter');
   const [copied, setCopied] = useState(false);
 
-  const twitterContent = data.twitter?.content || data.rawPost || 'Shipped v2 of our autonomous agent pipeline 🚢✨\n\nNo more hardcoded tool routing or token race conditions. Swapped in dynamic vector matching + automatic backoff. Sub-agent latency dropped 42%.\n\nFull PR & teardown below 👇 #buildinpublic #devin';
-  const hashtags = Array.isArray(data.twitter?.hashtags) ? data.twitter.hashtags.join(' ') : '#buildinpublic #devin';
+  const twitterContent = data.twitter?.content || data.rawPost || 'Autonomous LLM agents choke when you pass 40+ tool schemas every call.\n\nJust shipped vector-based sub-agent tool routing with HNSW cosine search. Cut context overhead by 68% and eliminated 429 exhaustion.';
+  const hashtags = Array.isArray(data.twitter?.hashtags) ? data.twitter.hashtags.join(' ') : '#buildinpublic #devin #ShipSpeak';
 
   const linkedinHook = data.linkedin?.hook || 'Shipped v2 of our autonomous agent pipeline 🚢✨';
   const linkedinBody = data.linkedin?.body || 'We replaced brittle hardcoded tool routing with dynamic vector tool-match scoring and automatic backoff retries. Concurrent sub-agent latency dropped by 42%.';
@@ -87,51 +88,81 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
 
   return (
     <div
-      className={`flex flex-col h-full justify-between bg-[#1b1c1d] border rounded-xl p-5 transition-all shadow-sm overflow-hidden ${
-        isRefining
-          ? 'border-[#5e6ad2]/70 ring-1 ring-[#5e6ad2]/40 shadow-[#5e6ad2]/10'
-          : 'border-[#292a2b] hover:border-[#343536]'
+      className={`flex flex-col h-full justify-between border rounded-xl p-5 transition-all shadow-xs overflow-hidden ${
+        isLight
+          ? isRefining
+            ? 'bg-white border-amber-500/70 ring-1 ring-amber-500/40'
+            : 'bg-white border-[#E6E6E4] hover:border-zinc-300'
+          : isRefining
+          ? 'bg-[#1b1c1d] border-[#5e6ad2]/70 ring-1 ring-[#5e6ad2]/40 shadow-[#5e6ad2]/10'
+          : 'bg-[#1b1c1d] border-[#292a2b] hover:border-[#343536]'
       }`}
     >
       <div className="flex-1 flex flex-col min-h-0">
-        {/* Card Header: Title + Char Counter */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#292a2b]">
+        {/* Card Header matching Stitch */}
+        <div
+          className={`flex items-center justify-between pb-3 border-b ${
+            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          }`}
+        >
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]">
+            <div
+              className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
+                isLight
+                  ? 'bg-[#18181B] text-amber-500 border-[#18181B]'
+                  : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
+              }`}
+            >
               {isRefining ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
               ) : (
-                <Share2 className="h-3.5 w-3.5 text-[#5e6ad2]" />
+                <Share2 className="h-3.5 w-3.5" />
               )}
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-[#e3e2e3] tracking-tight flex items-center gap-2">
-                Social Post Draft
+              <h3
+                className={`text-xs font-semibold tracking-tight flex items-center gap-2 ${
+                  isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
+                }`}
+              >
+                Social Post Draft &amp; Release Notes
                 {isRefining && (
-                  <span className="text-[10px] font-mono text-[#bdc2ff]">
+                  <span className={`text-[10px] font-mono ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
                     Refining...
                   </span>
                 )}
               </h3>
-              <p className="text-xs text-[#908f9e] mt-0.5">Engineering Announcement</p>
+              <p className={`text-[11px] mt-0.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                Engineering Announcement
+              </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[11px] text-[#bdc2ff]">
+            <span className={`font-mono text-[10px] ${isLight ? 'text-zinc-500' : 'text-[#bdc2ff]'}`}>
               {charCount} / 280 chars
             </span>
           </div>
         </div>
 
         {/* STITCH CHANNEL SEGMENT TABS */}
-        <div className="mt-3.5 flex items-center gap-1 bg-[#0d0e0f] p-1 rounded-lg border border-[#292a2b]">
+        <div
+          className={`mt-3.5 flex items-center gap-1 p-1 rounded-lg border ${
+            isLight
+              ? 'bg-[#F4F4F5] border-[#E6E6E4]'
+              : 'bg-[#0d0e0f] border border-[#292a2b]'
+          }`}
+        >
           <button
             type="button"
             onClick={() => setPlatform('twitter')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
               platform === 'twitter'
-                ? 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
+                ? isLight
+                  ? 'bg-white text-[#18181B] font-medium border border-[#E6E6E4] shadow-xs'
+                  : 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
+                : isLight
+                ? 'text-zinc-500 hover:text-zinc-800'
                 : 'text-[#908f9e] hover:text-[#e3e2e3]'
             }`}
           >
@@ -144,7 +175,11 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
             onClick={() => setPlatform('linkedin')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
               platform === 'linkedin'
-                ? 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
+                ? isLight
+                  ? 'bg-white text-[#18181B] font-medium border border-[#E6E6E4] shadow-xs'
+                  : 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
+                : isLight
+                ? 'text-zinc-500 hover:text-zinc-800'
                 : 'text-[#908f9e] hover:text-[#e3e2e3]'
             }`}
           >
@@ -157,7 +192,11 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
             onClick={() => setPlatform('threads')}
             className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
               platform === 'threads'
-                ? 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
+                ? isLight
+                  ? 'bg-white text-[#18181B] font-medium border border-[#E6E6E4] shadow-xs'
+                  : 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
+                : isLight
+                ? 'text-zinc-500 hover:text-zinc-800'
                 : 'text-[#908f9e] hover:text-[#e3e2e3]'
             }`}
           >
@@ -166,24 +205,41 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
           </button>
         </div>
 
-        {/* Card Content with Strict Equalized Height */}
+        {/* Card Content with Formatted Post Copy Box matching Stitch */}
         <div className="mt-3 flex-1 max-h-[300px] overflow-y-auto pr-1">
-          <div className="rounded-lg bg-[#0d0e0f] p-3.5 border border-[#292a2b] space-y-3 font-sans text-xs text-[#e3e2e3] leading-relaxed">
+          <div
+            className={`rounded-lg p-3.5 border space-y-3 font-sans text-xs leading-relaxed ${
+              isLight
+                ? 'bg-[#FAFAFA] border-[#E6E6E4] text-zinc-700'
+                : 'bg-[#0d0e0f] border-[#292a2b] text-[#e3e2e3]'
+            }`}
+          >
             {platform === 'linkedin' ? (
               <div className="space-y-2">
-                <p className="font-semibold text-white">{linkedinHook}</p>
-                <p className="text-[#c6c5d5] whitespace-pre-line">{linkedinBody}</p>
-                <div className="p-2.5 rounded bg-[#1b1c1d] border border-[#292a2b] font-mono text-[11px] text-[#bdc2ff] whitespace-pre-line">
+                <p className={`font-semibold ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{linkedinHook}</p>
+                <p className={`whitespace-pre-line ${isLight ? 'text-zinc-600' : 'text-[#c6c5d5]'}`}>{linkedinBody}</p>
+                <div
+                  className={`p-2.5 rounded border font-mono text-[11px] whitespace-pre-line ${
+                    isLight
+                      ? 'bg-white border-[#E6E6E4] text-zinc-700'
+                      : 'bg-[#1b1c1d] border-[#292a2b] text-[#bdc2ff]'
+                  }`}
+                >
                   {takeaways}
                 </div>
-                <p className="italic text-[#908f9e]">{callToAction}</p>
+                <p className={`italic ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{callToAction}</p>
               </div>
             ) : (
               <div className="space-y-2.5 whitespace-pre-line select-text">
-                <p>{twitterContent}</p>
+                <p className={`font-medium ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{twitterContent}</p>
                 <div className="flex flex-wrap gap-1.5 pt-1">
                   {hashtags.split(' ').map((tag, idx) => (
-                    <span key={idx} className="font-mono text-[11px] text-[#5e6ad2]">
+                    <span
+                      key={idx}
+                      className={`font-mono text-[10.5px] font-medium ${
+                        isLight ? 'text-amber-800' : 'text-[#5e6ad2]'
+                      }`}
+                    >
                       {tag}
                     </span>
                   ))}
@@ -192,7 +248,13 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
             )}
 
             {/* STITCH SOCIAL METRICS MOCKUP PREVIEW */}
-            <div className="pt-2.5 flex items-center justify-between text-[#908f9e] font-mono text-[11px] border-t border-[#292a2b]">
+            <div
+              className={`pt-2.5 flex items-center justify-between font-mono text-[11px] border-t ${
+                isLight
+                  ? 'text-zinc-400 border-[#E6E6E4]'
+                  : 'text-[#908f9e] border-[#292a2b]'
+              }`}
+            >
               <span className="flex items-center gap-1">
                 <MessageCircle className="h-3 w-3" />
                 <span>24</span>
@@ -202,11 +264,11 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
                 <span>89</span>
               </span>
               <span className="flex items-center gap-1">
-                <Heart className="h-3 w-3 text-rose-400/80" />
+                <Heart className="h-3 w-3 text-rose-500" />
                 <span>412</span>
               </span>
               <span className="flex items-center gap-1">
-                <BarChart2 className="h-3 w-3 text-[#bdc2ff]" />
+                <BarChart2 className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`} />
                 <span>12.4K</span>
               </span>
             </div>
@@ -214,24 +276,38 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
         </div>
 
         {/* STITCH SOCIAL ACTION FOOTER */}
-        <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#292a2b]">
-          <span className="font-mono text-[11px] text-[#908f9e]">
-            Target Tone: <strong className="text-[#e3e2e3] font-normal">Direct & Technical</strong>
+        <div
+          className={`flex items-center justify-between pt-3 mt-3 border-t ${
+            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          }`}
+        >
+          <span
+            className={`font-mono text-[10px] px-1.5 py-0.5 rounded border ${
+              isLight
+                ? 'text-zinc-400 bg-[#F4F4F5] border-[#E6E6E4]'
+                : 'text-[#908f9e] bg-[#0d0e0f] border-[#292a2b]'
+            }`}
+          >
+            Target Tone: <strong className={isLight ? 'text-zinc-700 font-normal' : 'text-[#e3e2e3] font-normal'}>Direct &amp; Technical</strong>
           </span>
 
           <button
             type="button"
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#1f2021] hover:bg-[#292a2b] text-[#e3e2e3] hover:text-white border border-[#292a2b] text-xs font-mono transition-colors shadow-sm cursor-pointer"
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border font-medium text-xs transition-colors shadow-xs cursor-pointer ${
+              isLight
+                ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
+                : 'bg-[#1f2021] hover:bg-[#292a2b] text-[#e3e2e3] hover:text-white border-[#292a2b] font-mono'
+            }`}
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="text-emerald-400">Copied!</span>
+                <Check className="h-3.5 w-3.5 text-emerald-600" />
+                <span>Copied!</span>
               </>
             ) : (
               <>
-                <Copy className="h-3.5 w-3.5 text-[#bdc2ff]" />
+                <Copy className={`h-3.5 w-3.5 ${isLight ? 'text-zinc-500' : 'text-[#bdc2ff]'}`} />
                 <span>Copy to Clipboard</span>
               </>
             )}
