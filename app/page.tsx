@@ -6,6 +6,7 @@ import { InputControlCenter } from '@/components/InputControlCenter';
 import { BentoGrid } from '@/components/BentoGrid';
 import { getPresetById, getDefaultPreset } from '@/lib/presets';
 import { transformApiResponseToDeliverables } from '@/lib/transform';
+import { exportArtifactsBundle } from '@/lib/exportBundle';
 import { Deliverables } from '@/lib/types';
 import { Mic, Zap, Sparkles, CheckCircle2 } from 'lucide-react';
 
@@ -17,6 +18,7 @@ export default function Home() {
   const [deliverables, setDeliverables] = useState<Deliverables | null>(defaultPreset.deliverables);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [refiningCard, setRefiningCard] = useState<keyof Deliverables | null>(null);
+  const [isExportingBundle, setIsExportingBundle] = useState<boolean>(false);
   const [generationSource, setGenerationSource] = useState<string>('preset_ready');
   const [notification, setNotification] = useState<string | null>(null);
 
@@ -136,7 +138,6 @@ export default function Home() {
       }
     } catch (err: unknown) {
       console.warn('API tweak call failed, applying client heuristic refinement:', err);
-      // Client-side fallback refinement
       setDeliverables(prev => {
         if (!prev) return prev;
         const updated = { ...prev };
@@ -183,12 +184,33 @@ export default function Home() {
     }
   };
 
+  // Handle ZIP Artifacts Bundle Export
+  const handleExportBundle = async () => {
+    if (!deliverables) return;
+
+    setIsExportingBundle(true);
+    setNotification('Packaging ShipSpeak-deliverables.zip bundle...');
+
+    try {
+      await exportArtifactsBundle(deliverables);
+      setNotification('Downloaded ShipSpeak-deliverables.zip successfully!');
+    } catch (err) {
+      console.error('Bundle export error:', err);
+      setNotification('Failed to package deliverables bundle');
+    } finally {
+      setIsExportingBundle(false);
+      setTimeout(() => setNotification(null), 3500);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-[#090d16] text-neutral-100">
       {/* Sticky Top Navigation Bar */}
       <Navbar
         badgeText="Built for the Wispr No Hand Challenge"
         githubUrl="https://github.com/AsteroidHH/Wispr-Flow-No-Hands-Challenge"
+        onExportBundle={handleExportBundle}
+        isExportingBundle={isExportingBundle}
       />
 
       {/* Main Two-Column Layout */}
@@ -254,6 +276,8 @@ export default function Home() {
               isGenerating={isGenerating}
               onTweakCard={handleTweakCard}
               refiningCard={refiningCard}
+              onExportBundle={handleExportBundle}
+              isExportingBundle={isExportingBundle}
             />
           </div>
         </div>

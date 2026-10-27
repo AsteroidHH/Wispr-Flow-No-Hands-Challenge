@@ -13,6 +13,8 @@ interface BentoGridProps {
   isGenerating: boolean;
   onTweakCard: (cardKey: keyof Deliverables, instruction: string) => void;
   refiningCard?: keyof Deliverables | null;
+  onExportBundle?: () => void;
+  isExportingBundle?: boolean;
 }
 
 export function BentoGrid({
@@ -20,6 +22,8 @@ export function BentoGrid({
   isGenerating,
   onTweakCard,
   refiningCard = null,
+  onExportBundle,
+  isExportingBundle = false,
 }: BentoGridProps) {
   if (isGenerating) {
     return (
@@ -88,6 +92,8 @@ export function BentoGrid({
           data={deliverables.pullRequest}
           onTweak={(inst) => onTweakCard('pullRequest', inst)}
           isRefining={refiningCard === 'pullRequest'}
+          onExportBundle={onExportBundle}
+          isExportingBundle={isExportingBundle}
         />
         <ArchitectureCard
           data={deliverables.architecture}
