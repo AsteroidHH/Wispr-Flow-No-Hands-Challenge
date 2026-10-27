@@ -243,7 +243,7 @@ ${breakingChangesList || '- None'}`;
                   onClick={onExportBundle}
                   disabled={isExportingBundle}
                   title="Export complete deliverables bundle (.zip)"
-                  className="flex items-center p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] bg-[#1f2021] hover:bg-[#292a2b] border border-[#292a2b] transition-colors text-xs disabled:opacity-40"
+                  className="flex items-center p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] bg-[#1f2021] hover:bg-[#292a2b] border border-[#292a2b] transition-colors text-xs disabled:opacity-40 cursor-pointer"
                 >
                   {isExportingBundle ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
@@ -252,18 +252,6 @@ ${breakingChangesList || '- None'}`;
                   )}
                 </button>
               )}
-
-              {/* Authoritative "Create PR on GitHub" Button in Stitch Indigo */}
-              <button
-                type="button"
-                onClick={() => setIsRepoModalOpen(true)}
-                title="Open directly on GitHub with prefilled PR description (Zero OAuth)"
-                className="flex items-center gap-1.5 rounded-md bg-[#5e6ad2] hover:bg-[#5e6ad2]/90 text-white px-2.5 py-1 text-xs font-medium transition-colors shadow-sm"
-              >
-                <GithubIcon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Create PR</span>
-                <ExternalLink className="h-2.5 w-2.5 opacity-80" />
-              </button>
             </div>
           </div>
 
@@ -352,6 +340,37 @@ ${breakingChangesList || '- None'}`;
               </pre>
             </div>
           )}
+
+          {/* Stitch PR Actions Footer */}
+          <div className="flex items-center justify-between pt-3 mt-3 border-t border-[#292a2b]">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 text-xs font-mono text-[#908f9e] hover:text-[#e3e2e3] transition-colors cursor-pointer"
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="text-emerald-400">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3.5 w-3.5" />
+                  <span>Copy Markdown</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsRepoModalOpen(true)}
+              className="flex items-center justify-center gap-2 bg-[#5e6ad2] hover:bg-[#4f5abf] text-white font-semibold py-2 px-4 rounded-lg text-xs transition-colors shadow-sm cursor-pointer"
+            >
+              <GithubIcon className="h-3.5 w-3.5" />
+              <span>Create PR on GitHub</span>
+              <ExternalLink className="h-3 w-3 opacity-80" />
+            </button>
+          </div>
         </div>
 
         <VoiceTweakInput
