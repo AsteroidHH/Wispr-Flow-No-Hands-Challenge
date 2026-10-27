@@ -4,12 +4,80 @@ import React, { useEffect, useRef, useState } from 'react';
 import mermaid from 'mermaid';
 import { AlertCircle, Loader2 } from 'lucide-react';
 
+export type MermaidTheme = 'obsidian' | 'cyberpunk' | 'slate';
+
+export const THEME_CONFIGS: Record<
+  MermaidTheme,
+  { name: string; badgeColor: string; variables: Record<string, string | boolean> }
+> = {
+  obsidian: {
+    name: 'Obsidian Dark',
+    badgeColor: 'border-indigo-500/40 text-indigo-300 bg-indigo-950/30',
+    variables: {
+      darkMode: true,
+      background: '#090d16',
+      mainBkg: '#161b22',
+      primaryColor: '#6366f1',
+      primaryTextColor: '#f8fafc',
+      primaryBorderColor: '#4f46e5',
+      lineColor: '#94a3b8',
+      secondaryColor: '#8b5cf6',
+      tertiaryColor: '#0e7490',
+      edgeLabelBackground: '#1e293b',
+      nodeBorder: '#475569',
+    },
+  },
+  cyberpunk: {
+    name: 'Cyberpunk Indigo',
+    badgeColor: 'border-pink-500/40 text-pink-300 bg-pink-950/30',
+    variables: {
+      darkMode: true,
+      background: '#090d16',
+      mainBkg: '#0f172a',
+      primaryColor: '#ec4899',
+      primaryTextColor: '#fdf4ff',
+      primaryBorderColor: '#f43f5e',
+      lineColor: '#06b6d4',
+      secondaryColor: '#a855f7',
+      tertiaryColor: '#3b82f6',
+      edgeLabelBackground: '#030712',
+      nodeBorder: '#06b6d4',
+    },
+  },
+  slate: {
+    name: 'Slate Minimal',
+    badgeColor: 'border-slate-500/40 text-slate-300 bg-slate-900/40',
+    variables: {
+      darkMode: true,
+      background: '#090d16',
+      mainBkg: '#1e293b',
+      primaryColor: '#475569',
+      primaryTextColor: '#f1f5f9',
+      primaryBorderColor: '#64748b',
+      lineColor: '#cbd5e1',
+      secondaryColor: '#334155',
+      tertiaryColor: '#0f172a',
+      edgeLabelBackground: '#0f172a',
+      nodeBorder: '#94a3b8',
+    },
+  },
+};
+
 interface MermaidRendererProps {
   code: string;
+  theme?: MermaidTheme;
+  zoom?: number;
   className?: string;
+  onSvgRendered?: (svg: string, element: SVGSVGElement | null) => void;
 }
 
-export function MermaidRenderer({ code, className = '' }: MermaidRendererProps) {
+export function MermaidRenderer({
+  code,
+  theme = 'obsidian',
+  zoom = 1,
+  className = '',
+  onSvgRendered,
+}: MermaidRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
@@ -18,26 +86,15 @@ export function MermaidRenderer({ code, className = '' }: MermaidRendererProps) 
   useEffect(() => {
     let isMounted = true;
 
-    // Initialize mermaid once
+    const themeVars = THEME_CONFIGS[theme]?.variables || THEME_CONFIGS.obsidian.variables;
+
     try {
       mermaid.initialize({
         startOnLoad: false,
         theme: 'dark',
         securityLevel: 'loose',
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-        themeVariables: {
-          darkMode: true,
-          background: '#0d1117',
-          mainBkg: '#161b22',
-          primaryColor: '#6366f1',
-          primaryTextColor: '#f8fafc',
-          primaryBorderColor: '#4f46e5',
-          lineColor: '#94a3b8',
-          secondaryColor: '#8b5cf6',
-          tertiaryColor: '#0e7490',
-          edgeLabelBackground: '#1e293b',
-          nodeBorder: '#475569',
-        },
+        themeVariables: themeVars,
       });
     } catch (err) {
       console.warn('Mermaid initialization warning:', err);
@@ -47,13 +104,14 @@ export function MermaidRenderer({ code, className = '' }: MermaidRendererProps) 
       if (!code.trim()) {
         setSvgContent('');
         setIsLoading(false);
+        if (onSvgRendered) onSvgRendered('', null);
         return;
       }
 
       setIsLoading(true);
       setError(null);
 
-      // Generate a distinct ID for each render to prevent Mermaid ID collisions
+      // Distinct ID prevents DOM ID collision in Mermaid cache
       const uniqueId = `mermaid-chart-${Math.random().toString(36).substring(2, 10)}`;
 
       try {
@@ -61,11 +119,18 @@ export function MermaidRenderer({ code, className = '' }: MermaidRendererProps) 
         if (isMounted) {
           setSvgContent(svg);
           setIsLoading(false);
+
+          if (onSvgRendered) {
+            // Give DOM a microtask to attach before querying
+            setTimeout(() => {
+              const svgEl = containerRef.current?.querySelector('svg') || null;
+              onSvgRendered(svg, svgEl as SVGSVGElement | null);
+            }, 50);
+          }
         }
       } catch (err: unknown) {
         console.error('Mermaid render error:', err);
         if (isMounted) {
-          // Clean up any stray error elements inserted by Mermaid in document.body
           const strayErrorEl = document.getElementById(uniqueId);
           if (strayErrorEl) strayErrorEl.remove();
 
@@ -80,7 +145,7 @@ export function MermaidRenderer({ code, className = '' }: MermaidRendererProps) 
     return () => {
       isMounted = false;
     };
-  }, [code]);
+  }, [code, theme, onSvgRendered]);
 
   if (error) {
     return (
@@ -93,9 +158,11 @@ export function MermaidRenderer({ code, className = '' }: MermaidRendererProps) 
   }
 
   return (
-    <div className={`relative flex items-center justify-center overflow-x-auto rounded-lg bg-neutral-950/60 p-4 border border-neutral-800/80 ${className}`}>
+    <div
+      className={`relative flex items-center justify-center overflow-auto rounded-lg bg-[#090d16] p-4 border border-neutral-800/80 transition-colors ${className}`}
+    >
       {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-neutral-950/80 backdrop-blur-xs">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#090d16]/85 backdrop-blur-xs">
           <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
           <span className="ml-2 text-xs font-mono text-neutral-400">Rendering visual topology...</span>
         </div>
@@ -103,7 +170,12 @@ export function MermaidRenderer({ code, className = '' }: MermaidRendererProps) 
 
       <div
         ref={containerRef}
-        className="w-full flex justify-center [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:drop-shadow-md"
+        style={{
+          transform: `scale(${zoom})`,
+          transformOrigin: 'center center',
+          transition: 'transform 0.2s ease-out',
+        }}
+        className="w-full flex justify-center [&_svg]:max-w-full [&_svg]:h-auto [&_svg]:drop-shadow-md select-none"
         dangerouslySetInnerHTML={{ __html: svgContent }}
       />
     </div>
