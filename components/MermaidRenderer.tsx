@@ -104,9 +104,11 @@ export function MermaidRenderer({
 
     async function renderDiagram() {
       if (!code.trim()) {
-        setSvgContent('');
-        setIsLoading(false);
-        if (onSvgRendered) onSvgRendered('', null);
+        if (isMounted) {
+          setSvgContent('');
+          setIsLoading(false);
+          if (onSvgRendered) onSvgRendered('', null);
+        }
         return;
       }
 
@@ -125,19 +127,25 @@ export function MermaidRenderer({
           if (onSvgRendered) {
             // Give DOM a microtask to attach before querying
             setTimeout(() => {
-              const svgEl = containerRef.current?.querySelector('svg') || null;
-              onSvgRendered(svg, svgEl as SVGSVGElement | null);
+              if (isMounted) {
+                const svgEl = containerRef.current?.querySelector('svg') || null;
+                onSvgRendered(svg, svgEl as SVGSVGElement | null);
+              }
             }, 50);
           }
         }
       } catch (err: unknown) {
+        if (!isMounted) return;
         console.error('Mermaid render error:', err);
-        if (isMounted) {
-          const strayErrorEl = document.getElementById(currentUniqueId) || document.getElementById(`d${currentUniqueId}`);
-          if (strayErrorEl) strayErrorEl.remove();
+        const strayErrorEl = document.getElementById(currentUniqueId) || document.getElementById(`d${currentUniqueId}`);
+        if (strayErrorEl) strayErrorEl.remove();
 
-          setError(err instanceof Error ? err.message : 'Failed to parse Mermaid diagram.');
-          setIsLoading(false);
+        setError(err instanceof Error ? err.message : 'Failed to parse Mermaid diagram.');
+        setIsLoading(false);
+      } finally {
+        if (!isMounted && currentUniqueId) {
+          const stray = document.getElementById(currentUniqueId) || document.getElementById(`d${currentUniqueId}`);
+          if (stray) stray.remove();
         }
       }
     }
@@ -146,10 +154,6 @@ export function MermaidRenderer({
 
     return () => {
       isMounted = false;
-      if (currentUniqueId) {
-        const stray = document.getElementById(currentUniqueId) || document.getElementById(`d${currentUniqueId}`);
-        if (stray) stray.remove();
-      }
     };
   }, [code, theme, onSvgRendered]);
 
