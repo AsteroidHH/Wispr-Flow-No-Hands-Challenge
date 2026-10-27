@@ -345,6 +345,17 @@ export function InputControlCenter({
           <span>Estimated synthesis: ~1.2s</span>
         </div>
       </div>
+
+      {/* Stitch Quick Tips Micro-Card */}
+      <div className="p-2.5 rounded-lg bg-[#0d0e0f] border border-[#292a2b] flex items-center justify-between text-[#908f9e] text-xs font-mono">
+        <div className="flex items-center gap-2">
+          <span className="text-[#5e6ad2] font-semibold">⚡ Tip:</span>
+          <span className="text-[#e3e2e3]">
+            Press <strong className="text-white font-mono bg-[#1f2021] px-1 py-0.5 rounded border border-[#292a2b]">⌘↵</strong> to transform voice into PR, Diagram, Script & Posts instantly.
+          </span>
+        </div>
+        <span className="text-[#908f9e] text-[10px] hidden sm:inline">v2.4.9</span>
+      </div>
     </div>
   );
 }

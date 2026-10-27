@@ -86,7 +86,7 @@ export function BentoGrid({
       </div>
 
       {/* 4-Card Responsive 2x2 Bento Grid with Strict Height Equalization */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-fr">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
         <PullRequestCard
           data={deliverables.pullRequest}
           onTweak={(inst) => onTweakCard('pullRequest', inst)}

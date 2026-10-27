@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
+import { Sidebar } from '@/components/Sidebar';
 import { InputControlCenter } from '@/components/InputControlCenter';
 import { BentoGrid } from '@/components/BentoGrid';
 import { TerminalPreview } from '@/components/terminal-preview';
@@ -23,6 +24,7 @@ export default function Home() {
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
   const [generationSource, setGenerationSource] = useState<string>('preset_ready');
   const [notification, setNotification] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
 
   // Handle Preset selection
   const handleSelectPreset = useCallback((presetId: string) => {
@@ -218,10 +220,29 @@ export default function Home() {
         onExportBundle={handleExportBundle}
         isExportingBundle={isExportingBundle}
         onOpenTerminal={() => setIsTerminalOpen(true)}
+        onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
       />
 
-      {/* Main Two-Column Layout */}
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
+      {/* Docked Sidebar (Desktop fixed, Mobile overlay) */}
+      <Sidebar className="hidden lg:flex" />
+
+      {/* Mobile Drawer Overlay */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+          <Sidebar
+            className="flex w-64 shadow-2xl"
+            onNavigate={() => setIsSidebarOpen(false)}
+          />
+        </div>
+      )}
+
+      {/* Main Two-Column Cockpit Layout (pl-60 on Desktop matching Stitch) */}
+      <div className="flex-1 lg:pl-60 transition-all flex flex-col justify-between">
+        <main className="w-full flex-1 px-4 py-5 sm:px-6">
         {/* Top Cockpit Sub-Header / Ambient Context Bar (from Stitch) */}
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#292a2b] pb-4">
           <div className="flex flex-wrap items-center gap-2.5">
@@ -333,18 +354,19 @@ export default function Home() {
         onClose={() => setIsTerminalOpen(false)}
       />
 
-      {/* Footer */}
-      <footer className="mt-auto border-t border-[#292a2b] bg-[#121315] py-4 text-center text-xs text-[#908f9e]">
-        <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="flex items-center gap-1.5 font-mono text-[11px] text-[#e3e2e3]">
-            <Sparkles className="h-3 w-3 text-[#5e6ad2]" />
-            ShipSpeak • The Voice-First Last-Mile Engine for Developers
-          </p>
-          <p className="font-mono text-[11px] text-[#908f9e]">
-            Wispr Flow Challenge • Hold Wispr to refine any card
-          </p>
-        </div>
-      </footer>
+        {/* Footer */}
+        <footer className="mt-auto border-t border-[#292a2b] bg-[#121315] py-4 text-center text-xs text-[#908f9e]">
+          <div className="mx-auto max-w-7xl px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="flex items-center gap-1.5 font-mono text-[11px] text-[#e3e2e3]">
+              <Sparkles className="h-3 w-3 text-[#5e6ad2]" />
+              ShipSpeak • The Voice-First Last-Mile Engine for Developers
+            </p>
+            <p className="font-mono text-[11px] text-[#908f9e]">
+              Wispr Flow Challenge • Hold Wispr to refine any card
+            </p>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
