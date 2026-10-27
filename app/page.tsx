@@ -2,15 +2,20 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '@/components/Navbar';
-import { Sidebar } from '@/components/Sidebar';
+import { Sidebar, SidebarView } from '@/components/Sidebar';
 import { InputControlCenter } from '@/components/InputControlCenter';
 import { BentoGrid } from '@/components/BentoGrid';
+import { ToolingDrawer, ToolingTab } from '@/components/ToolingDrawer';
+import { PullRequestsView } from '@/components/views/PullRequestsView';
+import { ReleaseMatrixView } from '@/components/views/ReleaseMatrixView';
+import { DeployQueueView } from '@/components/views/DeployQueueView';
+import { ChangelogAiView } from '@/components/views/ChangelogAiView';
 import { TerminalPreview } from '@/components/terminal-preview';
 import { getPresetById, getDefaultPreset } from '@/lib/presets';
 import { transformApiResponseToDeliverables } from '@/lib/transform';
 import { exportArtifactsBundle } from '@/lib/exportBundle';
 import { Deliverables } from '@/lib/types';
-import { Mic, Zap, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Mic, Zap, Sparkles, CheckCircle2, Sliders } from 'lucide-react';
 
 export default function Home() {
   const defaultPreset = getDefaultPreset();
@@ -25,6 +30,25 @@ export default function Home() {
   const [generationSource, setGenerationSource] = useState<string>('preset_ready');
   const [notification, setNotification] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
+  const [activeView, setActiveView] = useState<SidebarView>('overview');
+  const [isToolingOpen, setIsToolingOpen] = useState<boolean>(false);
+  const [toolingTab, setToolingTab] = useState<ToolingTab>('telemetry');
+
+  const handleSidebarNavigate = (view: SidebarView) => {
+    if (view === 'telemetry' || view === 'api-keys' || view === 'settings') {
+      setToolingTab(view as ToolingTab);
+      setIsToolingOpen(true);
+      setIsSidebarOpen(false);
+      return;
+    }
+    setActiveView(view);
+    setIsSidebarOpen(false);
+  };
+
+  const handleOpenTooling = (tab: ToolingTab) => {
+    setToolingTab(tab);
+    setIsToolingOpen(true);
+  };
 
   // Handle Preset selection
   const handleSelectPreset = useCallback((presetId: string) => {
@@ -94,12 +118,15 @@ export default function Home() {
     }
   }, [activePresetId, voiceTranscript, gitDiff, defaultPreset]);
 
-  // Keyboard shortcut: ⌘+Enter or Ctrl+Enter
+  // Keyboard shortcut: ⌘+Enter or Ctrl+Enter & ⌥S
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         e.preventDefault();
         handleGenerate();
+      } else if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 's' || e.key === 'S')) {
+        e.preventDefault();
+        handleOpenTooling('settings');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -221,10 +248,15 @@ export default function Home() {
         isExportingBundle={isExportingBundle}
         onOpenTerminal={() => setIsTerminalOpen(true)}
         onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
+        onOpenTooling={handleOpenTooling}
       />
 
       {/* Docked Sidebar (Desktop fixed, Mobile overlay) */}
-      <Sidebar className="hidden lg:flex" />
+      <Sidebar
+        activeView={activeView}
+        onSelectView={handleSidebarNavigate}
+        className="hidden lg:flex"
+      />
 
       {/* Mobile Drawer Overlay */}
       {isSidebarOpen && (
@@ -234,8 +266,9 @@ export default function Home() {
             onClick={() => setIsSidebarOpen(false)}
           />
           <Sidebar
+            activeView={activeView}
+            onSelectView={handleSidebarNavigate}
             className="flex w-64 shadow-2xl"
-            onNavigate={() => setIsSidebarOpen(false)}
           />
         </div>
       )}
@@ -265,20 +298,44 @@ export default function Home() {
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
             {/* Quick Latency Badge */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1b1c1d] border border-[#292a2b] text-[#e3e2e3] font-mono text-xs">
+            <button
+              type="button"
+              onClick={() => handleOpenTooling('telemetry')}
+              title="Open Telemetry Inspector"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1b1c1d] hover:bg-[#292a2b] border border-[#292a2b] text-[#e3e2e3] font-mono text-xs transition-colors cursor-pointer"
+            >
               <Zap className="h-3.5 w-3.5 text-[#ffb867]" />
               <span>Latency: <strong className="text-[#e3e2e3] font-medium">18ms</strong></span>
-            </div>
+            </button>
 
             {/* Generation Engine Status Pill */}
-            <div className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-2.5 py-1 text-xs text-[#908f9e] font-mono">
+            <button
+              type="button"
+              onClick={() => handleOpenTooling('api-keys')}
+              title="View Model & API Credentials"
+              className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] hover:bg-[#292a2b] px-2.5 py-1 text-xs text-[#908f9e] font-mono transition-colors cursor-pointer"
+            >
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
               <span className="text-[#e3e2e3]">
                 {generationSource === 'gemini_2.5_flash'
                   ? 'Gemini 2.5 Flash'
                   : 'Wispr Audio + Gemini 2.5'}
               </span>
-            </div>
+            </button>
+
+            {/* Quick Config Button */}
+            <button
+              type="button"
+              onClick={() => handleOpenTooling('settings')}
+              title="Cockpit Configuration (⌥S)"
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1b1c1d] hover:bg-[#292a2b] text-[#e3e2e3] border border-[#292a2b] font-mono text-xs transition-colors cursor-pointer"
+            >
+              <Sliders className="h-3.5 w-3.5 text-[#bdc2ff]" />
+              <span>Config</span>
+              <span className="rounded bg-[#0d0e0f] px-1 py-0.2 text-[9px] text-[#908f9e] border border-[#292a2b]">
+                ⌥S
+              </span>
+            </button>
           </div>
         </div>
 
@@ -290,34 +347,69 @@ export default function Home() {
           </div>
         )}
 
-        {/* 2-Column Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Input Control Center */}
-          <div className="lg:col-span-5 xl:col-span-5">
-            <InputControlCenter
-              activePresetId={activePresetId}
-              onSelectPreset={handleSelectPreset}
-              voiceTranscript={voiceTranscript}
-              setVoiceTranscript={setVoiceTranscript}
-              gitDiff={gitDiff}
-              setGitDiff={setGitDiff}
-              onGenerate={handleGenerate}
-              isGenerating={isGenerating}
-            />
-          </div>
+        {/* VIEW 1: Overview Cockpit */}
+        {activeView === 'overview' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Input Control Center */}
+            <div className="lg:col-span-5 xl:col-span-5">
+              <InputControlCenter
+                activePresetId={activePresetId}
+                onSelectPreset={handleSelectPreset}
+                voiceTranscript={voiceTranscript}
+                setVoiceTranscript={setVoiceTranscript}
+                gitDiff={gitDiff}
+                setGitDiff={setGitDiff}
+                onGenerate={handleGenerate}
+                isGenerating={isGenerating}
+              />
+            </div>
 
-          {/* Right Column: Responsive 4-Card Bento Grid */}
-          <div className="lg:col-span-7 xl:col-span-7">
-            <BentoGrid
-              deliverables={deliverables}
-              isGenerating={isGenerating}
-              onTweakCard={handleTweakCard}
-              refiningCard={refiningCard}
-              onExportBundle={handleExportBundle}
-              isExportingBundle={isExportingBundle}
-            />
+            {/* Right Column: Responsive 4-Card Bento Grid */}
+            <div className="lg:col-span-7 xl:col-span-7">
+              <BentoGrid
+                deliverables={deliverables}
+                isGenerating={isGenerating}
+                onTweakCard={handleTweakCard}
+                refiningCard={refiningCard}
+                onExportBundle={handleExportBundle}
+                isExportingBundle={isExportingBundle}
+              />
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* VIEW 2: Pull Requests Release Pipeline */}
+        {activeView === 'pull-requests' && (
+          <PullRequestsView
+            deliverables={deliverables}
+            onBack={() => setActiveView('overview')}
+            onExportBundle={handleExportBundle}
+          />
+        )}
+
+        {/* VIEW 3: Release Matrix & Edge Deployments */}
+        {activeView === 'release-matrix' && (
+          <ReleaseMatrixView
+            onBack={() => setActiveView('overview')}
+          />
+        )}
+
+        {/* VIEW 4: Deploy Queue & Pipeline Events */}
+        {activeView === 'deploy-queue' && (
+          <DeployQueueView
+            onBack={() => setActiveView('overview')}
+          />
+        )}
+
+        {/* VIEW 5: Changelog AI Copilot */}
+        {activeView === 'changelog-ai' && (
+          <ChangelogAiView
+            voiceTranscript={voiceTranscript}
+            gitDiff={gitDiff}
+            deliverables={deliverables}
+            onBack={() => setActiveView('overview')}
+          />
+        )}
 
         {/* Bottom Global Terminal / Status Bar (from Stitch) */}
         <div className="mt-6 p-3 rounded-lg bg-[#1b1c1d] border border-[#292a2b] flex flex-wrap items-center justify-between gap-3 text-xs text-[#908f9e] font-mono shadow-sm">
@@ -352,6 +444,14 @@ export default function Home() {
       <TerminalPreview
         isOpen={isTerminalOpen}
         onClose={() => setIsTerminalOpen(false)}
+      />
+
+      {/* Tooling Slide-Over Drawer */}
+      <ToolingDrawer
+        isOpen={isToolingOpen}
+        activeTab={toolingTab}
+        onTabChange={setToolingTab}
+        onClose={() => setIsToolingOpen(false)}
       />
 
         {/* Footer */}

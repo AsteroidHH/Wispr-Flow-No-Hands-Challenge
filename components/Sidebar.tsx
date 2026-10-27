@@ -12,25 +12,39 @@ import {
   Settings,
 } from 'lucide-react';
 
+export type SidebarView =
+  | 'overview'
+  | 'pull-requests'
+  | 'release-matrix'
+  | 'deploy-queue'
+  | 'changelog-ai'
+  | 'telemetry'
+  | 'api-keys'
+  | 'settings';
+
 interface SidebarProps {
-  activePath?: string;
-  onNavigate?: (path: string) => void;
+  activeView: SidebarView;
+  onSelectView: (view: SidebarView) => void;
   className?: string;
 }
 
-export function Sidebar({ activePath = 'overview', onNavigate, className = '' }: SidebarProps) {
-  const workspaceItems = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard, active: true },
+export function Sidebar({
+  activeView = 'overview',
+  onSelectView,
+  className = '',
+}: SidebarProps) {
+  const workspaceItems: { id: SidebarView; label: string; icon: typeof LayoutDashboard; badge?: string }[] = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
     { id: 'pull-requests', label: 'Pull Requests', icon: GitPullRequest, badge: '4' },
     { id: 'release-matrix', label: 'Release Matrix', icon: Rocket },
     { id: 'deploy-queue', label: 'Deploy Queue', icon: Layers },
-    { id: 'changelog-copilot', label: 'Changelog AI', icon: Sparkles },
+    { id: 'changelog-ai', label: 'Changelog AI', icon: Sparkles },
   ];
 
-  const toolingItems = [
+  const toolingItems: { id: SidebarView; label: string; icon: typeof Activity }[] = [
     { id: 'telemetry', label: 'Telemetry', icon: Activity },
     { id: 'api-keys', label: 'API Keys', icon: Key },
-    { id: 'cockpit-settings', label: 'Settings', icon: Settings },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -45,26 +59,33 @@ export function Sidebar({ activePath = 'overview', onNavigate, className = '' }:
               Workspace
             </span>
           </div>
-          <nav className="flex flex-col gap-0.5">
-            {workspaceItems.map(item => {
+          <nav className="flex flex-col gap-1">
+            {workspaceItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activePath === item.id;
+              const isActive = activeView === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => onNavigate?.(item.id)}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
+                  type="button"
+                  onClick={() => onSelectView(item.id)}
+                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#1f2021] text-[#e3e2e3] font-semibold border-l-2 border-[#5e6ad2]'
-                      : 'text-[#908f9e] hover:bg-[#1b1c1d] hover:text-[#e3e2e3]'
+                      ? 'bg-[#1b1c1d] text-white border border-[#292a2b] shadow-sm'
+                      : 'text-[#908f9e] hover:bg-[#121315] hover:text-zinc-200'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className={`h-4 w-4 ${isActive ? 'text-[#bdc2ff]' : 'text-[#908f9e]'}`} />
-                    <span>{item.label}</span>
+                    <Icon
+                      className={`h-4 w-4 transition-colors ${
+                        isActive ? 'text-[#5e6ad2]' : 'text-[#908f9e]'
+                      }`}
+                    />
+                    <span className={isActive ? 'font-semibold text-white' : ''}>
+                      {item.label}
+                    </span>
                   </div>
                   {item.badge && (
-                    <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-[#292a2b] text-[#bdc2ff]">
+                    <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-[#1f2021] text-[#bdc2ff] border border-[#292a2b]">
                       {item.badge}
                     </span>
                   )}
@@ -81,22 +102,29 @@ export function Sidebar({ activePath = 'overview', onNavigate, className = '' }:
               Tooling
             </span>
           </div>
-          <nav className="flex flex-col gap-0.5">
-            {toolingItems.map(item => {
+          <nav className="flex flex-col gap-1">
+            {toolingItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activePath === item.id;
+              const isActive = activeView === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => onNavigate?.(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors ${
+                  type="button"
+                  onClick={() => onSelectView(item.id)}
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
                     isActive
-                      ? 'bg-[#1f2021] text-[#e3e2e3] font-semibold border-l-2 border-[#5e6ad2]'
-                      : 'text-[#908f9e] hover:bg-[#1b1c1d] hover:text-[#e3e2e3]'
+                      ? 'bg-[#1b1c1d] text-white border border-[#292a2b] shadow-sm'
+                      : 'text-[#908f9e] hover:bg-[#121315] hover:text-zinc-200'
                   }`}
                 >
-                  <Icon className="h-4 w-4 text-[#908f9e]" />
-                  <span>{item.label}</span>
+                  <Icon
+                    className={`h-4 w-4 transition-colors ${
+                      isActive ? 'text-[#5e6ad2]' : 'text-[#908f9e]'
+                    }`}
+                  />
+                  <span className={isActive ? 'font-semibold text-white' : ''}>
+                    {item.label}
+                  </span>
                 </button>
               );
             })}
