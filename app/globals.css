@@ -9,8 +9,11 @@
   --surface-highest: #343536;
   --primary-accent: #5e6ad2;
   --primary-tint: #bdc2ff;
+  --accent-tertiary: #ffb867;
   --text-main: #e3e2e3;
   --text-muted: #908f9e;
+  --text-variant: #c6c5d5;
+  --border-subtle: #292a2b;
 }
 
 body {

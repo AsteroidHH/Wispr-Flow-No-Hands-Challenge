@@ -222,35 +222,49 @@ export default function Home() {
 
       {/* Main Two-Column Layout */}
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
-          <div>
-            <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2">
-              <span>Developer Shipping Cockpit</span>
-              <span className="inline-flex items-center gap-1 font-mono text-[11px] bg-white/[0.05] text-zinc-300 px-2 py-0.5 rounded border border-white/[0.08]">
-                <Zap className="h-3 w-3 text-indigo-400" />
-                Zero-Hand Flow
-              </span>
-            </h1>
-            <p className="mt-0.5 text-xs text-zinc-400">
-              Convert raw unstructured voice brain dumps and git diffs into PRs, architecture diagrams, demo scripts, and social updates.
-            </p>
+        {/* Top Cockpit Sub-Header / Ambient Context Bar (from Stitch) */}
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#292a2b] pb-4">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#5e6ad2] animate-pulse"></span>
+              <h1 className="text-sm sm:text-base font-semibold tracking-tight text-[#e3e2e3]">
+                Cockpit Studio
+              </h1>
+            </div>
+            <span className="text-[#908f9e] text-xs">/</span>
+            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#1b1c1d] border border-[#292a2b] text-[#908f9e] font-mono text-[11px]">
+              <span className="text-[#5e6ad2]">terminal:</span>
+              <span className="text-[#e3e2e3]">#ss-9821-rtx</span>
+            </div>
+            <div className="hidden md:flex items-center gap-1.5 text-[#908f9e] font-mono text-[11px]">
+              <span>Git Head:</span>
+              <span className="text-[#e3e2e3]">0x8efb34</span>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+            {/* Quick Latency Badge */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#1b1c1d] border border-[#292a2b] text-[#e3e2e3] font-mono text-xs">
+              <Zap className="h-3.5 w-3.5 text-[#ffb867]" />
+              <span>Latency: <strong className="text-[#e3e2e3] font-medium">18ms</strong></span>
+            </div>
+
             {/* Generation Engine Status Pill */}
-            <div className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-[#111215] px-2.5 py-1 text-xs text-zinc-400 font-mono">
+            <div className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-2.5 py-1 text-xs text-[#908f9e] font-mono">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-              {generationSource === 'gemini_2.5_flash'
-                ? 'Gemini 2.5 Flash'
-                : 'ShipSpeak Engine Active'}
+              <span className="text-[#e3e2e3]">
+                {generationSource === 'gemini_2.5_flash'
+                  ? 'Gemini 2.5 Flash'
+                  : 'Wispr Audio + Gemini 2.5'}
+              </span>
             </div>
           </div>
         </div>
 
         {/* Dynamic Notification Banner */}
         {notification && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#111215] px-3.5 py-2 text-xs font-mono text-zinc-200 animate-fadeIn shadow-sm">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#292a2b] bg-[#1b1c1d] px-3.5 py-2 text-xs font-mono text-[#e3e2e3] animate-fadeIn shadow-sm">
+            <CheckCircle2 className="h-3.5 w-3.5 text-[#5e6ad2] shrink-0" />
             <span>{notification}</span>
           </div>
         )}
@@ -281,6 +295,34 @@ export default function Home() {
               onExportBundle={handleExportBundle}
               isExportingBundle={isExportingBundle}
             />
+          </div>
+        </div>
+
+        {/* Bottom Global Terminal / Status Bar (from Stitch) */}
+        <div className="mt-6 p-3 rounded-lg bg-[#1b1c1d] border border-[#292a2b] flex flex-wrap items-center justify-between gap-3 text-xs text-[#908f9e] font-mono shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5e6ad2]"></span>
+              <span className="text-[#e3e2e3]">Daemon v2.4 Active</span>
+            </div>
+            <span className="text-[#292a2b]">|</span>
+            <span>Branch: <strong className="text-[#bdc2ff]">feat/agent-router-v2</strong></span>
+            <span className="text-[#292a2b]">|</span>
+            <span>Engine Memory: <strong className="text-[#e3e2e3]">248MB</strong></span>
+          </div>
+          <div className="flex items-center gap-3 text-[11px]">
+            <div className="flex items-center gap-1">
+              <span className="px-1.5 py-0.5 rounded bg-[#0d0e0f] text-[#e3e2e3] border border-[#292a2b]">⌥1-3</span>
+              <span>Presets</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="px-1.5 py-0.5 rounded bg-[#0d0e0f] text-[#e3e2e3] border border-[#292a2b]">⌘↵</span>
+              <span>Generate</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="px-1.5 py-0.5 rounded bg-[#0d0e0f] text-[#e3e2e3] border border-[#292a2b]">Esc</span>
+              <span>Clear</span>
+            </div>
           </div>
         </div>
       </main>

@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{colors:{"on-secondary-fixed-variant":"#454747","on-secondary-container":"#b4b5b5","on-secondary-fixed":"#1a1c1c","on-tertiary-fixed-variant":"#673d00","surface-tint":"#bdc2ff","surface-container-highest":"#343536","inverse-surface":"#e3e2e3","on-primary-container":"#fdfaff","secondary-container":"#454747","outline":"#908f9e","outline-variant":"#454652","tertiary-container":"#a56500","secondary-fixed":"#e2e2e2","on-error-container":"#ffdad6","on-error":"#690005","on-background":"#e3e2e3","tertiary-fixed-dim":"#ffb867","tertiary-fixed":"#ffddbb","surface":"#121315","surface-dim":"#121315","secondary":"#c6c6c7","on-tertiary-fixed":"#2b1700","on-secondary":"#2f3131","on-tertiary-container":"#fffaf8","secondary-fixed-dim":"#c6c6c7","on-primary":"#121f8b","error-container":"#93000a","surface-variant":"#343536","surface-container-lowest":"#0d0e0f","inverse-primary":"#4854bb","surface-container":"#1f2021","surface-container-low":"#1b1c1d","on-primary-fixed":"#000965","primary-fixed-dim":"#bdc2ff","inverse-on-surface":"#303032","surface-bright":"#38393a","on-surface":"#e3e2e3","primary-container":"#5e6ad2","primary-fixed":"#dfe0ff","tertiary":"#ffb867","on-primary-fixed-variant":"#2e3aa2","background":"#121315","surface-container-high":"#292a2b","on-tertiary":"#482900","error":"#ffb4ab","on-surface-variant":"#c6c5d5","primary":"#bdc2ff"},borderRadius:{"DEFAULT":"0.125rem","lg":"0.25rem","xl":"0.5rem","full":"0.75rem"},spacing:{"space-xl":"1.5rem","space-md":"0.75rem","space-sm":"0.5rem","gutter":"1rem","space-lg":"1rem","margin":"1rem","space-xs":"0.25rem"},fontFamily:{"label-md":["JetBrains Mono"],"headline-xl":["Inter"],"label-sm":["JetBrains Mono"],"body-sm":["Inter"],"headline-sm":["Inter"],"body-md":["Inter"],"headline-md":["Inter"],"body-lg":["Inter"],"headline-xl-mobile":["Inter"],"headline-lg":["Inter"],"code-inline":["JetBrains Mono"]},fontSize:{"label-md":["12px",{"lineHeight":"16px","letterSpacing":"-0.01em","fontWeight":"500"}],"headline-xl":["32px",{"lineHeight":"40px","letterSpacing":"-0.025em","fontWeight":"600"}],"label-sm":["11px",{"lineHeight":"14px","letterSpacing":"0em","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"18px","letterSpacing":"0em","fontWeight":"400"}],"headline-sm":["15px",{"lineHeight":"22px","letterSpacing":"-0.01em","fontWeight":"500"}],"body-md":["13px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"headline-md":["18px",{"lineHeight":"26px","letterSpacing":"-0.015em","fontWeight":"500"}],"body-lg":["14px",{"lineHeight":"22px","letterSpacing":"-0.005em","fontWeight":"400"}],"headline-xl-mobile":["26px",{"lineHeight":"34px","letterSpacing":"-0.02em","fontWeight":"600"}],"headline-lg":["24px",{"lineHeight":"32px","letterSpacing":"-0.02em","fontWeight":"600"}],"code-inline":["12px",{"lineHeight":"16px","letterSpacing":"0em","fontWeight":"400"}]}}}};</script></head><body class="bg-surface-container-lowest font-body-md text-on-surface antialiased"><header class="fixed top-0 left-0 right-0 z-50 h-14 bg-surface/90 backdrop-blur-xl flex items-center justify-between px-space-lg shadow-[0_1px_8px_rgba(0,0,0,0.6)]"><div class="flex items-center gap-space-md"><img alt="ShipSpeak Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1Xl32hUc47hC7Ret9J9N5OOF047yrB8YHqKMioHvwNmb_f9_Ef8gtQGZr0N4GLTOzLymn5RfAAYyvwdgnOvz4H7ANyAFpap4V_Kmb48cGCU9ZAF10n4b3BmW4OkWIb1JZH4RTh3SL9prhj0I1YCYmoqWMoqoXIe4On0XCBDBigM0rPY4Exe5XfBbX9SBxB5c0oSFZcgett0E_xUWOw5hUzycQq2usR3rWlJTgx9G7P5w60mcvako5lCPQw"/><span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">ShipSpeak</span><div class="h-4 w-[1px] bg-surface-container-highest"></div><button class="flex items-center gap-space-xs px-space-sm py-1 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface-variant hover:text-on-surface transition-colors"><span class="font-label-sm text-label-sm">Core Engine</span><span class="material-symbols-outlined text-[14px]">expand_more</span></button><div class="flex items-center gap-space-xs px-space-sm py-1 rounded bg-surface-container-lowest text-on-surface-variant"><span class="material-symbols-outlined text-[13px] text-primary">fork_right</span><span class="font-label-sm text-label-sm font-label-md text-on-surface">main</span></div><div class="flex items-center gap-1.5 px-space-sm py-1 rounded bg-surface-container-lowest text-on-surface-variant"><span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span><span class="font-label-sm text-label-sm">GitHub In Sync</span></div></div><div class="flex-1 max-w-md mx-space-lg"><button class="w-full flex items-center justify-between px-space-md py-1.5 rounded-lg bg-surface-container-lowest hover:bg-surface-container-low text-on-surface-variant hover:text-on-surface transition-colors"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[16px]">search</span><span class="font-body-sm text-body-sm">Search issues, releases, commands...</span></div><div class="flex items-center gap-1"><span class="font-label-sm text-label-sm px-1.5 py-0.5 rounded bg-surface-container-high text-on-surface">⌘K</span></div></button></div><div class="flex items-center gap-space-md"><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors flex items-center gap-1" href="#"><span class="material-symbols-outlined text-[16px]">menu_book</span><span>Docs</span></a><button class="p-1.5 rounded text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors relative"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 bg-primary rounded-full"></span></button><div class="h-4 w-[1px] bg-surface-container-highest"></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><aside class="fixed left-0 top-14 bottom-0 w-60 bg-surface-container-lowest z-40 flex flex-col justify-between py-space-md shadow-[1px_0_12px_rgba(0,0,0,0.5)]"><div class="flex flex-col gap-space-md px-space-sm"><div class="px-space-sm py-1"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Workspace</span></div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container text-on-surface font-headline-sm"><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-1.5 rounded transition-colors bg-surface-container text-on-surface font-headline-sm" data-path="overview" href="#"><span class="material-symbols-outlined text-[18px]">dashboard</span><span>Overview</span></a><a class="flex items-center justify-between px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="pull-requests" href="#"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[18px]">call_merge</span><span>Pull Requests</span></div><span class="font-label-sm text-label-sm px-1.5 rounded bg-surface-container-high text-primary">4</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="release-matrix" href="#"><span class="material-symbols-outlined text-[18px]">rocket_launch</span><span>Release Matrix</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="deploy-queue" href="#"><span class="material-symbols-outlined text-[18px]">layers</span><span>Deploy Queue</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="changelog-copilot" href="#"><span class="material-symbols-outlined text-[18px]">auto_awesome</span><span>Changelog AI</span></a></nav><div class="px-space-sm pt-space-sm"><span class="font-label-sm text-label-sm uppercase tracking-wider text-outline">Tooling</span></div><nav class="flex flex-col gap-1" data-active-classes="bg-surface-container text-on-surface font-headline-sm"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="telemetry" href="#"><span class="material-symbols-outlined text-[18px]">query_stats</span><span>Telemetry</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="api-keys" href="#"><span class="material-symbols-outlined text-[18px]">key</span><span>API Keys</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface transition-colors font-body-md text-body-md" data-path="cockpit-settings" href="#"><span class="material-symbols-outlined text-[18px]">settings</span><span>Settings</span></a></nav></div><div class="px-space-sm flex flex-col gap-2"><div class="p-space-sm rounded-lg bg-surface-container-low flex flex-col gap-1"><div class="flex items-center justify-between"><span class="font-label-sm text-label-sm text-on-surface">Build v2.4.9</span><span class="font-label-sm text-label-sm text-tertiary">Staging</span></div><div class="w-full bg-surface-container h-1 rounded-full overflow-hidden"><div class="bg-primary-container h-full w-3/4"></div></div></div></div></aside><div class="pl-60"><main class="relative pt-14 w-full bg-surface-container-lowest min-h-screen px-space-lg py-space-lg"><div class="flex flex-col w-full">
+<!-- Top Cockpit Sub-Header / Ambient Context Bar -->
+<section class="flex flex-wrap items-center justify-between gap-space-sm pb-space-md border-b border-surface-container">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+<span class="font-headline-sm text-headline-sm text-on-surface tracking-tight">Cockpit Studio</span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">/</span>
+<div class="flex items-center gap-1.5 px-space-xs py-0.5 rounded bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[13px] text-primary">terminal</span>
+<span>session_id: #ss-9821-rtx</span>
+</div>
+<div class="hidden md:flex items-center gap-1 text-outline font-label-sm text-label-sm">
+<span>Git Head</span>
+<span class="text-on-surface font-label-md">0x8efb34</span>
+</div>
+</div>
+<!-- Quick Tool Action Badges -->
+<div class="flex items-center gap-space-sm">
+<div class="flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container-high text-on-surface font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px] text-tertiary">bolt</span>
+<span>Latency: <strong class="text-on-surface font-label-md">18ms</strong></span>
+</div>
+<div class="flex items-center gap-1 px-2 py-1 rounded bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">memory</span>
+<span>Whisper v3-Turbo + Claude 3.5 Sonnet</span>
+</div>
+<button class="flex items-center gap-1 px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors font-label-sm text-label-sm">
+<span class="material-symbols-outlined text-[14px]">tune</span>
+<span>Config</span>
+<span class="px-1 py-0.2 rounded bg-surface-container-lowest text-outline text-[10px]">⌥S</span>
+</button>
+</div>
+</section>
+<!-- Two-Column Cockpit Workspace -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-lg pt-space-lg">
+<!-- LEFT COLUMN: Input Control Center (approx 44%) -->
+<div class="lg:col-span-5 flex flex-col gap-space-md">
+<!-- Panel 1: Master Control & Presets Card -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col gap-space-md shadow-sm">
+<!-- Header & Voice Stream Status -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">mic_double</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Input Control Center</span>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="text-primary font-medium">Voice Engine Ready</span>
+</div>
+</div>
+<!-- Raycast Segmented Preset Tabs -->
+<div class="grid grid-cols-3 gap-1 p-1 rounded-lg bg-surface-container-lowest">
+<button class="preset-btn flex items-center justify-center gap-1.5 py-1.5 px-2 rounded font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors" id="preset-auth" onclick="selectPreset('auth')">
+<span class="material-symbols-outlined text-[14px]">shield</span>
+<span>Auth</span>
+<span class="text-[10px] opacity-60 ml-0.5">⌥1</span>
+</button>
+<button class="preset-btn flex items-center justify-center gap-1.5 py-1.5 px-2 rounded font-label-sm text-label-sm bg-surface-container text-on-surface transition-colors font-medium" id="preset-ai" onclick="selectPreset('ai')">
+<span class="material-symbols-outlined text-[14px] text-primary">smart_toy</span>
+<span>AI Agent</span>
+<span class="text-[10px] text-primary ml-0.5 font-label-md">⌥2</span>
+</button>
+<button class="preset-btn flex items-center justify-center gap-1.5 py-1.5 px-2 rounded font-label-sm text-label-sm text-on-surface-variant hover:text-on-surface transition-colors" id="preset-hackathon" onclick="selectPreset('hackathon')">
+<span class="material-symbols-outlined text-[14px]">trophy</span>
+<span>Hackathon</span>
+<span class="text-[10px] opacity-60 ml-0.5">⌥3</span>
+</button>
+</div>
+<!-- Voice Brain Dump Textarea & Recorder Container -->
+<div class="flex flex-col gap-2 rounded-lg p-space-md bg-surface-container-lowest">
+<div class="flex items-center justify-between">
+<label class="font-label-sm text-label-sm uppercase tracking-wider text-outline flex items-center gap-1" for="brain-dump-input">
+<span>Speech-to-Artifact Stream</span>
+<span class="text-on-surface-variant">• Raw Transcript</span>
+</label>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-primary">312 words</span>
+<span class="text-outline text-label-sm">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant">01:24 duration</span>
+</div>
+</div>
+<!-- Realistic Dev Brain Dump Textarea -->
+<textarea class="w-full bg-surface-container-low text-on-surface rounded p-space-sm font-body-sm text-body-sm leading-relaxed outline-none focus:bg-surface-container transition-colors resize-none placeholder-outline" id="brain-dump-input" placeholder="Speak or paste technical thoughts, commit notes, architectural adjustments..." rows="6">Refactored our autonomous agent tool routing pipeline. Replaced brittle hardcoded switch statements with dynamic vector tool-match scoring in tools/registry.ts. Fixed the token exhaustion race condition when concurrent sub-agents spawn parallel research loops. Added exponential backoff retry on Anthropic rate limits and streamed structured JSON delta outputs straight to client websockets.</textarea>
+<!-- Interactive Acoustic Scrub Bar & Record Control -->
+<div class="pt-2 flex flex-col gap-2">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-outline">00:48</span>
+<!-- Visualized Mini Audio Waveform -->
+<div class="flex-1 h-6 bg-surface-container-low rounded flex items-center px-2 gap-0.5 overflow-hidden">
+<span class="w-1 h-2 bg-primary rounded-full"></span>
+<span class="w-1 h-3.5 bg-primary rounded-full"></span>
+<span class="w-1 h-5 bg-primary-container rounded-full"></span>
+<span class="w-1 h-2.5 bg-primary rounded-full"></span>
+<span class="w-1 h-4 bg-primary-container rounded-full"></span>
+<span class="w-1 h-3 bg-primary rounded-full"></span>
+<span class="w-1 h-1.5 bg-primary rounded-full"></span>
+<span class="w-1 h-4.5 bg-primary rounded-full"></span>
+<span class="w-1 h-5 bg-primary-container rounded-full"></span>
+<span class="w-1 h-3 bg-primary rounded-full"></span>
+<span class="w-1 h-2 bg-primary rounded-full"></span>
+<span class="w-1 h-4 bg-primary-container rounded-full"></span>
+<span class="w-1 h-5 bg-primary rounded-full"></span>
+<span class="w-1 h-2.5 bg-primary rounded-full"></span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="w-1 h-2 bg-outline-variant rounded-full"></span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="w-1 h-2 bg-outline-variant rounded-full"></span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+</div>
+<span class="font-label-sm text-label-sm text-outline">01:24</span>
+</div>
+<!-- Voice Trigger Row -->
+<div class="flex items-center justify-between pt-1">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface transition-all font-body-sm text-body-sm" id="mic-toggle-btn" onclick="toggleMicrophone()">
+<span class="material-symbols-outlined text-[16px] text-tertiary" id="mic-icon">mic</span>
+<span class="font-label-sm text-label-sm font-medium" id="mic-status-label">Tap or hold Space to talk</span>
+</button>
+<div class="flex items-center gap-1">
+<button class="px-2 py-1 rounded bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm transition-colors" onclick="clearTranscript()">
+                  Clear
+                </button>
+<button class="flex items-center gap-1 px-2 py-1 rounded bg-surface-container-low hover:bg-surface-container text-on-surface font-label-sm text-label-sm transition-colors" onclick="sampleReplay()">
+<span class="material-symbols-outlined text-[14px]">sync</span>
+<span>Sync PR #142</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Collapsible Git Diff Drawer -->
+<div class="rounded-lg bg-surface-container-lowest overflow-hidden">
+<button class="w-full flex items-center justify-between p-space-sm hover:bg-surface-container-low transition-colors text-left" onclick="toggleDiffDrawer()">
+<div class="flex items-center gap-2 min-w-0">
+<span class="material-symbols-outlined text-outline text-[16px] transition-transform" id="diff-chevron">expand_more</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium truncate">Git Diff Context</span>
+<span class="font-label-sm text-label-sm text-primary bg-surface-container px-1.5 py-0.2 rounded font-code-inline">feat/agent-router-v2</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-label-sm text-primary">+84</span>
+<span class="font-label-sm text-label-sm text-error">-29</span>
+<span class="font-label-sm text-label-sm text-outline">2 files</span>
+</div>
+</button>
+<!-- Drawer Body with High-Contrast Diff Lines -->
+<div class="px-space-sm pb-space-sm flex flex-col gap-2" id="diff-drawer-content">
+<!-- File Badge Row -->
+<div class="flex items-center gap-2 pt-1 overflow-x-auto">
+<span class="px-2 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px] text-tertiary">code</span>
+<span>tools/registry.ts</span>
+</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-low text-on-surface-variant font-label-sm text-label-sm flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">code</span>
+<span>services/agent_runner.py</span>
+</span>
+</div>
+<!-- Code Diff Sandbox -->
+<div class="bg-surface-container-low rounded p-space-sm font-code-inline text-code-inline text-on-surface leading-tight overflow-x-auto flex flex-col gap-1 select-text">
+<div class="text-outline">@@ -14,7 +14,14 @@ export class ToolRegistry {</div>
+<div class="flex items-start text-on-surface-variant opacity-60">
+<span class="w-5 select-none text-outline">14</span>
+<span>  constructor(private readonly config: RuntimeConfig) {}</span>
+</div>
+<!-- Red Deleted Line -->
+<div class="flex items-start bg-error-container/30 text-error px-1 rounded">
+<span class="w-5 select-none opacity-70">-</span>
+<span>- if (tool.name === 'eval') { runOldEval(task); }</span>
+</div>
+<div class="flex items-start bg-error-container/30 text-error px-1 rounded">
+<span class="w-5 select-none opacity-70">-</span>
+<span>- return this.registry.get(task.toolType).invoke();</span>
+</div>
+<!-- Green Added Lines -->
+<div class="flex items-start bg-surface-container text-primary px-1 rounded">
+<span class="w-5 select-none text-primary">+</span>
+<span>+ const toolScore = await computeEmbeddingSimilarity(task, tool.schema);</span>
+</div>
+<div class="flex items-start bg-surface-container text-primary px-1 rounded">
+<span class="w-5 select-none text-primary">+</span>
+<span>+ if (toolScore &gt; 0.84) return this.dispatchVectorTool(tool, task);</span>
+</div>
+<div class="flex items-start bg-surface-container text-primary px-1 rounded">
+<span class="w-5 select-none text-primary">+</span>
+<span>+ return this.fallbackBackoffRetry(task, { maxAttempts: 5 });</span>
+</div>
+<div class="flex items-start text-on-surface-variant opacity-60">
+<span class="w-5 select-none text-outline">19</span>
+<span>  }</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Master Solid High-Contrast CTA Button -->
+<div class="pt-2 flex flex-col gap-2">
+<button class="w-full py-2.5 px-4 rounded bg-white text-surface-container-lowest font-headline-sm text-headline-sm font-semibold hover:bg-neutral-200 active:scale-[0.99] transition-all flex items-center justify-center gap-2 shadow-md" onclick="synthesizeArtifacts()">
+<span class="material-symbols-outlined text-[20px] text-surface-container-lowest">auto_fix_high</span>
+<span>Generate Ship Artifacts</span>
+<span class="ml-2 px-1.5 py-0.5 rounded bg-surface-container-lowest/15 text-surface-container-lowest font-label-sm text-label-sm">⌘↵</span>
+</button>
+<div class="flex items-center justify-between px-1 text-outline font-label-sm text-label-sm">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">history</span>
+<span>Last auto-sync: 42 seconds ago</span>
+</span>
+<span>Estimated synthesis: ~1.2s</span>
+</div>
+</div>
+</div>
+<!-- Quick Tips Micro-Card -->
+<div class="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface-variant font-label-sm text-label-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">keyboard</span>
+<span>Fast Tip: Press <strong class="text-on-surface font-label-md">⌘↵</strong> to transform audio into PR, Diagram, Script &amp; Posts instantly.</span>
+</div>
+<span class="text-outline">v2.4.9</span>
+</div>
+</div>
+<!-- RIGHT COLUMN: 2x2 Bento Grid (approx 56%) -->
+<div class="lg:col-span-7 grid grid-cols-1 md:grid-cols-2 gap-space-md">
+<!-- CARD 1: Automated Pull Request (PR) -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col justify-between gap-space-md shadow-sm">
+<div class="flex flex-col gap-space-sm">
+<!-- Card Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[16px]">call_merge</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Pull Request</h3>
+<span class="font-label-sm text-label-sm text-outline">Automated Engine PR</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-primary">Ready to publish</span>
+</div>
+<!-- Branch Tag Pill -->
+<div class="flex items-center gap-1 text-on-surface-variant font-label-sm text-label-sm">
+<span class="text-outline">Target:</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-lowest font-code-inline text-code-inline text-on-surface">feat/agent-router-v2</span>
+<span>→</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-lowest font-code-inline text-code-inline text-on-surface">main</span>
+</div>
+<!-- PR Summary Box -->
+<div class="bg-surface-container-lowest rounded p-space-sm flex flex-col gap-2">
+<span class="font-headline-sm text-headline-sm text-on-surface font-medium leading-snug">
+              feat(engine): intelligent vector-based agent tool routing &amp; backoff retries
+            </span>
+<div class="flex flex-col gap-1.5 text-body-sm font-body-sm text-on-surface-variant">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">check_box</span>
+<span class="text-on-surface">Vector tool score matcher in <code class="font-code-inline text-code-inline text-primary">tools/registry.ts</code></span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">check_box</span>
+<span>Mitigates sub-agent token saturation concurrency lock</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px] text-primary">check_box</span>
+<span>Anthropic API 429 exponential backoff strategy</span>
+</div>
+</div>
+</div>
+</div>
+<!-- PR Actions -->
+<div class="flex items-center justify-between pt-2 border-t border-surface-container">
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-colors" id="copy-pr-btn" onclick="copyPrContent()">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+<span id="copy-pr-label">Copy Markdown</span>
+</button>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-primary-container text-on-primary-container font-headline-sm text-headline-sm font-medium hover:bg-opacity-90 transition-colors">
+<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+<span>Create PR on GitHub</span>
+</button>
+</div>
+</div>
+<!-- CARD 2: Architecture Topology Diagram -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col justify-between gap-space-md shadow-sm">
+<div class="flex flex-col gap-space-sm">
+<!-- Card Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[16px]">account_tree</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Architecture Topology</h3>
+<span class="font-label-sm text-label-sm text-outline">Realtime Routing Map</span>
+</div>
+</div>
+<div class="flex items-center gap-1 bg-surface-container-lowest p-0.5 rounded">
+<span class="px-2 py-0.5 rounded bg-surface-container text-primary font-label-sm text-label-sm">Visual</span>
+<span class="px-2 py-0.5 rounded text-outline hover:text-on-surface font-label-sm text-label-sm cursor-pointer">Mermaid</span>
+</div>
+</div>
+<!-- Interactive Node Canvas Visualizer -->
+<div class="relative bg-surface-container-lowest rounded p-space-sm h-48 flex flex-col justify-between overflow-hidden">
+<!-- Connection Diagram Lines Overlay -->
+<svg class="absolute inset-0 w-full h-full pointer-events-none stroke-surface-container-highest" xmlns="http://www.w3.org/2000/svg">
+<line stroke-dasharray="3 3" stroke-width="1.5" x1="80" x2="160" y1="40" y2="40"></line>
+<line stroke-width="1.5" x1="220" x2="280" y1="40" y2="40"></line>
+<line stroke-width="1.5" x1="190" x2="190" y1="58" y2="110"></line>
+</svg>
+<!-- Topology Nodes Flow -->
+<div class="flex items-center justify-between z-10 pt-2 px-1">
+<!-- Node 1: Client Socket -->
+<div class="p-2 rounded bg-surface-container text-center flex flex-col items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-on-surface-variant">sync_alt</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">WS Client</span>
+<span class="text-[10px] text-outline">Delta Stream</span>
+</div>
+<!-- Node 2: Core Orchestrator -->
+<div class="p-2 rounded bg-primary-container text-on-primary-container text-center flex flex-col items-center gap-1 shadow-md">
+<span class="material-symbols-outlined text-[16px]">hub</span>
+<span class="font-label-sm text-label-sm font-semibold">ShipSpeak</span>
+<span class="text-[10px] text-primary font-label-md">Orchestrator</span>
+</div>
+<!-- Node 3: Vector Tool Matcher -->
+<div class="p-2 rounded bg-surface-container text-center flex flex-col items-center gap-1 shadow-sm">
+<span class="material-symbols-outlined text-[16px] text-tertiary">search_insights</span>
+<span class="font-label-sm text-label-sm text-on-surface font-medium">Vector Index</span>
+<span class="text-[10px] text-tertiary">Score &gt; 0.84</span>
+</div>
+</div>
+<!-- Lower Level Sub-Agent Pool -->
+<div class="z-10 flex items-center justify-center pb-2">
+<div class="px-3 py-1.5 rounded bg-surface-container flex items-center gap-2 shadow-sm">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+<span class="font-label-sm text-label-sm text-on-surface">Sub-Agents Pool (Concurrent x4)</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container-highest text-primary font-label-sm text-label-sm">14ms latency</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Architecture Topology Actions -->
+<div class="flex items-center justify-between pt-2 border-t border-surface-container">
+<div class="flex items-center gap-2">
+<button class="px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm transition-colors">SVG</button>
+<button class="px-2 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-label-sm text-label-sm transition-colors">PNG</button>
+</div>
+<button class="flex items-center gap-1 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm transition-colors">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+<span>Copy Mermaid syntax</span>
+</button>
+</div>
+</div>
+<!-- CARD 3: 2-Minute Demo Video Script -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col justify-between gap-space-md shadow-sm">
+<div class="flex flex-col gap-space-sm">
+<!-- Card Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[16px]">videocam</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Demo Video Script</h3>
+<span class="font-label-sm text-label-sm text-outline">Sprint Teleprompter Draft</span>
+</div>
+</div>
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-sm text-label-sm text-tertiary">02:00 Total</span>
+</div>
+<!-- Teleprompter Flow Blocks -->
+<div class="bg-surface-container-lowest rounded p-space-sm flex flex-col gap-2 max-h-48 overflow-y-auto">
+<div class="p-2 rounded bg-surface-container-low flex flex-col gap-0.5">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-primary font-medium">[00:00 - 00:25] The Concurrency Wall</span>
+<span class="text-outline">Hook</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">"Notice how the autonomous agent stalled when three sub-queries triggered simultaneous tool calls? Let's unpack why."</p>
+</div>
+<div class="p-2 rounded bg-surface-container-low flex flex-col gap-0.5">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-primary font-medium">[00:25 - 01:10] Vector Tool Routing</span>
+<span class="text-outline">Solution</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">"Instead of switch statements, our new vector matcher ranks tools by semantic proximity to the task schema in real-time."</p>
+</div>
+<div class="p-2 rounded bg-surface-container-low flex flex-col gap-0.5">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-primary font-medium">[01:10 - 01:45] Live Stress Run</span>
+<span class="text-outline">Proof</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">"Watch 4 concurrent agents resolve simultaneously in under 800ms with zero 429 drops."</p>
+</div>
+<div class="p-2 rounded bg-surface-container-low flex flex-col gap-0.5">
+<div class="flex items-center justify-between font-label-sm text-label-sm">
+<span class="text-primary font-medium">[01:45 - 02:00] Call to Action</span>
+<span class="text-outline">Outro</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface">"Merged in PR #142. Clone the repo and test the runner with our demo command."</p>
+</div>
+</div>
+</div>
+<!-- Script Teleprompter Options -->
+<div class="flex items-center justify-between pt-2 border-t border-surface-container">
+<div class="flex items-center gap-1.5">
+<span class="font-label-sm text-label-sm text-outline">Speed:</span>
+<button class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface font-label-sm text-label-sm">1.0x</button>
+<button class="px-1.5 py-0.5 rounded bg-surface-container-low hover:bg-surface-container text-on-surface-variant font-label-sm text-label-sm">1.2x</button>
+</div>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-headline-sm transition-colors">
+<span class="material-symbols-outlined text-[16px] text-primary">play_arrow</span>
+<span>Launch Teleprompter</span>
+</button>
+</div>
+</div>
+<!-- CARD 4: Social Post (Launch Announcement) -->
+<div class="p-space-md rounded-lg bg-surface-container-low flex flex-col justify-between gap-space-md shadow-sm">
+<div class="flex flex-col gap-space-sm">
+<!-- Card Header -->
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="w-7 h-7 rounded bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[16px]">campaign</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Social Post Draft</h3>
+<span class="font-label-sm text-label-sm text-outline">Engineering Announcement</span>
+</div>
+</div>
+<span class="font-label-sm text-label-sm text-primary">248 / 280 chars</span>
+</div>
+<!-- Channel Segment Tabs -->
+<div class="flex items-center gap-1 bg-surface-container-lowest p-0.5 rounded">
+<button class="flex-1 py-1 rounded bg-surface-container text-on-surface font-label-sm text-label-sm font-medium">X / Twitter</button>
+<button class="flex-1 py-1 rounded text-outline hover:text-on-surface font-label-sm text-label-sm">LinkedIn</button>
+<button class="flex-1 py-1 rounded text-outline hover:text-on-surface font-label-sm text-label-sm">Threads</button>
+</div>
+<!-- Post Content Bubble -->
+<div class="bg-surface-container-lowest rounded p-space-sm flex flex-col gap-2 font-body-sm text-body-sm text-on-surface">
+<p class="leading-relaxed">
+              Shipped v2 of our autonomous agent pipeline 🚢✨<br/><br/>
+              No more hardcoded tool routing or token race conditions. Swapped in dynamic vector matching + automatic backoff. Sub-agent latency dropped 42%.<br/><br/>
+              Full PR &amp; teardown below 👇 <span class="text-primary">#buildinpublic</span> <span class="text-primary">#devin</span>
+</p>
+<!-- Social Metrics Mockup Preview -->
+<div class="pt-2 flex items-center justify-between text-outline font-label-sm text-label-sm border-t border-surface-container">
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">chat_bubble</span>
+<span>24</span>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">repeat</span>
+<span>89</span>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">favorite</span>
+<span>412</span>
+</span>
+<span class="flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">analytics</span>
+<span>12.4K</span>
+</span>
+</div>
+</div>
+</div>
+<!-- Social Action Buttons -->
+<div class="flex items-center justify-between pt-2 border-t border-surface-container">
+<span class="font-label-sm text-label-sm text-outline">Target Tone: Direct &amp; Technical</span>
+<button class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-headline-sm transition-colors" id="copy-social-btn" onclick="copySocialPost()">
+<span class="material-symbols-outlined text-[16px] text-primary">copy_all</span>
+<span id="copy-social-label">Copy to Clipboard</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Global Terminal / Toast Bar -->
+<div class="mt-space-lg p-space-sm rounded-lg bg-surface-container-low flex flex-wrap items-center justify-between gap-space-sm text-on-surface-variant font-label-sm text-label-sm shadow-sm">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span class="text-on-surface">Daemon v2.4 Active</span>
+</div>
+<span class="text-outline">|</span>
+<span>Branch: <strong class="text-primary font-label-md">feat/agent-router-v2</strong></span>
+<span class="text-outline">|</span>
+<span>Engine Memory: <strong class="text-on-surface font-label-md">248MB</strong></span>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface">⌘K</span>
+<span>Palette</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface">⌘C</span>
+<span>Copy Active</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="px-1.5 py-0.5 rounded bg-surface-container text-on-surface">Esc</span>
+<span>Clear Mode</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  let isRecording = false;
+
+  function toggleMicrophone() {
+    isRecording = !isRecording;
+    const btn = document.getElementById('mic-toggle-btn');
+    const label = document.getElementById('mic-status-label');
+    const icon = document.getElementById('mic-icon');
+
+    if (isRecording) {
+      btn.classList.add('bg-error-container', 'text-error');
+      label.innerText = 'Recording live... (Click to stop)';
+      icon.innerText = 'graphic_eq';
+      icon.classList.remove('text-tertiary');
+      icon.classList.add('text-error');
+    } else {
+      btn.classList.remove('bg-error-container', 'text-error');
+      label.innerText = 'Tap or hold Space to talk';
+      icon.innerText = 'mic';
+      icon.classList.remove('text-error');
+      icon.classList.add('text-tertiary');
+    }
+  }
+
+  function selectPreset(preset) {
+    const buttons = document.querySelectorAll('.preset-btn');
+    buttons.forEach(b => {
+      b.classList.remove('bg-surface-container', 'text-on-surface', 'font-medium');
+      b.classList.add('text-on-surface-variant');
+    });
+
+    const activeBtn = document.getElementById('preset-' + preset);
+    if (activeBtn) {
+      activeBtn.classList.add('bg-surface-container', 'text-on-surface', 'font-medium');
+      activeBtn.classList.remove('text-on-surface-variant');
+    }
+
+    const textarea = document.getElementById('brain-dump-input');
+    if (preset === 'auth') {
+      textarea.value = "Hardened Auth0 token refresh mechanism with asymmetric RS256 signature verification in middleware/auth.ts. Added Redis token revocation blacklist with 15min TTL to eliminate zombie session vulnerability.";
+    } else if (preset === 'ai') {
+      textarea.value = "Refactored our autonomous agent tool routing pipeline. Replaced brittle hardcoded switch statements with dynamic vector tool-match scoring in tools/registry.ts. Fixed the token exhaustion race condition when concurrent sub-agents spawn parallel research loops. Added exponential backoff retry on Anthropic rate limits and streamed structured JSON delta outputs straight to client websockets.";
+    } else if (preset === 'hackathon') {
+      textarea.value = "Shipped end-to-end voice-to-PR generation pipeline prototype. Integrated local Whisper audio streaming directly with WebSockets, synthesizing Claude Sonnet PR summaries, automated ASCII topology graphs, and demo teleprompter scripts in 1.4 seconds.";
+    }
+  }
+
+  function toggleDiffDrawer() {
+    const drawer = document.getElementById('diff-drawer-content');
+    const chevron = document.getElementById('diff-chevron');
+    if (drawer.classList.contains('hidden')) {
+      drawer.classList.remove('hidden');
+      chevron.style.transform = 'rotate(0deg)';
+    } else {
+      drawer.classList.add('hidden');
+      chevron.style.transform = 'rotate(-90deg)';
+    }
+  }
+
+  function clearTranscript() {
+    document.getElementById('brain-dump-input').value = '';
+    document.getElementById('brain-dump-input').focus();
+  }
+
+  function sampleReplay() {
+    selectPreset('ai');
+  }
+
+  function synthesizeArtifacts() {
+    const btn = event.currentTarget;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px] animate-spin">refresh</span><span>Synthesizing Pipeline...</span>';
+    setTimeout(() => {
+      btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">check</span><span>Artifacts Updated!</span>';
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+      }, 1400);
+    }, 800);
+  }
+
+  function copyPrContent() {
+    const label = document.getElementById('copy-pr-label');
+    label.innerText = 'Copied to Clipboard!';
+    setTimeout(() => {
+      label.innerText = 'Copy Markdown';
+    }, 1800);
+  }
+
+  function copySocialPost() {
+    const label = document.getElementById('copy-social-label');
+    label.innerText = 'Copied!';
+    setTimeout(() => {
+      label.innerText = 'Copy to Clipboard';
+    }, 1800);
+  }
+
+  // Keyboard shortcut listener (⌘↵ to Generate)
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      e.preventDefault();
+      synthesizeArtifacts();
+    }
+  });
+</script></main></div></body></html>

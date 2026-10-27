@@ -41,46 +41,46 @@ ${segments
 
   return (
     <div
-      className={`flex flex-col h-full justify-between bg-[#111215] border rounded-xl p-5 transition-all shadow-sm overflow-hidden ${
+      className={`flex flex-col h-full justify-between bg-[#1b1c1d] border rounded-xl p-5 transition-all shadow-sm overflow-hidden ${
         isRefining
-          ? 'border-indigo-500/70 ring-1 ring-indigo-500/40 shadow-indigo-500/10'
-          : 'border-white/[0.08] hover:border-white/[0.14]'
+          ? 'border-[#5e6ad2]/70 ring-1 ring-[#5e6ad2]/40 shadow-[#5e6ad2]/10'
+          : 'border-[#292a2b] hover:border-[#343536]'
       }`}
     >
       <div className="flex-1 flex flex-col min-h-0">
         {/* Card Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between pb-3 border-b border-[#292a2b]">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.04] text-indigo-400 border border-white/[0.08]">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]">
               {isRefining ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
               ) : (
-                <Video className="h-3.5 w-3.5 text-indigo-400" />
+                <Video className="h-3.5 w-3.5 text-[#5e6ad2]" />
               )}
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-zinc-100 tracking-tight flex items-center gap-2">
-                Demo video script
+              <h3 className="text-sm font-semibold text-[#e3e2e3] tracking-tight flex items-center gap-2">
+                Demo Video Script
                 {isRefining && (
-                  <span className="text-[10px] font-mono text-indigo-300">
+                  <span className="text-[10px] font-mono text-[#bdc2ff]">
                     Refining...
                   </span>
                 )}
               </h3>
-              <p className="text-xs text-zinc-400 mt-0.5">{data.title}</p>
+              <p className="text-xs text-[#908f9e] mt-0.5">{data.title}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5">
-            <div className="flex items-center gap-1 font-mono text-[11px] bg-white/[0.05] text-zinc-300 px-2.5 py-0.5 rounded border border-white/[0.08]">
-              <Clock className="h-3 w-3 text-indigo-400" />
+            <div className="flex items-center gap-1 font-mono text-[11px] bg-[#0d0e0f] text-[#ffb867] px-2.5 py-0.5 rounded border border-[#292a2b]">
+              <Clock className="h-3 w-3 text-[#ffb867]" />
               <span>{data.totalDuration}</span>
             </div>
 
             <button
               onClick={handleCopy}
               title="Copy script markdown"
-              className="flex items-center p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-colors text-xs"
+              className="flex items-center p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] bg-[#1f2021] hover:bg-[#292a2b] border border-[#292a2b] transition-colors text-xs"
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5 text-emerald-400" />
@@ -96,26 +96,26 @@ ${segments
           {(data.segments || []).map((seg, idx) => (
             <div
               key={idx}
-              className="rounded-lg border border-white/[0.06] bg-[#0a0b0d] p-3 transition-colors hover:border-white/[0.12]"
+              className="rounded-lg border border-[#292a2b] bg-[#0d0e0f] p-3 transition-colors hover:border-[#343536]"
             >
               <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className="rounded bg-white/[0.04] px-2 py-0.5 font-mono text-[10px] font-medium text-indigo-300 border border-white/[0.08]">
+                <span className="rounded bg-[#1f2021] px-2 py-0.5 font-mono text-[10px] font-medium text-[#bdc2ff] border border-[#292a2b]">
                   {seg.timestamp}
                 </span>
-                <span className="text-xs font-medium text-zinc-400">
+                <span className="text-xs font-medium text-[#908f9e]">
                   {seg.stage}
                 </span>
               </div>
 
               <div className="mt-2 space-y-1.5">
-                <div className="flex items-start gap-1.5 text-xs text-zinc-200">
-                  <Mic className="h-3.5 w-3.5 mt-0.5 text-indigo-400 shrink-0" />
+                <div className="flex items-start gap-1.5 text-xs text-[#e3e2e3]">
+                  <Mic className="h-3.5 w-3.5 mt-0.5 text-[#5e6ad2] shrink-0" />
                   <p className="italic leading-relaxed">&ldquo;{seg.spokenLine || seg.audio}&rdquo;</p>
                 </div>
 
-                <div className="flex items-start gap-1.5 rounded bg-[#111215] px-2.5 py-1 text-[11px] text-zinc-400 border border-white/[0.06]">
-                  <Eye className="h-3 w-3 mt-0.5 text-indigo-400 shrink-0" />
-                  <p className="font-mono text-zinc-400">{seg.visualCue}</p>
+                <div className="flex items-start gap-1.5 rounded bg-[#1b1c1d] px-2.5 py-1 text-[11px] text-[#c6c5d5] border border-[#292a2b]">
+                  <Eye className="h-3 w-3 mt-0.5 text-[#5e6ad2] shrink-0" />
+                  <p className="font-mono text-[#908f9e]">{seg.visualCue}</p>
                 </div>
               </div>
             </div>
