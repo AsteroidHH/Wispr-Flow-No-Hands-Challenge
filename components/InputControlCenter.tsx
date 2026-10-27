@@ -108,30 +108,30 @@ export function InputControlCenter({
       };
 
   return (
-    <div className="flex flex-col gap-5 rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-5 shadow-sm overflow-hidden">
+    <div className="flex flex-col gap-5 rounded-xl border border-white/[0.08] bg-[#111215] p-5 shadow-sm overflow-hidden">
       {/* Header & Judge Presets Bar */}
       <div>
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h2 className="text-sm font-semibold tracking-tight text-[#e3e2e3]">
+            <h2 className="text-sm font-semibold tracking-tight text-zinc-100">
               Input Workspace
             </h2>
-            <p className="text-xs text-[#908f9e] mt-0.5">
+            <p className="text-xs text-zinc-400 mt-0.5">
               Dictate your rationale or select a scenario
             </p>
           </div>
-          <span className="rounded bg-[#0d0e0f] px-2 py-0.5 text-[10px] font-mono text-[#908f9e] border border-[#292a2b]">
+          <span className="font-mono text-[11px] bg-white/[0.05] text-zinc-300 px-2 py-0.5 rounded border border-white/[0.08]">
             Wispr Hotkey Ready
           </span>
         </div>
 
         {/* Sleek Segmented Tab Control for Judge Presets with ⌥1, ⌥2, ⌥3 hints */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between text-xs text-[#908f9e] font-medium">
+          <div className="flex items-center justify-between text-xs text-zinc-400 font-medium">
             <span>Evaluation Presets</span>
-            <span className="text-[10px] text-[#908f9e] font-mono">1-click load</span>
+            <span className="text-[10px] text-zinc-500 font-mono">1-click load</span>
           </div>
-          <div className="grid grid-cols-3 gap-1 bg-[#0d0e0f] p-1 rounded-lg border border-[#292a2b] overflow-hidden">
+          <div className="grid grid-cols-3 gap-1 bg-[#0a0b0d] p-1 rounded-lg border border-white/[0.08] overflow-hidden">
             {JUDGE_PRESETS.map((preset, index) => {
               const isSelected = activePresetId === preset.id;
               const shortcut = `⌥${index + 1}`;
@@ -143,17 +143,17 @@ export function InputControlCenter({
                   title={`${preset.name} (${shortcut}) — ${preset.tagline}`}
                   className={`w-full min-w-0 flex items-center justify-between gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all ${
                     isSelected
-                      ? 'bg-[#1f2021] text-white shadow-sm border border-[#343536]'
-                      : 'text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#1b1c1d]/50'
+                      ? 'bg-[#1c1d22] text-white font-medium shadow-inner border border-white/[0.12]'
+                      : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.03]'
                   }`}
                 >
                   <div className="flex items-center gap-1.5 min-w-0 truncate">
-                    <span className={`shrink-0 ${isSelected ? 'text-[#bdc2ff]' : 'text-[#908f9e]'}`}>
+                    <span className={`shrink-0 ${isSelected ? 'text-indigo-300' : 'text-zinc-500'}`}>
                       {getPresetIcon(preset.id)}
                     </span>
                     <span className="truncate text-left text-[11px] sm:text-xs">{preset.name}</span>
                   </div>
-                  <kbd className="shrink-0 font-mono text-[9px] opacity-60 rounded bg-[#0d0e0f] px-1 py-0.5 border border-[#292a2b] ml-0.5">
+                  <kbd className="shrink-0 font-mono text-[9px] opacity-70 rounded bg-[#0a0b0d] px-1 py-0.5 border border-white/[0.08] ml-0.5">
                     {shortcut}
                   </kbd>
                 </button>
@@ -163,9 +163,9 @@ export function InputControlCenter({
         </div>
       </div>
 
-      {/* Primary Voice Transcript Area - Inner #0d0e0f Card */}
-      <div className="rounded-xl border border-[#292a2b] bg-[#0d0e0f] p-3.5 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#292a2b] pb-2.5">
+      {/* Primary Voice Transcript Area - Inner Crisp Card */}
+      <div className="bg-[#0a0b0d] border border-white/[0.08] focus-within:border-indigo-500/60 rounded-xl p-4 space-y-3 transition-colors">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] pb-2.5">
           <div className="flex items-center gap-2">
             <span
               className={`h-1.5 w-1.5 rounded-full ${
@@ -174,7 +174,7 @@ export function InputControlCenter({
             />
             <label
               htmlFor="voice-transcript"
-              className="text-xs font-medium text-[#e3e2e3]"
+              className="text-xs font-medium text-zinc-200"
             >
               Voice brain dump
             </label>
@@ -188,11 +188,11 @@ export function InputControlCenter({
               title="ambient visualizer for your Wispr Flow voice stream."
               className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors border ${
                 isAudioReactive
-                  ? 'border-[#5e6ad2]/50 bg-[#5e6ad2]/15 text-[#bdc2ff]'
-                  : 'border-[#292a2b] bg-[#1b1c1d] text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3]'
+                  ? 'border-indigo-500/50 bg-indigo-500/15 text-indigo-300'
+                  : 'border-white/[0.08] bg-white/[0.03] text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-200'
               }`}
             >
-              <Activity className={`h-3 w-3 ${isAudioReactive ? 'text-[#bdc2ff]' : 'text-[#908f9e]'}`} />
+              <Activity className={`h-3 w-3 ${isAudioReactive ? 'text-indigo-300' : 'text-zinc-400'}`} />
               <span>Audio HUD</span>
               <span
                 className={`h-1.5 w-1.5 rounded-full ${
@@ -205,14 +205,14 @@ export function InputControlCenter({
               <button
                 type="button"
                 onClick={() => setVoiceTranscript('')}
-                className="flex items-center gap-1 text-xs text-[#908f9e] hover:text-rose-400 transition-colors"
+                className="flex items-center gap-1 text-xs text-zinc-400 hover:text-rose-400 transition-colors"
                 title="Clear transcript"
               >
                 <Trash2 className="h-3 w-3" />
                 <span>Clear</span>
               </button>
             )}
-            <span className="text-xs font-mono text-[#908f9e]">
+            <span className="text-xs font-mono text-zinc-400">
               {wordCount} words
             </span>
           </div>
@@ -227,11 +227,11 @@ export function InputControlCenter({
         )}
 
         {/* Quiet Indicator Banner */}
-        <div className="flex items-center justify-between rounded-lg border border-[#292a2b] bg-[#121315] px-3 py-2 text-xs text-[#908f9e]">
+        <div className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-xs text-zinc-400">
           <div className="flex items-center gap-2">
-            <Volume2 className="h-3.5 w-3.5 text-[#bdc2ff] shrink-0" />
+            <Volume2 className="h-3.5 w-3.5 text-indigo-300 shrink-0" />
             <span className="text-xs">
-              Press your <kbd className="rounded bg-[#1b1c1d] px-1.5 py-0.5 font-mono text-[#e3e2e3] border border-[#292a2b]">Wispr Flow</kbd> hotkey and ramble here.
+              Press your <kbd className="rounded bg-white/[0.05] px-1.5 py-0.5 font-mono text-zinc-200 border border-white/[0.08]">Wispr Flow</kbd> hotkey and ramble here.
             </span>
           </div>
           <button
@@ -240,10 +240,10 @@ export function InputControlCenter({
             className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors border ${
               isRecording
                 ? 'border-rose-500/40 bg-rose-950/40 text-rose-300'
-                : 'border-[#292a2b] bg-[#1b1c1d] text-[#e3e2e3] hover:bg-[#292a2b]'
+                : 'border-white/[0.08] bg-white/[0.03] text-zinc-200 hover:bg-white/[0.08]'
             }`}
           >
-            <Mic className="h-3 w-3 text-[#bdc2ff]" />
+            <Mic className="h-3 w-3 text-indigo-300" />
             <span>{isRecording ? 'Listening...' : 'Simulate Voice'}</span>
           </button>
         </div>
@@ -256,21 +256,21 @@ export function InputControlCenter({
             value={voiceTranscript}
             onChange={(e) => setVoiceTranscript(e.target.value)}
             placeholder="Talk about what you built, what was refactored, breaking changes, architecture decisions, and demo highlights..."
-            className="w-full rounded-lg border border-[#292a2b] bg-[#0d0e0f] p-3.5 text-sm text-[#e3e2e3] placeholder:text-[#908f9e]/50 focus:border-[#5e6ad2] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2] font-sans leading-relaxed transition-all"
+            className="w-full rounded-lg bg-transparent text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none font-sans leading-relaxed transition-all"
           />
         </div>
       </div>
 
       {/* Git Diff Context Drawer (Collapsible) */}
-      <div className="rounded-xl border border-[#292a2b] bg-[#0d0e0f] overflow-hidden">
+      <div className="rounded-xl border border-white/[0.08] bg-[#0a0b0d] overflow-hidden">
         <button
           type="button"
           onClick={() => setIsDiffDrawerOpen(prev => !prev)}
-          className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-[#1b1c1d]"
+          className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-white/[0.03]"
         >
           <div className="flex items-center gap-2">
             <GitBranch className="h-4 w-4 text-emerald-400" />
-            <span className="text-xs font-medium text-[#e3e2e3]">
+            <span className="text-xs font-medium text-zinc-200">
               Git diff context
             </span>
             {diffLines > 0 && (
@@ -279,30 +279,30 @@ export function InputControlCenter({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-[#908f9e]">
-            <span className="text-xs text-[#908f9e] hidden sm:inline">
+          <div className="flex items-center gap-2 text-zinc-400">
+            <span className="text-xs text-zinc-400 hidden sm:inline">
               {isDiffDrawerOpen ? 'Collapse' : 'Expand context'}
             </span>
             {isDiffDrawerOpen ? (
-              <ChevronUp className="h-4 w-4 text-[#908f9e]" />
+              <ChevronUp className="h-4 w-4 text-zinc-400" />
             ) : (
-              <ChevronDown className="h-4 w-4 text-[#908f9e]" />
+              <ChevronDown className="h-4 w-4 text-zinc-400" />
             )}
           </div>
         </button>
 
         {isDiffDrawerOpen && (
-          <div className="border-t border-[#292a2b] p-3 space-y-2 bg-[#0d0e0f]">
-            <div className="flex items-center justify-between text-xs text-[#908f9e]">
+          <div className="border-t border-white/[0.06] p-3 space-y-2 bg-[#0a0b0d]">
+            <div className="flex items-center justify-between text-xs text-zinc-400">
               <span className="flex items-center gap-1 font-mono text-[11px]">
-                <FileCode className="h-3 w-3 text-[#908f9e]" />
+                <FileCode className="h-3 w-3 text-zinc-400" />
                 Paste git diff or repo structure:
               </span>
               {gitDiff && (
                 <button
                   type="button"
                   onClick={() => setGitDiff('')}
-                  className="text-[#908f9e] hover:text-rose-400 transition-colors"
+                  className="text-zinc-400 hover:text-rose-400 transition-colors"
                 >
                   Clear diff
                 </button>
@@ -314,29 +314,29 @@ export function InputControlCenter({
               value={gitDiff}
               onChange={(e) => setGitDiff(e.target.value)}
               placeholder="diff --git a/server.ts b/server.ts&#10;index 4b825dc..a713ef8 100644&#10;--- a/server.ts&#10;+++ b/server.ts..."
-              className="w-full rounded-lg border border-[#292a2b] bg-[#0d0e0f] p-3 font-mono text-[11px] text-emerald-200/90 placeholder:text-[#908f9e]/40 focus:border-[#5e6ad2] focus:outline-none focus:ring-1 focus:ring-[#5e6ad2]"
+              className="w-full rounded-lg border border-white/[0.06] bg-[#0a0b0d] p-3 font-mono text-[11px] text-emerald-200/90 placeholder:text-zinc-600 focus:border-indigo-500/60 focus:outline-none focus:ring-1 focus:ring-indigo-500/60"
             />
           </div>
         )}
       </div>
 
-      {/* Primary CTA Button: High-Contrast Stitch White Button */}
+      {/* Primary CTA Button: Upgraded Authoritative High-Contrast Button */}
       <div>
         <button
           type="button"
           onClick={onGenerate}
           disabled={isGenerating || (!voiceTranscript.trim() && !gitDiff.trim())}
-          className="w-full bg-white text-[#0d0e0f] font-semibold hover:bg-neutral-200 py-2.5 rounded shadow-md flex items-center justify-center gap-2 active:scale-[0.99] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full py-3 px-4 rounded-lg bg-zinc-100 hover:bg-white text-zinc-950 font-semibold text-sm shadow-[0_0_20px_rgba(255,255,255,0.12)] transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed active:scale-[0.99]"
         >
-          <Sparkles className={`h-4 w-4 text-[#5e6ad2] ${isGenerating ? 'animate-spin' : ''}`} />
+          <Sparkles className={`h-4 w-4 text-indigo-600 ${isGenerating ? 'animate-spin' : ''}`} />
           <span>
             {isGenerating ? 'Synthesizing Deliverables...' : 'Generate Deliverables'}
           </span>
-          <span className="font-mono text-xs opacity-70 ml-1 rounded bg-[#0d0e0f]/10 px-1.5 py-0.5">
+          <span className="font-mono text-xs opacity-70 ml-1 rounded bg-zinc-900/10 px-1.5 py-0.5 border border-zinc-900/10">
             ⌘↵
           </span>
         </button>
-        <p className="mt-2 text-center text-[11px] text-[#908f9e]">
+        <p className="mt-2 text-center text-[11px] text-zinc-500">
           Transforms messy raw voice rational into PR, Architecture, Script & Social update
         </p>
       </div>

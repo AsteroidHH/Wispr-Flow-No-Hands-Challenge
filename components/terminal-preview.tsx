@@ -233,9 +233,9 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 sm:p-6 backdrop-blur-md animate-fadeIn">
-      <div className="relative flex h-full max-h-[640px] w-full max-w-3xl flex-col rounded-xl border border-[#292a2b] bg-[#1b1c1d] shadow-2xl overflow-hidden font-mono text-xs">
+      <div className="relative flex h-full max-h-[640px] w-full max-w-3xl flex-col rounded-xl border border-white/[0.08] bg-[#111215] shadow-2xl overflow-hidden font-mono text-xs">
         {/* macOS Style Window Titlebar */}
-        <div className="flex h-10 items-center justify-between border-b border-[#292a2b] bg-[#121315] px-4 select-none">
+        <div className="flex h-10 items-center justify-between border-b border-white/[0.06] bg-[#0a0b0d] px-4 select-none">
           {/* Traffic Light Buttons */}
           <div className="flex items-center gap-2">
             <button

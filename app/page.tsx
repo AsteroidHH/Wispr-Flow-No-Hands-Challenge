@@ -222,23 +222,23 @@ export default function Home() {
 
       {/* Main Two-Column Layout */}
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8">
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#292a2b] pb-4">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/[0.06] pb-4">
           <div>
-            <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-[#e3e2e3] flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-zinc-100 flex items-center gap-2">
               <span>Developer Shipping Cockpit</span>
-              <span className="inline-flex items-center gap-1 rounded bg-[#1b1c1d] px-2 py-0.5 text-xs font-mono text-[#908f9e] border border-[#292a2b]">
-                <Zap className="h-3 w-3 text-[#5e6ad2]" />
+              <span className="inline-flex items-center gap-1 font-mono text-[11px] bg-white/[0.05] text-zinc-300 px-2 py-0.5 rounded border border-white/[0.08]">
+                <Zap className="h-3 w-3 text-indigo-400" />
                 Zero-Hand Flow
               </span>
             </h1>
-            <p className="mt-0.5 text-xs text-[#908f9e]">
+            <p className="mt-0.5 text-xs text-zinc-400">
               Convert raw unstructured voice brain dumps and git diffs into PRs, architecture diagrams, demo scripts, and social updates.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
             {/* Generation Engine Status Pill */}
-            <div className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-2.5 py-1 text-xs text-[#908f9e] font-mono">
+            <div className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-[#111215] px-2.5 py-1 text-xs text-zinc-400 font-mono">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
               {generationSource === 'gemini_2.5_flash'
                 ? 'Gemini 2.5 Flash'
@@ -249,7 +249,7 @@ export default function Home() {
 
         {/* Dynamic Notification Banner */}
         {notification && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-[#292a2b] bg-[#1b1c1d] px-3.5 py-2 text-xs font-mono text-[#e3e2e3] animate-fadeIn shadow-sm">
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#111215] px-3.5 py-2 text-xs font-mono text-zinc-200 animate-fadeIn shadow-sm">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
             <span>{notification}</span>
           </div>

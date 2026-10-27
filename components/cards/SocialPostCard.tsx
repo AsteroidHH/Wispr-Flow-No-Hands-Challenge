@@ -60,45 +60,45 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
 
   return (
     <div
-      className={`flex flex-col justify-between rounded-xl border bg-[#1b1c1d] p-5 transition-colors overflow-hidden ${
+      className={`flex flex-col h-full justify-between bg-[#111215] border rounded-xl p-5 transition-all shadow-sm overflow-hidden ${
         isRefining
-          ? 'border-[#5e6ad2] ring-1 ring-[#5e6ad2]/50'
-          : 'border-[#292a2b] hover:border-[#343536]'
+          ? 'border-indigo-500/70 ring-1 ring-indigo-500/40 shadow-indigo-500/10'
+          : 'border-white/[0.08] hover:border-white/[0.14]'
       }`}
     >
-      <div>
+      <div className="flex-1 flex flex-col min-h-0">
         {/* Card Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#292a2b]">
+        <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0d0e0f] text-[#bdc2ff] border border-[#292a2b]">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.04] text-indigo-400 border border-white/[0.08]">
               {isRefining ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
               ) : (
-                <Share2 className="h-3.5 w-3.5 text-[#5e6ad2]" />
+                <Share2 className="h-3.5 w-3.5 text-indigo-400" />
               )}
             </div>
             <div>
-              <h3 className="text-xs font-semibold text-[#e3e2e3] flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-zinc-100 tracking-tight flex items-center gap-2">
                 Build-in-public post
                 {isRefining && (
-                  <span className="text-[10px] font-mono text-[#bdc2ff]">
+                  <span className="text-[10px] font-mono text-indigo-300">
                     Refining...
                   </span>
                 )}
               </h3>
-              <p className="text-[11px] text-[#908f9e]">Social reach & community update</p>
+              <p className="text-xs text-zinc-400 mt-0.5">Social reach & community update</p>
             </div>
           </div>
 
           <div className="flex items-center gap-1.5">
-            {/* Stitch X/LinkedIn Platform Selector */}
-            <div className="flex rounded-md bg-[#0d0e0f] p-0.5 border border-[#292a2b]">
+            {/* Platform Selector */}
+            <div className="flex rounded-md bg-[#0a0b0d] p-0.5 border border-white/[0.08]">
               <button
                 onClick={() => setPlatform('post')}
                 className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
                   platform === 'post'
-                    ? 'bg-[#1f2021] text-[#e3e2e3] shadow-xs'
-                    : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                    ? 'bg-[#1c1d22] text-white shadow-xs border border-white/[0.1]'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 <Code2 className="h-3 w-3" />
@@ -108,8 +108,8 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
                 onClick={() => setPlatform('twitter')}
                 className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
                   platform === 'twitter'
-                    ? 'bg-[#1f2021] text-[#e3e2e3] shadow-xs'
-                    : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                    ? 'bg-[#1c1d22] text-white shadow-xs border border-white/[0.1]'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 <TwitterIcon className="h-3 w-3" />
@@ -119,8 +119,8 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
                 onClick={() => setPlatform('linkedin')}
                 className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
                   platform === 'linkedin'
-                    ? 'bg-[#1f2021] text-[#e3e2e3] shadow-xs'
-                    : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                    ? 'bg-[#1c1d22] text-white shadow-xs border border-white/[0.1]'
+                    : 'text-zinc-400 hover:text-zinc-200'
                 }`}
               >
                 <LinkedinIcon className="h-3 w-3" />
@@ -132,7 +132,7 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
             <button
               onClick={handleCopy}
               title="Copy post content"
-              className="flex items-center p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#292a2b] transition-colors text-xs border border-[#292a2b] bg-[#0d0e0f]"
+              className="flex items-center p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-colors text-xs"
             >
               {copied ? (
                 <Check className="h-3.5 w-3.5 text-emerald-400" />
@@ -143,20 +143,20 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
           </div>
         </div>
 
-        {/* Card Content */}
-        <div className="mt-4">
+        {/* Card Content with Strict Equalized Height */}
+        <div className="mt-3.5 flex-1 max-h-[340px] overflow-y-auto pr-1">
           {platform === 'post' ? (
             <div className="space-y-3">
-              <div className="rounded-lg bg-[#0d0e0f] p-3.5 border border-[#292a2b] font-sans text-xs text-[#e3e2e3] whitespace-pre-line leading-relaxed max-h-[360px] overflow-y-auto">
+              <div className="rounded-lg bg-[#0a0b0d] p-3.5 border border-white/[0.06] font-sans text-xs text-zinc-200 whitespace-pre-line leading-relaxed">
                 {data.rawPost || data.twitter?.content || 'No post content'}
               </div>
-              <p className="text-[11px] text-[#908f9e]">
-                Crafted with bullet points, engineering rational, and launch hashtags
+              <p className="text-[11px] text-zinc-400">
+                Crafted with bullet points, engineering rationale, and launch hashtags
               </p>
             </div>
           ) : platform === 'twitter' ? (
             <div className="space-y-3">
-              <div className="rounded-lg bg-[#0d0e0f] p-3.5 border border-[#292a2b] font-sans text-xs text-[#e3e2e3] whitespace-pre-line leading-relaxed">
+              <div className="rounded-lg bg-[#0a0b0d] p-3.5 border border-white/[0.06] font-sans text-xs text-zinc-200 whitespace-pre-line leading-relaxed">
                 {data.twitter?.content || ''}
               </div>
 
@@ -166,7 +166,7 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
                   {(data.twitter?.hashtags || []).map((tag, idx) => (
                     <span
                       key={idx}
-                      className="inline-flex items-center gap-0.5 rounded bg-[#0d0e0f] px-2 py-0.5 font-mono text-[10px] text-[#bdc2ff] border border-[#292a2b]"
+                      className="inline-flex items-center gap-0.5 rounded bg-[#0a0b0d] px-2 py-0.5 font-mono text-[10px] text-indigo-300 border border-white/[0.08]"
                     >
                       <Hash className="h-2.5 w-2.5" />
                       {tag.replace('#', '')}
@@ -174,12 +174,12 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
                   ))}
                 </div>
 
-                <div className="flex items-center gap-1.5 font-mono text-[#908f9e] text-xs">
+                <div className="flex items-center gap-1.5 font-mono text-zinc-400 text-xs">
                   <span>{data.twitter?.charCount || (data.twitter?.content || '').length} / 280</span>
-                  <div className="h-1.5 w-12 rounded-full bg-[#0d0e0f] border border-[#292a2b] overflow-hidden">
+                  <div className="h-1.5 w-12 rounded-full bg-[#0a0b0d] border border-white/[0.08] overflow-hidden">
                     <div
                       className={`h-full ${
-                        (data.twitter?.charCount || 0) > 280 ? 'bg-rose-500' : 'bg-[#5e6ad2]'
+                        (data.twitter?.charCount || 0) > 280 ? 'bg-rose-500' : 'bg-indigo-500'
                       }`}
                       style={{ width: `${Math.min(100, ((data.twitter?.charCount || 0) / 280) * 100)}%` }}
                     />
@@ -188,35 +188,35 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
               </div>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[380px] overflow-y-auto pr-1">
-              <div className="rounded-lg bg-[#0d0e0f] p-3.5 border border-[#292a2b] space-y-2.5">
-                <div className="border-b border-[#292a2b] pb-2">
-                  <span className="text-[10px] font-mono text-[#908f9e]">
+            <div className="space-y-3">
+              <div className="rounded-lg bg-[#0a0b0d] p-3.5 border border-white/[0.06] space-y-2.5">
+                <div className="border-b border-white/[0.06] pb-2">
+                  <span className="text-[10px] font-mono text-zinc-400">
                     Hook
                   </span>
-                  <p className="text-xs font-semibold text-[#e3e2e3] mt-0.5">
+                  <p className="text-xs font-semibold text-zinc-100 mt-0.5">
                     {data.linkedin?.hook || ''}
                   </p>
                 </div>
 
                 <div>
-                  <span className="text-[10px] font-mono text-[#908f9e]">
+                  <span className="text-[10px] font-mono text-zinc-400">
                     Story
                   </span>
-                  <p className="text-xs text-[#e3e2e3] whitespace-pre-line mt-0.5 leading-relaxed">
+                  <p className="text-xs text-zinc-200 whitespace-pre-line mt-0.5 leading-relaxed">
                     {data.linkedin?.body || ''}
                   </p>
                 </div>
 
                 {data.linkedin?.takeaways && data.linkedin.takeaways.length > 0 && (
                   <div>
-                    <span className="text-[10px] font-mono text-[#908f9e]">
+                    <span className="text-[10px] font-mono text-zinc-400">
                       Takeaways
                     </span>
                     <ul className="mt-1 space-y-1">
                       {(data.linkedin.takeaways || []).map((t, idx) => (
-                        <li key={idx} className="flex items-start gap-1.5 text-xs text-[#e3e2e3]">
-                          <span className="text-[#5e6ad2] font-bold">•</span>
+                        <li key={idx} className="flex items-start gap-1.5 text-xs text-zinc-200">
+                          <span className="text-indigo-400 font-bold">•</span>
                           <span>{t}</span>
                         </li>
                       ))}
@@ -224,8 +224,8 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
                   </div>
                 )}
 
-                <div className="border-t border-[#292a2b] pt-2">
-                  <p className="text-xs font-medium text-[#bdc2ff] italic">
+                <div className="border-t border-white/[0.06] pt-2">
+                  <p className="text-xs font-medium text-indigo-300 italic">
                     {data.linkedin?.callToAction || ''}
                   </p>
                 </div>

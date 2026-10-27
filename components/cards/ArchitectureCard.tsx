@@ -207,14 +207,14 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
   // Common diagram view controls toolbar
   const renderControlsToolbar = () => (
-    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#0d0e0f] p-1.5 border border-[#292a2b] text-xs">
+    <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[#0a0b0d] p-1.5 border border-white/[0.08] text-xs">
       {/* Theme Switcher */}
       <div className="flex items-center gap-1.5">
-        <span className="flex items-center gap-1 text-[11px] text-[#908f9e] mr-1">
-          <Palette className="h-3 w-3 text-[#5e6ad2]" />
+        <span className="flex items-center gap-1 text-[11px] text-zinc-400 mr-1">
+          <Palette className="h-3 w-3 text-indigo-400" />
           Theme:
         </span>
-        <div className="flex rounded bg-[#121315] p-0.5 border border-[#292a2b]">
+        <div className="flex rounded bg-[#111215] p-0.5 border border-white/[0.08]">
           {(['obsidian', 'cyberpunk', 'slate'] as MermaidTheme[]).map((thm) => (
             <button
               key={thm}
@@ -222,8 +222,8 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               onClick={() => handleThemeChange(thm)}
               className={`rounded px-2 py-0.5 text-[10px] font-mono transition-colors ${
                 activeTheme === thm
-                  ? 'bg-[#1f2021] text-[#e3e2e3] font-medium shadow-xs border border-[#343536]'
-                  : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                  ? 'bg-[#1c1d22] text-white font-medium shadow-xs border border-white/[0.12]'
+                  : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
               {thm === 'obsidian' ? 'Obsidian' : thm === 'cyberpunk' ? 'Cyberpunk' : 'Slate'}
@@ -234,12 +234,12 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
       {/* Zoom and Navigation Controls */}
       <div className="flex items-center gap-1">
-        <div className="flex items-center rounded bg-[#121315] p-0.5 border border-[#292a2b]">
+        <div className="flex items-center rounded bg-[#111215] p-0.5 border border-white/[0.08]">
           <button
             type="button"
             onClick={handleZoomOut}
             title="Zoom Out"
-            className="rounded p-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3] transition-colors"
+            className="rounded p-1 text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-100 transition-colors"
           >
             <ZoomOut className="h-3.5 w-3.5" />
           </button>
@@ -247,16 +247,16 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
             type="button"
             onClick={handleResetZoom}
             title="Reset Zoom (100%)"
-            className="flex items-center gap-0.5 px-1.5 py-0.5 font-mono text-[10px] text-[#e3e2e3] hover:bg-[#292a2b] rounded transition-colors"
+            className="flex items-center gap-0.5 px-1.5 py-0.5 font-mono text-[10px] text-zinc-300 hover:bg-white/[0.08] rounded transition-colors"
           >
-            <RotateCcw className="h-2.5 w-2.5 text-[#908f9e]" />
+            <RotateCcw className="h-2.5 w-2.5 text-zinc-400" />
             <span>{Math.round(zoom * 100)}%</span>
           </button>
           <button
             type="button"
             onClick={handleZoomIn}
             title="Zoom In"
-            className="rounded p-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3] transition-colors"
+            className="rounded p-1 text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-100 transition-colors"
           >
             <ZoomIn className="h-3.5 w-3.5" />
           </button>
@@ -267,7 +267,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
           type="button"
           onClick={() => setIsFullscreen(prev => !prev)}
           title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen Inspection Modal'}
-          className="flex items-center gap-1 rounded border border-[#292a2b] bg-[#121315] p-1 text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3] transition-colors"
+          className="flex items-center gap-1 rounded border border-white/[0.08] bg-white/[0.04] p-1 text-zinc-400 hover:bg-white/[0.08] hover:text-zinc-100 transition-colors"
         >
           {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </button>
@@ -279,47 +279,47 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
     <>
       {/* Standard Card Container */}
       <div
-        className={`flex flex-col justify-between rounded-xl border bg-[#1b1c1d] p-5 transition-colors overflow-hidden ${
+        className={`flex flex-col h-full justify-between bg-[#111215] border rounded-xl p-5 transition-all shadow-sm overflow-hidden ${
           isRefining
-            ? 'border-[#5e6ad2] ring-1 ring-[#5e6ad2]/50'
-            : 'border-[#292a2b] hover:border-[#343536]'
+            ? 'border-indigo-500/70 ring-1 ring-indigo-500/40 shadow-indigo-500/10'
+            : 'border-white/[0.08] hover:border-white/[0.14]'
         }`}
       >
-        <div>
+        <div className="flex-1 flex flex-col min-h-0">
           {/* Card Header */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#292a2b]">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-white/[0.06]">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0d0e0f] text-[#bdc2ff] border border-[#292a2b]">
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.04] text-indigo-400 border border-white/[0.08]">
                 {isRefining ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
                 ) : (
-                  <Workflow className="h-3.5 w-3.5 text-[#5e6ad2]" />
+                  <Workflow className="h-3.5 w-3.5 text-indigo-400" />
                 )}
               </div>
               <div>
-                <h3 className="text-xs font-semibold text-[#e3e2e3] flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-zinc-100 tracking-tight flex items-center gap-2">
                   Architecture diagram
                   {isRefining && (
-                    <span className="text-[10px] font-mono text-[#bdc2ff]">
+                    <span className="text-[10px] font-mono text-indigo-300">
                       Refining...
                     </span>
                   )}
                 </h3>
-                <p className="text-[11px] text-[#908f9e]">{data.title}</p>
+                <p className="text-xs text-zinc-400 mt-0.5">{data.title}</p>
               </div>
             </div>
 
             {/* Header Action Buttons - Minimal Ghost Toolbar */}
             <div className="flex items-center gap-1">
               {/* Diagram / Code Toggle */}
-              <div className="flex rounded-md bg-[#0d0e0f] p-0.5 border border-[#292a2b] mr-1">
+              <div className="flex rounded-md bg-[#0a0b0d] p-0.5 border border-white/[0.08] mr-1">
                 <button
                   type="button"
                   onClick={() => setViewMode('diagram')}
                   className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
                     viewMode === 'diagram'
-                      ? 'bg-[#1f2021] text-[#e3e2e3] shadow-xs'
-                      : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                      ? 'bg-[#1c1d22] text-white shadow-xs border border-white/[0.1]'
+                      : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   <Eye className="h-3 w-3" />
@@ -330,8 +330,8 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                   onClick={() => setViewMode('code')}
                   className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors ${
                     viewMode === 'code'
-                      ? 'bg-[#1f2021] text-[#e3e2e3] shadow-xs'
-                      : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                      ? 'bg-[#1c1d22] text-white shadow-xs border border-white/[0.1]'
+                      : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
                   <Code className="h-3 w-3" />
@@ -344,11 +344,11 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 type="button"
                 onClick={handleExportPng}
                 disabled={isExportingPng}
-                title="Export as PNG (#0d0e0f canvas)"
-                className="flex items-center gap-1 p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#292a2b] transition-colors text-xs border border-[#292a2b] bg-[#0d0e0f] disabled:opacity-40"
+                title="Export as PNG (retina canvas)"
+                className="flex items-center gap-1 p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-colors text-xs disabled:opacity-40"
               >
                 {isExportingPng ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
                 ) : (
                   <ImageIcon className="h-3.5 w-3.5" />
                 )}
@@ -361,10 +361,10 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 onClick={handleExportSvg}
                 disabled={isExportingSvg}
                 title="Export as raw SVG markup"
-                className="flex items-center gap-1 p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#292a2b] transition-colors text-xs border border-[#292a2b] bg-[#0d0e0f] disabled:opacity-40"
+                className="flex items-center gap-1 p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-colors text-xs disabled:opacity-40"
               >
                 {isExportingSvg ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
                 ) : (
                   <FileCode className="h-3.5 w-3.5" />
                 )}
@@ -376,7 +376,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 type="button"
                 onClick={handleCopyCode}
                 title="Copy Mermaid code"
-                className="flex items-center p-1.5 rounded-md text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#292a2b] transition-colors text-xs border border-[#292a2b] bg-[#0d0e0f]"
+                className="flex items-center p-1.5 rounded-md text-zinc-400 hover:text-zinc-100 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] transition-colors text-xs"
               >
                 {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
               </button>
@@ -385,41 +385,41 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
           {/* Toast Feedback Notification */}
           {toastMessage && (
-            <div className="mt-2.5 flex items-center gap-1.5 rounded-md bg-[#0d0e0f] px-2.5 py-1 text-[11px] font-mono text-[#bdc2ff] border border-[#292a2b] animate-fadeIn">
-              <Sparkles className="h-3 w-3 text-[#5e6ad2]" />
+            <div className="mt-2.5 flex items-center gap-1.5 rounded-md bg-[#0a0b0d] px-2.5 py-1 text-[11px] font-mono text-indigo-300 border border-white/[0.08] animate-fadeIn">
+              <Sparkles className="h-3 w-3 text-indigo-400" />
               <span>{toastMessage}</span>
             </div>
           )}
 
-          {/* Card Content */}
-          <div className="mt-3.5 space-y-2.5">
+          {/* Card Content with Height Equalization */}
+          <div className="mt-3.5 flex-1 flex flex-col min-h-0 space-y-2.5">
             {viewMode === 'diagram' ? (
-              <div className="w-full space-y-2">
+              <div className="w-full flex-1 flex flex-col min-h-0 space-y-2">
                 {/* Navigation and Theme Toolbar */}
                 {renderControlsToolbar()}
 
-                {/* Rendered Mermaid Canvas with Zoom inside Stitch container */}
-                <div className="rounded-lg border border-[#292a2b] bg-[#0d0e0f] p-2 overflow-hidden">
+                {/* Rendered Mermaid Viewport */}
+                <div className="w-full min-h-[280px] max-h-[360px] bg-[#090a0c] border border-white/[0.06] rounded-lg p-3 flex items-center justify-center overflow-auto">
                   <MermaidRenderer
                     code={data.mermaidCode}
                     theme={activeTheme}
                     zoom={zoom}
                     onSvgRendered={handleSvgRendered}
-                    className="min-h-[260px] max-h-[380px]"
+                    className="w-full h-full flex items-center justify-center border-0 bg-transparent p-0"
                   />
                 </div>
 
-                <p className="mt-1 text-[11px] text-[#908f9e] italic">
+                <p className="mt-1 text-[11px] text-zinc-400 italic">
                   {data.description}
                 </p>
               </div>
             ) : (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-[#908f9e] font-medium">
+              <div className="flex-1 flex flex-col min-h-0 space-y-2">
+                <div className="flex items-center justify-between text-xs text-zinc-400 font-medium">
                   <span>Mermaid specification</span>
-                  <span className="font-mono text-[10px] text-[#908f9e]">flowchart</span>
+                  <span className="font-mono text-[10px] text-zinc-500">flowchart</span>
                 </div>
-                <pre className="max-h-[340px] overflow-x-auto rounded-lg bg-[#0d0e0f] p-4 font-mono text-xs text-[#e3e2e3] border border-[#292a2b] leading-relaxed">
+                <pre className="flex-1 min-h-[280px] max-h-[360px] overflow-x-auto rounded-lg bg-[#0a0b0d] p-4 font-mono text-xs text-zinc-200 border border-white/[0.06] leading-relaxed">
                   <code>{data.mermaidCode}</code>
                 </pre>
               </div>
@@ -437,21 +437,21 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
       {/* Fullscreen Modal Inspection View */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-[#0d0e0f]/98 p-4 sm:p-6 backdrop-blur-xl animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex flex-col bg-[#090a0c]/98 p-4 sm:p-6 backdrop-blur-xl animate-fadeIn">
           {/* Modal Header */}
-          <div className="flex items-center justify-between border-b border-[#292a2b] pb-4">
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1b1c1d] text-[#e3e2e3] border border-[#292a2b]">
-                <Workflow className="h-4 w-4 text-[#5e6ad2]" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.04] text-zinc-100 border border-white/[0.08]">
+                <Workflow className="h-4 w-4 text-indigo-400" />
               </div>
               <div>
-                <h2 className="text-sm font-semibold text-[#e3e2e3] flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
                   <span>{data.title}</span>
-                  <span className="rounded bg-[#1b1c1d] px-2 py-0.5 text-[10px] font-mono text-[#908f9e] border border-[#292a2b]">
+                  <span className="font-mono text-[11px] bg-white/[0.05] text-zinc-300 px-2 py-0.5 rounded border border-white/[0.08]">
                     Fullscreen
                   </span>
                 </h2>
-                <p className="text-xs text-[#908f9e]">
+                <p className="text-xs text-zinc-400">
                   System topology viewer • ESC to exit
                 </p>
               </div>
@@ -463,12 +463,12 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 type="button"
                 onClick={handleExportPng}
                 disabled={isExportingPng}
-                className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] transition-colors"
+                className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-white/[0.08] hover:text-white transition-colors"
               >
                 {isExportingPng ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
                 ) : (
-                  <ImageIcon className="h-3.5 w-3.5 text-[#908f9e]" />
+                  <ImageIcon className="h-3.5 w-3.5 text-zinc-400" />
                 )}
                 <span>Export PNG</span>
               </button>
@@ -477,12 +477,12 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 type="button"
                 onClick={handleExportSvg}
                 disabled={isExportingSvg}
-                className="flex items-center gap-1.5 rounded-md border border-[#292a2b] bg-[#1b1c1d] px-3 py-1.5 text-xs font-medium text-[#e3e2e3] hover:bg-[#292a2b] transition-colors"
+                className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-zinc-200 hover:bg-white/[0.08] hover:text-white transition-colors"
               >
                 {isExportingSvg ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-[#5e6ad2]" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-indigo-400" />
                 ) : (
-                  <FileCode className="h-3.5 w-3.5 text-[#908f9e]" />
+                  <FileCode className="h-3.5 w-3.5 text-zinc-400" />
                 )}
                 <span>Export SVG</span>
               </button>
@@ -490,7 +490,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               <button
                 type="button"
                 onClick={() => setIsFullscreen(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-md border border-[#292a2b] bg-[#1b1c1d] text-[#908f9e] hover:bg-[#292a2b] hover:text-white transition-colors"
+                className="flex h-7 w-7 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.04] text-zinc-400 hover:bg-white/[0.08] hover:text-white transition-colors"
                 title="Exit Fullscreen (Esc)"
               >
                 <X className="h-4 w-4" />
@@ -502,7 +502,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
           <div className="py-3">{renderControlsToolbar()}</div>
 
           {/* Main Inspection Canvas */}
-          <div className="relative flex-1 overflow-auto rounded-xl border border-[#292a2b] bg-[#0d0e0f] p-6 flex items-center justify-center">
+          <div className="relative flex-1 overflow-auto rounded-xl border border-white/[0.06] bg-[#090a0c] p-6 flex items-center justify-center">
             <MermaidRenderer
               code={data.mermaidCode}
               theme={activeTheme}
@@ -513,8 +513,8 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
           </div>
 
           {/* Modal Footer */}
-          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-[#292a2b] mt-3">
-            <p className="text-xs text-[#908f9e] italic">
+          <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-white/[0.06] mt-3">
+            <p className="text-xs text-zinc-400 italic">
               {data.description}
             </p>
             <div className="w-full sm:w-auto">

@@ -165,12 +165,12 @@ export function MermaidRenderer({
 
   return (
     <div
-      className={`relative flex items-center justify-center overflow-auto rounded-lg bg-[#0d0e0f] p-4 border border-[#292a2b] transition-colors ${className}`}
+      className={`relative flex items-center justify-center overflow-auto rounded-lg bg-transparent transition-colors ${className}`}
     >
       {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#0d0e0f]/85 backdrop-blur-xs">
-          <Loader2 className="h-6 w-6 animate-spin text-[#5e6ad2]" />
-          <span className="ml-2 text-xs font-mono text-[#908f9e]">Rendering visual topology...</span>
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-[#090a0c]/85 backdrop-blur-xs">
+          <Loader2 className="h-6 w-6 animate-spin text-indigo-400" />
+          <span className="ml-2 text-xs font-mono text-zinc-400">Rendering visual topology...</span>
         </div>
       )}
 

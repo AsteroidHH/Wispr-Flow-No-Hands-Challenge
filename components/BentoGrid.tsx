@@ -27,27 +27,27 @@ export function BentoGrid({
 }: BentoGridProps) {
   if (isGenerating) {
     return (
-      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-8 text-center">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0d0e0f] border border-[#292a2b] text-[#5e6ad2]">
+      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl border border-white/[0.08] bg-[#111215] p-8 text-center shadow-sm">
+        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0a0b0d] border border-white/[0.08] text-indigo-400">
           <Sparkles className="h-5 w-5 animate-spin" />
         </div>
-        <h3 className="mt-4 text-sm font-semibold text-[#e3e2e3]">Synthesizing deliverables</h3>
-        <p className="mt-1 max-w-sm text-xs text-[#908f9e]">
+        <h3 className="mt-4 text-sm font-semibold text-zinc-100 tracking-tight">Synthesizing deliverables</h3>
+        <p className="mt-1 max-w-sm text-xs text-zinc-400">
           Converting unstructured voice brain dump and git context into 4 developer-grade assets...
         </p>
-        <div className="mt-5 flex items-center gap-3 font-mono text-[11px] text-[#908f9e]">
+        <div className="mt-5 flex items-center gap-3 font-mono text-[11px] text-zinc-400">
           <span className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
             PR Spec
           </span>
           <span>•</span>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#5e6ad2]"></span>
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-400"></span>
             Mermaid Diagram
           </span>
           <span>•</span>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#bdc2ff]"></span>
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-300"></span>
             Demo Script
           </span>
           <span>•</span>
@@ -62,9 +62,9 @@ export function BentoGrid({
 
   if (!deliverables) {
     return (
-      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl border border-[#292a2b] bg-[#1b1c1d] p-8 text-center">
-        <p className="text-xs text-[#908f9e]">
-          Select a judge preset or hit <span className="font-mono text-[#e3e2e3]">Generate Deliverables</span> to view output.
+      <div className="flex h-full min-h-[500px] flex-col items-center justify-center rounded-xl border border-white/[0.08] bg-[#111215] p-8 text-center shadow-sm">
+        <p className="text-xs text-zinc-400">
+          Select a judge preset or hit <span className="font-mono text-zinc-100">Generate Deliverables</span> to view output.
         </p>
       </div>
     );
@@ -76,17 +76,17 @@ export function BentoGrid({
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-          <span className="text-xs font-medium text-[#e3e2e3]">
+          <span className="text-xs font-medium text-zinc-200">
             Generated deliverables
           </span>
         </div>
-        <span className="text-[11px] font-mono text-[#908f9e]">
+        <span className="font-mono text-[11px] bg-white/[0.05] text-zinc-300 px-2 py-0.5 rounded border border-white/[0.08]">
           4 Artifacts • Voice-Tweakable
         </span>
       </div>
 
-      {/* 4-Card Responsive Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      {/* 4-Card Responsive 2x2 Bento Grid with Strict Height Equalization */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 auto-rows-fr">
         <PullRequestCard
           data={deliverables.pullRequest}
           onTweak={(inst) => onTweakCard('pullRequest', inst)}
