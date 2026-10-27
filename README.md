@@ -40,18 +40,27 @@ flowchart LR
 
 ## 🚀 Key Features
 
-### 1. Input Control Center
+### 1. Input Control Center & Audio HUD
 - **3 One-Click Judge Presets:**
   - 🛡️ **Auth Refactor:** OAuth2 PKCE, edge JWT verification, Redis token revocation.
   - 🤖 **AI Agent Pipeline:** Multi-agent supervisor, SQL/Vector routing, 0.72 confidence circuit breaker.
   - 🏆 **Hackathon Project:** ShipSpeak voice-first shipping cockpit.
+- **Live Audio-Reactive HUD:** Built with Web Audio API (`AudioContext` + `AnalyserNode`) rendering 24 real-time equalizer bars and a dynamic indigo/cyan ambient aura around the textarea when speaking.
 - **Persistent Wispr Indicator:** *"Press your Wispr Flow hotkey and ramble here"* with simulated voice testing and word counter.
 - **Collapsible Git Diff Drawer:** Line-counted secondary context ingestion for maximum grounding.
 - **Trigger Button & Keyboard Shortcut:** `⌘ + Enter` / `Ctrl + Enter` instant synthesis.
 
 ### 2. Real-Time 4-Card Bento Grid
-1. **GitHub PR & Commit Card:** Conventional commit message, executive summary, bulleted key changes, breaking change alert box, and a tab to view the complete Markdown checklist.
-2. **Mermaid Architecture Card:** Client-side dynamic SVG rendering with zero ID collisions, plus a Diagram/Code toggle.
+1. **GitHub PR & Commit Card:**
+   - Conventional commit message, executive summary, bulleted key changes, and breaking change alert box.
+   - **Zero-OAuth "Open on GitHub" PR Launcher:** Generates a pre-filled GitHub compare URL with title and body query parameters.
+   - **ZIP Bundle Export:** One-click download of all release artifacts.
+2. **Mermaid Architecture Card:**
+   - Dynamic SVG rendering with isolated GUID passes.
+   - **PNG Export:** Canvas serialization at 2x retina resolution with `#090d16` background.
+   - **SVG Export:** Raw vector markup download.
+   - **Fullscreen Modal & Zoom:** Scale from 40% to 220% with reset controls.
+   - **Dynamic Theming:** Instant toggling between Obsidian Dark, Cyberpunk Indigo, and Slate Minimal palettes.
 3. **2-Minute Demo Video Script Card:** Time-bucketed segments (`00:00 - 00:20`, `00:20 - 00:50`, etc.) with spoken dialogue lines and screen recording cues.
 4. **Build-in-Public Social Card:** Tabbed preview for formatted launch post, Twitter thread (character progress bar + hashtags), and LinkedIn breakdown.
 
@@ -60,7 +69,12 @@ flowchart LR
 - Allows hands-free iterative changes like *"make the PR more concise"* or *"add a Redis note to the architecture diagram"*.
 - Targeted card enters an animated violet glowing focus ring and updates in-place smoothly without re-rendering adjacent cards.
 
-### 4. Zero-Friction Judge Experience
+### 4. Interactive Terminal CLI Drawer
+- macOS style window controls (traffic lights) with dark developer console.
+- Interactive prompt simulating `shipspeak --listen` with realistic animated pipeline logs.
+- 1-click copy for the hypothetical CLI command: `npx shipspeak --voice`.
+
+### 5. Zero-Friction Judge Experience
 - Boots pre-populated with high-fidelity mock data.
 - Resilient two-tier fallback: if `GEMINI_API_KEY` is not provided, both `/api/generate` and `/api/tweak` gracefully synthesize high-quality mock deliverables so judges never face broken screens or authentication errors.
 
@@ -71,6 +85,7 @@ flowchart LR
 - **Frontend:** Next.js 16 (App Router with Turbopack), React 19, TypeScript, Tailwind CSS v4.
 - **Diagramming:** Client-side `mermaid` (v12.2.0) with isolated GUID render passes and dark theme palette.
 - **AI Engine:** Official Google Gen AI SDK (`@google/genai`) with `gemini-2.5-flash` structured JSON schema enforcement.
+- **Archiving:** `jszip` for client-side bundle generation (`ShipSpeak-deliverables.zip`).
 - **Endpoints:**
   - `POST /api/generate`: Synthesizes PR markdown, commit title, valid Mermaid syntax, video script array, and social post.
   - `POST /api/tweak` (and alias `/api/week`): Refines specific card schemas in-place based on voice prompts.
@@ -101,15 +116,6 @@ npm run dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000) to open the cockpit.
-
----
-
-## 🎙️ The Wispr Flow "No Hands" Workflow
-
-ShipSpeak was conceptualized, architected, and built leveraging **Wispr Flow** as the voice dictation driver:
-1. **Spoken Architecture Briefing:** Architectural parameters were voice-dictated directly into the AI coding agent without manual typing fatigue.
-2. **Word Count & Context Density:** Voice brain dumps generated 4–5x higher prompt density than typing, passing nuanced edge cases and design preferences straight into the code generation pipeline.
-3. **End-to-End Hands-Free Operation:** Builders dictate their project rationale, trigger generation via keyboard shortcuts, and refine individual deliverables using voice tweaks.
 
 ---
 
