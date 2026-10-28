@@ -149,7 +149,7 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
 
   return (
     <div
-      className={`flex flex-col h-full justify-between border rounded-xl p-5 transition-all shadow-xs overflow-hidden ${
+      className={`flex flex-col h-[340px] xl:h-[360px] rounded-xl p-3.5 justify-between shadow-xs overflow-hidden border transition-all ${
         isLight
           ? isRefining
             ? 'bg-white border-amber-500/70 ring-1 ring-amber-500/40'
@@ -159,213 +159,210 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
           : 'bg-[#1b1c1d] border-[#292a2b] hover:border-[#343536]'
       }`}
     >
-      <div className="flex-1 flex flex-col min-h-0">
-        {/* Card Header matching Stitch */}
-        <div
-          className={`flex items-center justify-between pb-3 border-b ${
-            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+      {/* Card Header matching Stitch */}
+      <div
+        className={`flex items-center justify-between pb-2 border-b shrink-0 ${
+          isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+        }`}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className={`flex h-6.5 w-6.5 items-center justify-center rounded-lg border shrink-0 ${
+              isLight
+                ? 'bg-[#18181B] text-amber-500 border-[#18181B]'
+                : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
+            }`}
+          >
+            {isRefining ? (
+              <Loader2 className={`h-3 w-3 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
+            ) : (
+              <Share2 className="h-3 w-3" />
+            )}
+          </div>
+          <div className="min-w-0 truncate">
+            <h3
+              className={`text-xs font-semibold tracking-tight truncate flex items-center gap-1.5 ${
+                isLight ? 'text-zinc-900' : 'text-[#e3e2e3]'
+              }`}
+            >
+              <span>Social Post Draft</span>
+              {isRefining && (
+                <span className={`text-[9px] font-mono shrink-0 ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
+                  Refining...
+                </span>
+              )}
+            </h3>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <span
+            className={`font-mono text-[9.5px] transition-colors ${
+              isOverLimit
+                ? 'text-rose-500 font-semibold'
+                : isLight
+                ? 'text-zinc-500'
+                : 'text-[#bdc2ff]'
+            }`}
+          >
+            {charCount} / {maxChars} chars
+          </span>
+        </div>
+      </div>
+
+      {/* STITCH CHANNEL SEGMENT TABS */}
+      <div
+        className={`mt-2 flex items-center gap-1 p-0.5 rounded-lg border shrink-0 ${
+          isLight
+            ? 'bg-[#F4F4F5] border-[#E6E6E4]'
+            : 'bg-[#0d0e0f] border border-[#292a2b]'
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => setPlatform('twitter')}
+          className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer ${
+            platform === 'twitter'
+              ? isLight
+                ? 'bg-white text-[#18181B] font-medium border border-[#E6E6E4] shadow-xs'
+                : 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
+              : isLight
+              ? 'text-zinc-500 hover:text-zinc-800'
+              : 'text-[#908f9e] hover:text-[#e3e2e3]'
           }`}
         >
-          <div className="flex items-center gap-2.5">
-            <div
-              className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
-                isLight
-                  ? 'bg-[#18181B] text-amber-500 border-[#18181B]'
-                  : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
-              }`}
-            >
-              {isRefining ? (
-                <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
-              ) : (
-                <Share2 className="h-3.5 w-3.5" />
-              )}
-            </div>
-            <div>
-              <h3
-                className={`text-xs font-semibold tracking-tight flex items-center gap-2 ${
-                  isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
+          <TwitterIcon className="h-3 w-3" />
+          <span>X / Twitter</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPlatform('linkedin')}
+          className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer ${
+            platform === 'linkedin'
+              ? isLight
+                ? 'bg-white text-[#18181B] font-medium border border-[#E6E6E4] shadow-xs'
+                : 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
+              : isLight
+              ? 'text-zinc-500 hover:text-zinc-800'
+              : 'text-[#908f9e] hover:text-[#e3e2e3]'
+          }`}
+        >
+          <LinkedinIcon className="h-3 w-3" />
+          <span>LinkedIn</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setPlatform('threads')}
+          className={`flex-1 flex items-center justify-center gap-1 py-1 rounded text-[11px] font-mono transition-colors cursor-pointer ${
+            platform === 'threads'
+              ? isLight
+                ? 'bg-white text-[#18181B] font-medium border border-[#E6E6E4] shadow-xs'
+                : 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
+              : isLight
+              ? 'text-zinc-500 hover:text-zinc-800'
+              : 'text-[#908f9e] hover:text-[#e3e2e3]'
+          }`}
+        >
+          <ThreadsIcon className="h-3 w-3" />
+          <span>Threads</span>
+        </button>
+      </div>
+
+      {/* Card Content with Formatted Post Copy Box matching Stitch */}
+      <div className="flex-1 overflow-y-auto pr-1.5 my-2 text-xs space-y-2 [scrollbar-width:thin]">
+        <div
+          className={`rounded-lg p-2.5 border space-y-2 font-sans text-xs leading-relaxed break-words ${
+            isLight
+              ? 'bg-[#FAFAFA] border-[#E6E6E4] text-zinc-700'
+              : 'bg-[#0d0e0f] border-[#292a2b] text-[#e3e2e3]'
+          }`}
+        >
+          {platform === 'linkedin' ? (
+            <div className="space-y-2">
+              <p className={`font-semibold break-words ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{linkedinHook}</p>
+              <p className={`whitespace-pre-line break-words ${isLight ? 'text-zinc-600' : 'text-[#c6c5d5]'}`}>{linkedinBody}</p>
+              <div
+                className={`p-2 rounded border font-mono text-[11px] whitespace-pre-line break-words ${
+                  isLight
+                    ? 'bg-white border-[#E6E6E4] text-zinc-700'
+                    : 'bg-[#1b1c1d] border-[#292a2b] text-[#bdc2ff]'
                 }`}
               >
-                Social Post Draft &amp; Release Notes
-                {isRefining && (
-                  <span className={`text-[10px] font-mono ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
-                    Refining...
-                  </span>
-                )}
-              </h3>
-              <p className={`text-[11px] mt-0.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-                Engineering Announcement
-              </p>
+                {takeaways}
+              </div>
+              <p className={`italic break-words ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{callToAction}</p>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-2 whitespace-pre-line select-text break-words">
+              <p className={`font-medium break-words ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{twitterContent}</p>
+              {tokenizedHashtags.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {tokenizedHashtags.map((tag, idx) => (
+                    <span
+                      key={idx}
+                      className={`font-mono text-[10px] font-medium ${
+                        isLight ? 'text-amber-800' : 'text-[#5e6ad2]'
+                      }`}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-          <div className="flex items-center gap-2">
-            <span
-              className={`font-mono text-[10px] transition-colors ${
-                isOverLimit
-                  ? 'text-rose-500 font-semibold'
-                  : isLight
-                  ? 'text-zinc-500'
-                  : 'text-[#bdc2ff]'
-              }`}
-            >
-              {charCount} / {maxChars} chars
+          {/* STITCH SOCIAL METRICS MOCKUP PREVIEW */}
+          <div
+            className={`pt-2 flex items-center justify-between font-mono text-[10.5px] border-t ${
+              isLight
+                ? 'text-zinc-400 border-[#E6E6E4]'
+                : 'text-[#908f9e] border-[#292a2b]'
+            }`}
+          >
+            <span className="flex items-center gap-1">
+              <MessageCircle className="h-3 w-3" />
+              <span>24</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <Repeat className="h-3 w-3" />
+              <span>89</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <Heart className="h-3 w-3 text-rose-500" />
+              <span>412</span>
+            </span>
+            <span className="flex items-center gap-1">
+              <BarChart2 className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`} />
+              <span>12.4K</span>
             </span>
           </div>
         </div>
+      </div>
 
-        {/* STITCH CHANNEL SEGMENT TABS */}
-        <div
-          className={`mt-3.5 flex items-center gap-1 p-1 rounded-lg border ${
-            isLight
-              ? 'bg-[#F4F4F5] border-[#E6E6E4]'
-              : 'bg-[#0d0e0f] border border-[#292a2b]'
-          }`}
-        >
-          <button
-            type="button"
-            onClick={() => setPlatform('twitter')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
-              platform === 'twitter'
-                ? isLight
-                  ? 'bg-white text-[#18181B] font-medium border border-[#E6E6E4] shadow-xs'
-                  : 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
-                : isLight
-                ? 'text-zinc-500 hover:text-zinc-800'
-                : 'text-[#908f9e] hover:text-[#e3e2e3]'
-            }`}
-          >
-            <TwitterIcon className="h-3.5 w-3.5" />
-            <span>X / Twitter</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setPlatform('linkedin')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
-              platform === 'linkedin'
-                ? isLight
-                  ? 'bg-white text-[#18181B] font-medium border border-[#E6E6E4] shadow-xs'
-                  : 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
-                : isLight
-                ? 'text-zinc-500 hover:text-zinc-800'
-                : 'text-[#908f9e] hover:text-[#e3e2e3]'
-            }`}
-          >
-            <LinkedinIcon className="h-3.5 w-3.5" />
-            <span>LinkedIn</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setPlatform('threads')}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded text-xs font-mono transition-colors cursor-pointer ${
-              platform === 'threads'
-                ? isLight
-                  ? 'bg-white text-[#18181B] font-medium border border-[#E6E6E4] shadow-xs'
-                  : 'bg-[#1f2021] text-white font-medium border border-[#343536] shadow-xs'
-                : isLight
-                ? 'text-zinc-500 hover:text-zinc-800'
-                : 'text-[#908f9e] hover:text-[#e3e2e3]'
-            }`}
-          >
-            <ThreadsIcon className="h-3.5 w-3.5" />
-            <span>Threads</span>
-          </button>
-        </div>
-
-        {/* Card Content with Formatted Post Copy Box matching Stitch */}
-        <div className="mt-3 flex-1 max-h-[300px] overflow-y-auto pr-1">
-          <div
-            className={`rounded-lg p-3.5 border space-y-3 font-sans text-xs leading-relaxed break-words ${
-              isLight
-                ? 'bg-[#FAFAFA] border-[#E6E6E4] text-zinc-700'
-                : 'bg-[#0d0e0f] border-[#292a2b] text-[#e3e2e3]'
-            }`}
-          >
-            {platform === 'linkedin' ? (
-              <div className="space-y-2">
-                <p className={`font-semibold break-words ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{linkedinHook}</p>
-                <p className={`whitespace-pre-line break-words ${isLight ? 'text-zinc-600' : 'text-[#c6c5d5]'}`}>{linkedinBody}</p>
-                <div
-                  className={`p-2.5 rounded border font-mono text-[11px] whitespace-pre-line break-words ${
-                    isLight
-                      ? 'bg-white border-[#E6E6E4] text-zinc-700'
-                      : 'bg-[#1b1c1d] border-[#292a2b] text-[#bdc2ff]'
-                  }`}
-                >
-                  {takeaways}
-                </div>
-                <p className={`italic break-words ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{callToAction}</p>
-              </div>
-            ) : (
-              <div className="space-y-2.5 whitespace-pre-line select-text break-words">
-                <p className={`font-medium break-words ${isLight ? 'text-[#18181B]' : 'text-white'}`}>{twitterContent}</p>
-                {tokenizedHashtags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 pt-1">
-                    {tokenizedHashtags.map((tag, idx) => (
-                      <span
-                        key={idx}
-                        className={`font-mono text-[10.5px] font-medium ${
-                          isLight ? 'text-amber-800' : 'text-[#5e6ad2]'
-                        }`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* STITCH SOCIAL METRICS MOCKUP PREVIEW */}
-            <div
-              className={`pt-2.5 flex items-center justify-between font-mono text-[11px] border-t ${
-                isLight
-                  ? 'text-zinc-400 border-[#E6E6E4]'
-                  : 'text-[#908f9e] border-[#292a2b]'
-              }`}
-            >
-              <span className="flex items-center gap-1">
-                <MessageCircle className="h-3 w-3" />
-                <span>24</span>
-              </span>
-              <span className="flex items-center gap-1">
-                <Repeat className="h-3 w-3" />
-                <span>89</span>
-              </span>
-              <span className="flex items-center gap-1">
-                <Heart className="h-3 w-3 text-rose-500" />
-                <span>412</span>
-              </span>
-              <span className="flex items-center gap-1">
-                <BarChart2 className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`} />
-                <span>12.4K</span>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* STITCH SOCIAL ACTION FOOTER */}
-        <div
-          className={`flex items-center justify-between pt-3 mt-3 border-t ${
-            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
-          }`}
-        >
+      {/* STITCH SOCIAL ACTION FOOTER */}
+      <div
+        className={`pt-2 border-t mt-auto shrink-0 flex flex-col gap-1.5 ${
+          isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+        }`}
+      >
+        <div className="flex items-center justify-between">
           <span
-            className={`font-mono text-[10px] px-1.5 py-0.5 rounded border ${
+            className={`font-mono text-[9.5px] px-1.5 py-0.5 rounded border ${
               isLight
                 ? 'text-zinc-400 bg-[#F4F4F5] border-[#E6E6E4]'
                 : 'text-[#908f9e] bg-[#0d0e0f] border-[#292a2b]'
             }`}
           >
-            Target Tone: <strong className={isLight ? 'text-zinc-700 font-normal' : 'text-[#e3e2e3] font-normal'}>Direct &amp; Technical</strong>
+            Tone: <strong className={isLight ? 'text-zinc-700 font-normal' : 'text-[#e3e2e3] font-normal'}>Direct &amp; Tech</strong>
           </span>
 
           <button
             type="button"
             onClick={handleCopy}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border font-medium text-xs transition-colors shadow-xs cursor-pointer ${
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border font-medium text-xs transition-colors shadow-xs cursor-pointer ${
               isLight
                 ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
                 : 'bg-[#1f2021] hover:bg-[#292a2b] text-[#e3e2e3] hover:text-white border-[#292a2b] font-mono'
@@ -373,25 +370,26 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
           >
             {copied ? (
               <>
-                <Check className="h-3.5 w-3.5 text-emerald-600" />
+                <Check className="h-3 w-3 text-emerald-600" />
                 <span>Copied!</span>
               </>
             ) : (
               <>
-                <Copy className={`h-3.5 w-3.5 ${isLight ? 'text-zinc-500' : 'text-[#bdc2ff]'}`} />
+                <Copy className={`h-3 w-3 ${isLight ? 'text-zinc-500' : 'text-[#bdc2ff]'}`} />
                 <span>Copy to Clipboard</span>
               </>
             )}
           </button>
         </div>
-      </div>
 
-      <VoiceTweakInput
-        cardName="Social Post"
-        onTweak={onTweak}
-        isRefining={isRefining}
-        placeholder="Hold Wispr to refine this card."
-      />
+        <VoiceTweakInput
+          cardName="Social Post"
+          onTweak={onTweak}
+          isRefining={isRefining}
+          placeholder="Hold Wispr to refine this card."
+          className="pt-1 mt-0 border-t-0"
+        />
+      </div>
     </div>
   );
 }

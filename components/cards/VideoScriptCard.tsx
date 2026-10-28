@@ -149,7 +149,7 @@ ${segments
   return (
     <>
       <div
-        className={`flex flex-col h-full justify-between border rounded-xl p-5 transition-all shadow-xs overflow-hidden ${
+        className={`flex flex-col h-[340px] xl:h-[360px] rounded-xl p-3.5 justify-between shadow-xs overflow-hidden border transition-all ${
           isLight
             ? isRefining
               ? 'bg-white border-amber-500/70 ring-1 ring-amber-500/40'
@@ -159,149 +159,146 @@ ${segments
             : 'bg-[#1b1c1d] border-[#292a2b] hover:border-[#343536]'
         }`}
       >
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Card Header matching Stitch */}
-          <div
-            className={`flex items-center justify-between pb-3 border-b ${
-              isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <div
-                className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
-                  isLight
-                    ? 'bg-[#18181B] text-white border-[#18181B]'
-                    : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
-                }`}
-              >
-                {isRefining ? (
-                  <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
-                ) : (
-                  <Video className="h-3.5 w-3.5" />
-                )}
-              </div>
-              <div>
-                <h3
-                  className={`text-xs font-semibold tracking-tight flex items-center gap-2 ${
-                    isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
-                  }`}
-                >
-                  Demo Video Script &amp; Teleprompter
-                  {isRefining && (
-                    <span className={`text-[10px] font-mono ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
-                      Refining...
-                    </span>
-                  )}
-                </h3>
-                <p className={`text-[11px] mt-0.5 truncate max-w-[200px] ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-                  {data?.title || 'Demo Video Script'}
-                </p>
-              </div>
+        {/* Card Header matching Stitch */}
+        <div
+          className={`flex items-center justify-between pb-2 border-b shrink-0 ${
+            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className={`flex h-6.5 w-6.5 items-center justify-center rounded-lg border shrink-0 ${
+                isLight
+                  ? 'bg-[#18181B] text-white border-[#18181B]'
+                  : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
+              }`}
+            >
+              {isRefining ? (
+                <Loader2 className={`h-3 w-3 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
+              ) : (
+                <Video className="h-3 w-3" />
+              )}
             </div>
-
-            <div className="flex items-center gap-1.5">
-              <div
-                className={`flex items-center gap-1 font-mono text-[10px] px-2 py-0.5 rounded border ${
-                  isLight
-                    ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-600'
-                    : 'bg-[#0d0e0f] text-[#ffb867] border-[#292a2b]'
+            <div className="min-w-0 truncate">
+              <h3
+                className={`text-xs font-semibold tracking-tight truncate flex items-center gap-1.5 ${
+                  isLight ? 'text-zinc-900' : 'text-[#e3e2e3]'
                 }`}
               >
-                <Clock className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#ffb867]'}`} />
-                <span>{data?.totalDuration || '02:00 Total'}</span>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleCopy}
-                title="Copy script markdown"
-                className={`flex items-center p-1.5 rounded-md border transition-colors text-xs cursor-pointer ${
-                  isLight
-                    ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-600'
-                    : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
-                }`}
-              >
-                {copied ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-600" />
-                ) : (
-                  <Copy className="h-3.5 w-3.5" />
+                <span>Demo Video Script</span>
+                {isRefining && (
+                  <span className={`text-[9px] font-mono shrink-0 ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
+                    Refining...
+                  </span>
                 )}
-              </button>
+              </h3>
             </div>
           </div>
 
-          {/* Clean Teleprompter Script Segments matching Stitch */}
-          <div className="mt-3.5 flex-1 max-h-[340px] overflow-y-auto pr-1 space-y-2.5">
-            {segments.length === 0 ? (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <div
+              className={`flex items-center gap-1 font-mono text-[9.5px] px-1.5 py-0.5 rounded border ${
+                isLight
+                  ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-600'
+                  : 'bg-[#0d0e0f] text-[#ffb867] border-[#292a2b]'
+              }`}
+            >
+              <Clock className={`h-2.5 w-2.5 ${isLight ? 'text-amber-600' : 'text-[#ffb867]'}`} />
+              <span>{data?.totalDuration || '02:00'}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              title="Copy script markdown"
+              className={`flex items-center p-1 rounded border transition-colors text-xs cursor-pointer ${
+                isLight
+                  ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-600'
+                  : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+              }`}
+            >
+              {copied ? (
+                <Check className="h-3 w-3 text-emerald-600" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Card Content Viewport (scrollable middle section) */}
+        <div className="flex-1 overflow-y-auto pr-1.5 my-2 text-xs space-y-2 [scrollbar-width:thin]">
+          {segments.length === 0 ? (
+            <div
+              className={`p-4 rounded-lg border text-center text-xs italic ${
+                isLight
+                  ? 'border-[#E6E6E4] text-zinc-400 bg-zinc-50'
+                  : 'border-[#292a2b] text-[#908f9e] bg-[#0d0e0f]'
+              }`}
+            >
+              No video script segments available.
+            </div>
+          ) : (
+            segments.map((seg, idx) => (
               <div
-                className={`p-6 rounded-lg border text-center text-xs italic ${
+                key={idx}
+                className={`rounded-lg p-2.5 transition-colors border ${
                   isLight
-                    ? 'border-[#E6E6E4] text-zinc-400 bg-zinc-50'
-                    : 'border-[#292a2b] text-[#908f9e] bg-[#0d0e0f]'
+                    ? 'bg-[#FAFAFA] border-[#E6E6E4] hover:border-zinc-300'
+                    : 'bg-[#0d0e0f] border-[#292a2b] hover:border-[#343536]'
                 }`}
               >
-                No video script segments available.
-              </div>
-            ) : (
-              segments.map((seg, idx) => (
-                <div
-                  key={idx}
-                  className={`rounded-lg p-3 transition-colors border ${
-                    isLight
-                      ? 'bg-[#FAFAFA] border-[#E6E6E4] hover:border-zinc-300'
-                      : 'bg-[#0d0e0f] border-[#292a2b] hover:border-[#343536]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span
-                      className={`font-mono text-[10.5px] font-semibold ${
-                        isLight
-                          ? 'text-amber-700'
-                          : 'text-[#bdc2ff] rounded bg-[#1f2021] px-2 py-0.5 border border-[#292a2b]'
-                      }`}
-                    >
-                      [{seg?.timestamp || '00:00'}] {seg?.stage || `Segment ${idx + 1}`}
-                    </span>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span
+                    className={`font-mono text-[10px] font-semibold ${
+                      isLight
+                        ? 'text-amber-700'
+                        : 'text-[#bdc2ff] rounded bg-[#1f2021] px-1.5 py-0.2 border border-[#292a2b]'
+                    }`}
+                  >
+                    [{seg?.timestamp || '00:00'}] {seg?.stage || `Segment ${idx + 1}`}
+                  </span>
+                </div>
+
+                <div className="mt-1 space-y-1">
+                  <div
+                    className={`flex items-start gap-1.5 text-xs leading-snug break-words ${
+                      isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'
+                    }`}
+                  >
+                    <Mic className={`h-3 w-3 mt-0.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+                    <p className="italic">&ldquo;{seg?.spokenLine || seg?.audio || 'No spoken audio line provided.'}&rdquo;</p>
                   </div>
 
-                  <div className="mt-1.5 space-y-1.5">
-                    <div
-                      className={`flex items-start gap-1.5 text-xs leading-snug break-words ${
-                        isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'
-                      }`}
-                    >
-                      <Mic className={`h-3.5 w-3.5 mt-0.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                      <p className="italic">&ldquo;{seg?.spokenLine || seg?.audio || 'No spoken audio line provided.'}&rdquo;</p>
-                    </div>
-
-                    <div
-                      className={`flex items-start gap-1.5 rounded px-2.5 py-1 text-[11px] border break-words ${
-                        isLight
-                          ? 'bg-white border-[#E6E6E4] text-zinc-600'
-                          : 'bg-[#1b1c1d] border-[#292a2b] text-[#c6c5d5]'
-                      }`}
-                    >
-                      <Eye className={`h-3 w-3 mt-0.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                      <p className="font-mono">{seg?.visualCue || 'Camera view'}</p>
-                    </div>
+                  <div
+                    className={`flex items-start gap-1.5 rounded px-2 py-0.5 text-[10.5px] border break-words ${
+                      isLight
+                        ? 'bg-white border-[#E6E6E4] text-zinc-600'
+                        : 'bg-[#1b1c1d] border-[#292a2b] text-[#c6c5d5]'
+                    }`}
+                  >
+                    <Eye className={`h-2.5 w-2.5 mt-0.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+                    <p className="font-mono">{seg?.visualCue || 'Camera view'}</p>
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+            ))
+          )}
+        </div>
 
-          {/* STITCH TELEPROMPTER ACTIONS BAR */}
-          <div
-            className={`flex items-center justify-between pt-3 mt-3 border-t ${
-              isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
-            }`}
-          >
-            <div className="flex items-center gap-1.5 font-mono text-[11px]">
+        {/* Card Footer */}
+        <div
+          className={`pt-2 border-t mt-auto shrink-0 flex flex-col gap-1.5 ${
+            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1 font-mono text-[10.5px]">
               <span className={isLight ? 'text-zinc-500' : 'text-[#908f9e]'}>Speed:</span>
               <button
                 type="button"
                 onClick={() => setPlaybackSpeed('1.0x')}
-                className={`px-2 py-0.5 rounded text-[10px] transition-colors cursor-pointer ${
+                className={`px-1.5 py-0.2 rounded text-[10px] transition-colors cursor-pointer ${
                   playbackSpeed === '1.0x'
                     ? isLight
                       ? 'bg-zinc-100 border border-[#E6E6E4] text-zinc-800 font-medium'
@@ -316,7 +313,7 @@ ${segments
               <button
                 type="button"
                 onClick={() => setPlaybackSpeed('1.2x')}
-                className={`px-2 py-0.5 rounded text-[10px] transition-colors cursor-pointer ${
+                className={`px-1.5 py-0.2 rounded text-[10px] transition-colors cursor-pointer ${
                   playbackSpeed === '1.2x'
                     ? isLight
                       ? 'bg-zinc-100 border border-[#E6E6E4] text-zinc-800 font-medium'
@@ -338,7 +335,7 @@ ${segments
                 setIsTeleprompterOpen(true);
                 setIsPlaying(true);
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border font-medium text-xs transition-colors shadow-xs ${
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg border font-medium text-xs transition-colors shadow-xs ${
                 segments.length === 0
                   ? isLight
                     ? 'bg-zinc-50 border-[#E6E6E4] text-zinc-400 cursor-not-allowed opacity-60'
@@ -348,7 +345,7 @@ ${segments
                   : 'bg-[#1f2021] hover:bg-[#292a2b] text-[#e3e2e3] hover:text-white border-[#292a2b] cursor-pointer'
               }`}
             >
-              <Play className={`h-3.5 w-3.5 ${
+              <Play className={`h-3 w-3 ${
                 segments.length === 0
                   ? 'text-zinc-400 fill-zinc-400'
                   : isLight
@@ -358,14 +355,15 @@ ${segments
               <span>Launch Teleprompter</span>
             </button>
           </div>
-        </div>
 
-        <VoiceTweakInput
-          cardName="Demo Video Script"
-          onTweak={onTweak}
-          isRefining={isRefining}
-          placeholder="Hold Wispr to refine this card."
-        />
+          <VoiceTweakInput
+            cardName="Demo Video Script"
+            onTweak={onTweak}
+            isRefining={isRefining}
+            placeholder="Hold Wispr to refine this card."
+            className="pt-1 mt-0 border-t-0"
+          />
+        </div>
       </div>
 
       {/* Teleprompter Fullscreen Studio Overlay */}

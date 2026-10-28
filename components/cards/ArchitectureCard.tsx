@@ -453,7 +453,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
     <>
       {/* Standard Card Container matching Stitch */}
       <div
-        className={`flex flex-col h-full justify-between border rounded-xl p-5 transition-all shadow-xs overflow-hidden ${
+        className={`flex flex-col h-[340px] xl:h-[360px] rounded-xl p-3.5 justify-between shadow-xs overflow-hidden border transition-all ${
           isLight
             ? isRefining
               ? 'bg-white border-amber-500/70 ring-1 ring-amber-500/40'
@@ -463,231 +463,261 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
             : 'bg-[#1b1c1d] border-[#292a2b] hover:border-[#343536]'
         }`}
       >
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Card Header matching Stitch */}
-          <div
-            className={`flex flex-wrap items-center justify-between gap-2 pb-3 border-b ${
-              isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <div
-                className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
-                  isLight
-                    ? 'bg-[#18181B] text-amber-500 border-[#18181B]'
-                    : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
-                }`}
-              >
-                {isRefining ? (
-                  <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
-                ) : (
-                  <Workflow className="h-3.5 w-3.5" />
-                )}
-              </div>
-              <div>
-                <h3
-                  className={`text-xs font-semibold tracking-tight flex items-center gap-2 ${
-                    isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
-                  }`}
-                >
-                  Architecture Topology Diagram
-                  {isRefining && (
-                    <span className={`text-[10px] font-mono ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
-                      Refining...
-                    </span>
-                  )}
-                </h3>
-                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>{safeTitle}</p>
-              </div>
+        {/* Card Header matching Stitch */}
+        <div
+          className={`flex items-center justify-between gap-2 pb-2 border-b shrink-0 ${
+            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className={`flex h-6.5 w-6.5 items-center justify-center rounded-lg border shrink-0 ${
+                isLight
+                  ? 'bg-[#18181B] text-amber-500 border-[#18181B]'
+                  : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
+              }`}
+            >
+              {isRefining ? (
+                <Loader2 className={`h-3 w-3 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
+              ) : (
+                <Workflow className="h-3 w-3" />
+              )}
             </div>
-
-            {/* Header Action Buttons */}
-            <div className="flex items-center gap-1">
-              {/* Diagram / Code Toggle */}
-              <div
-                className={`flex rounded-md p-0.5 border mr-1 ${
-                  isLight ? 'bg-[#F4F4F5] border-[#E6E6E4]' : 'bg-[#0d0e0f] border border-[#292a2b]'
+            <div className="min-w-0 truncate">
+              <h3
+                className={`text-xs font-semibold tracking-tight truncate flex items-center gap-1.5 ${
+                  isLight ? 'text-zinc-900' : 'text-[#e3e2e3]'
                 }`}
               >
-                <button
-                  type="button"
-                  onClick={() => setViewMode('diagram')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
-                    viewMode === 'diagram'
-                      ? isLight
-                        ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
-                        : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
-                      : isLight
-                      ? 'text-zinc-600 hover:text-[#18181B]'
-                      : 'text-[#908f9e] hover:text-[#e3e2e3]'
-                  }`}
-                >
-                  <Eye className="h-3 w-3" />
-                  <span>Visual</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('code')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
-                    viewMode === 'code'
-                      ? isLight
-                        ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
-                        : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
-                      : isLight
-                      ? 'text-zinc-600 hover:text-[#18181B]'
-                      : 'text-[#908f9e] hover:text-[#e3e2e3]'
-                  }`}
-                >
-                  <Code className="h-3 w-3" />
-                  <span>Code</span>
-                </button>
-              </div>
-
-              {/* Export as PNG Button */}
-              <button
-                type="button"
-                onClick={handleExportPng}
-                disabled={isExportingPng || !safeMermaidCode.trim()}
-                title="Export as PNG"
-                className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-mono transition-colors disabled:opacity-40 cursor-pointer ${
-                  isLight
-                    ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700 hover:bg-white'
-                    : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
-                }`}
-              >
-                {isExportingPng ? (
-                  <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                ) : (
-                  <ImageIcon className="h-3.5 w-3.5" />
+                <span>Architecture Topology</span>
+                {isRefining && (
+                  <span className={`text-[9px] font-mono shrink-0 ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
+                    Refining...
+                  </span>
                 )}
-                <span className="text-[10px]">PNG</span>
-              </button>
-
-              {/* Export as SVG Button */}
-              <button
-                type="button"
-                onClick={handleExportSvg}
-                disabled={isExportingSvg || !safeMermaidCode.trim()}
-                title="Export as SVG"
-                className={`flex items-center gap-1 px-2 py-1 rounded border text-xs font-mono transition-colors disabled:opacity-40 cursor-pointer ${
-                  isLight
-                    ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700 hover:bg-white'
-                    : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
-                }`}
-              >
-                {isExportingSvg ? (
-                  <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                ) : (
-                  <FileCode className="h-3.5 w-3.5" />
-                )}
-                <span className="text-[10px]">SVG</span>
-              </button>
-
-              {/* Copy Code Button */}
-              <button
-                type="button"
-                onClick={handleCopyCode}
-                title="Copy Mermaid code"
-                className={`flex items-center p-1.5 rounded-md border transition-colors text-xs cursor-pointer ${
-                  isLight
-                    ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700 shadow-xs'
-                    : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
-                }`}
-              >
-                {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-              </button>
+              </h3>
             </div>
           </div>
 
-          {/* Toast Feedback Notification */}
-          {toastMessage && (
+          {/* Header Action Buttons */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* Diagram / Code Toggle */}
             <div
-              className={`mt-2.5 flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-mono border animate-fadeIn ${
-                isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
+              className={`flex rounded p-0.5 border mr-1 ${
+                isLight ? 'bg-[#F4F4F5] border-[#E6E6E4]' : 'bg-[#0d0e0f] border border-[#292a2b]'
               }`}
             >
-              <Sparkles className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-              <span>{toastMessage}</span>
+              <button
+                type="button"
+                onClick={() => setViewMode('diagram')}
+                className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  viewMode === 'diagram'
+                    ? isLight
+                      ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
+                      : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                    : isLight
+                    ? 'text-zinc-600 hover:text-[#18181B]'
+                    : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                }`}
+              >
+                <Eye className="h-2.5 w-2.5" />
+                <span>Visual</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('code')}
+                className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  viewMode === 'code'
+                    ? isLight
+                      ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
+                      : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                    : isLight
+                    ? 'text-zinc-600 hover:text-[#18181B]'
+                    : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                }`}
+              >
+                <Code className="h-2.5 w-2.5" />
+                <span>Code</span>
+              </button>
             </div>
-          )}
 
-          {/* Card Content */}
-          <div className="mt-3.5 flex-1 flex flex-col min-h-0 space-y-2.5">
-            {viewMode === 'diagram' ? (
-              <div className="w-full flex-1 flex flex-col min-h-0 space-y-2">
-                {/* Navigation and Theme Toolbar */}
-                {renderControlsToolbar()}
+            {/* Export as PNG Button */}
+            <button
+              type="button"
+              onClick={handleExportPng}
+              disabled={isExportingPng || !safeMermaidCode.trim()}
+              title="Export as PNG"
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-mono transition-colors disabled:opacity-40 cursor-pointer ${
+                isLight
+                  ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700 hover:bg-white'
+                  : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+              }`}
+            >
+              {isExportingPng ? (
+                <Loader2 className={`h-2.5 w-2.5 animate-spin ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+              ) : (
+                <ImageIcon className="h-2.5 w-2.5" />
+              )}
+              <span>PNG</span>
+            </button>
 
-                {/* Rendered Mermaid Viewport matching Stitch */}
-                <div
-                  className={`architecture-mermaid-viewport w-full min-h-[280px] max-h-[360px] border rounded-lg p-3 flex items-center justify-center overflow-auto ${
-                    isLight ? 'bg-[#FAFAFA] border-[#E6E6E4]' : 'bg-[#0d0e0f] border-[#292a2b]'
-                  }`}
-                >
-                  <MermaidRenderer
-                    code={safeMermaidCode}
-                    theme={activeTheme}
-                    zoom={zoom}
-                    onSvgRendered={handleSvgRendered}
-                    className="w-full h-full flex items-center justify-center border-0 bg-transparent p-0"
-                  />
-                </div>
+            {/* Copy Raw Mermaid Button */}
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              title="Copy Mermaid.js Diagram Syntax"
+              className={`flex items-center p-1 rounded border transition-colors text-xs cursor-pointer ${
+                isLight
+                  ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-600'
+                  : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+              }`}
+            >
+              {copied ? (
+                <Check className="h-3 w-3 text-emerald-600" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
 
-                {/* Sub-Agents Pool info badge matching Stitch */}
-                <div
-                  className={`p-2 rounded border flex items-center justify-between text-xs shadow-xs ${
-                    isLight ? 'bg-white border-[#E6E6E4]' : 'bg-[#1b1c1d] border-[#292a2b]'
-                  }`}
-                >
-                  <div className={`flex items-center gap-1.5 ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
-                    <Workflow className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                    <span className="font-medium text-[11px]">Sub-Agents Pool</span>
-                  </div>
-                  <span
-                    className={`font-mono text-[10px] px-1.5 py-0.5 rounded font-medium border ${
-                      isLight
-                        ? 'text-amber-800 bg-amber-100/70 border-amber-200'
-                        : 'text-[#bdc2ff] bg-[#1f2021] border-[#292a2b]'
-                    }`}
-                  >
-                    Concurrent x4
-                  </span>
-                </div>
-
-                <p className={`mt-1 text-[11px] italic ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-                  {safeDescription}
-                </p>
-              </div>
-            ) : (
-              <div className="flex-1 flex flex-col min-h-0 space-y-2">
-                <div
-                  className={`flex items-center justify-between text-xs font-medium ${
-                    isLight ? 'text-zinc-500' : 'text-[#908f9e]'
-                  }`}
-                >
-                  <span>Mermaid specification</span>
-                  <span className="font-mono text-[10px]">flowchart</span>
-                </div>
-                <pre
-                  className={`flex-1 min-h-[280px] max-h-[360px] overflow-x-auto rounded-lg p-4 font-mono text-xs border leading-relaxed ${
-                    isLight
-                      ? 'bg-[#FAFAFA] text-zinc-800 border-[#E6E6E4]'
-                      : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
-                  }`}
-                >
-                  <code>{safeMermaidCode}</code>
-                </pre>
-              </div>
-            )}
+            {/* Fullscreen Modal Toggle Button */}
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(true)}
+              title="Open full-screen topology inspector"
+              className={`p-1 rounded border transition-colors cursor-pointer ${
+                isLight
+                  ? 'border-[#E6E6E4] bg-white text-zinc-600 hover:bg-zinc-50'
+                  : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:bg-[#292a2b] hover:text-[#e3e2e3]'
+              }`}
+            >
+              <Maximize2 className="h-3 w-3" />
+            </button>
           </div>
         </div>
 
-        <VoiceTweakInput
-          cardName="Architecture Diagram"
-          onTweak={onTweak}
-          isRefining={isRefining}
-          placeholder="Hold Wispr to refine this card."
-        />
+        {/* Toast Feedback Notification */}
+        {toastMessage && (
+          <div
+            className={`mt-1.5 flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-mono border animate-fadeIn shrink-0 ${
+              isLight ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
+            }`}
+          >
+            <Sparkles className={`h-2.5 w-2.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+            <span>{toastMessage}</span>
+          </div>
+        )}
+
+        {/* Card Content Viewport (scrollable middle section) */}
+        <div className="flex-1 overflow-y-auto pr-1.5 my-2 text-xs space-y-2 [scrollbar-width:thin]">
+          {viewMode === 'diagram' ? (
+            <div className="w-full flex flex-col space-y-2">
+              {/* Navigation and Theme Toolbar */}
+              {renderControlsToolbar()}
+
+              {/* Rendered Mermaid Viewport */}
+              <div
+                className={`architecture-mermaid-viewport w-full h-[140px] xl:h-[160px] border rounded-lg p-2 flex items-center justify-center overflow-auto ${
+                  isLight ? 'bg-[#FAFAFA] border-[#E6E6E4]' : 'bg-[#0d0e0f] border-[#292a2b]'
+                }`}
+              >
+                <MermaidRenderer
+                  code={safeMermaidCode}
+                  theme={activeTheme}
+                  zoom={zoom}
+                  onSvgRendered={handleSvgRendered}
+                  className="w-full h-full flex items-center justify-center border-0 bg-transparent p-0"
+                />
+              </div>
+
+              {/* Sub-Agents Pool info badge matching Stitch */}
+              <div
+                className={`p-1.5 rounded border flex items-center justify-between text-xs shadow-xs ${
+                  isLight ? 'bg-white border-[#E6E6E4]' : 'bg-[#1b1c1d] border-[#292a2b]'
+                }`}
+              >
+                <div className={`flex items-center gap-1.5 ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
+                  <Workflow className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+                  <span className="font-medium text-[10.5px]">Sub-Agents Pool</span>
+                </div>
+                <span
+                  className={`font-mono text-[9px] px-1.5 py-0.2 rounded font-medium border ${
+                    isLight
+                      ? 'text-amber-800 bg-amber-100/70 border-amber-200'
+                      : 'text-[#bdc2ff] bg-[#1f2021] border-[#292a2b]'
+                  }`}
+                >
+                  Concurrent x4
+                </span>
+              </div>
+
+              <p className={`text-[10.5px] italic ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                {safeDescription}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col space-y-1.5">
+              <div
+                className={`flex items-center justify-between text-[11px] font-medium ${
+                  isLight ? 'text-zinc-500' : 'text-[#908f9e]'
+                }`}
+              >
+                <span>Mermaid specification</span>
+                <span className="font-mono text-[9.5px]">flowchart</span>
+              </div>
+              <pre
+                className={`font-mono text-[11px] rounded-lg p-2.5 border leading-relaxed overflow-x-auto ${
+                  isLight
+                    ? 'bg-[#FAFAFA] text-zinc-800 border-[#E6E6E4]'
+                    : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
+                }`}
+              >
+                <code>{safeMermaidCode}</code>
+              </pre>
+            </div>
+          )}
+        </div>
+
+        {/* Card Footer */}
+        <div
+          className={`pt-2 border-t mt-auto shrink-0 flex flex-col gap-1.5 ${
+            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              className={`py-1 px-2.5 rounded-lg border text-xs font-medium shadow-xs transition-colors cursor-pointer ${
+                isLight
+                  ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
+                  : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:text-[#e3e2e3]'
+              }`}
+            >
+              {copied ? 'Copied Syntax!' : 'Copy Mermaid'}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(true)}
+              className={`flex items-center justify-center gap-1.5 font-medium py-1 px-3 rounded-lg text-xs shadow-xs transition-colors cursor-pointer ${
+                isLight
+                  ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                  : 'bg-[#5e6ad2] hover:bg-[#4f5abf] text-white font-semibold'
+              }`}
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+              <span>Full Topology</span>
+            </button>
+          </div>
+
+          <VoiceTweakInput
+            cardName="Architecture Diagram"
+            onTweak={onTweak}
+            isRefining={isRefining}
+            placeholder="Hold Wispr to refine this card."
+            className="pt-1 mt-0 border-t-0"
+          />
+        </div>
       </div>
 
       {/* Fullscreen Modal Inspection View */}

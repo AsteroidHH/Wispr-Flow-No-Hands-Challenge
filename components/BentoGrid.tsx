@@ -136,12 +136,12 @@ export function BentoGrid({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-2.5 max-h-full">
       {/* Bento Grid Header */}
       <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <span className={`h-1.5 w-1.5 rounded-full animate-pulse ${isLight ? 'bg-amber-600' : 'bg-[#5e6ad2]'}`} />
-          <span className={`text-xs font-medium ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+          <span className={`text-xs font-semibold ${isLight ? 'text-zinc-900' : 'text-[#e3e2e3]'}`}>
             Generated Deliverables
           </span>
         </div>
@@ -157,7 +157,7 @@ export function BentoGrid({
       </div>
 
       {/* 4-Card Responsive 2x2 Bento Grid with Strict Height Equalization */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 auto-rows-fr">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 auto-rows-fr">
         <PullRequestCard
           data={deliverables.pullRequest}
           onTweak={(inst) => onTweakCard('pullRequest', inst)}

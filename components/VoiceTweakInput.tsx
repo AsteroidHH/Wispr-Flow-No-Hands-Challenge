@@ -9,13 +9,15 @@ interface VoiceTweakInputProps {
   onTweak: (instruction: string) => void;
   isRefining?: boolean;
   placeholder?: string;
+  className?: string;
 }
 
 export function VoiceTweakInput({
   cardName = 'card',
   onTweak,
   isRefining = false,
-  placeholder = 'Hold Wispr to refine this card.'
+  placeholder = 'Hold Wispr to refine this card.',
+  className = '',
 }: VoiceTweakInputProps) {
   const { isLight } = useTheme();
   const [input, setInput] = useState('');
@@ -102,8 +104,8 @@ export function VoiceTweakInput({
   };
 
   return (
-    <div className={`pt-3 mt-auto border-t ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'}`}>
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
+    <div className={`pt-1.5 mt-auto border-t ${isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'} ${className}`}>
+      <form onSubmit={handleSubmit} className="flex items-center gap-1.5">
         {/* Subtle Mic Button */}
         <button
           type="button"

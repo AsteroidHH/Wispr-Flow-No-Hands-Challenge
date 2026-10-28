@@ -176,7 +176,7 @@ export function PullRequestCard({
   return (
     <>
       <div
-        className={`flex flex-col h-full justify-between border rounded-xl p-5 transition-all shadow-xs overflow-hidden ${
+        className={`flex flex-col h-[340px] xl:h-[360px] rounded-xl p-3.5 justify-between shadow-xs overflow-hidden border transition-all ${
           isLight
             ? isRefining
               ? 'bg-white border-amber-500/70 ring-1 ring-amber-500/40'
@@ -186,183 +186,179 @@ export function PullRequestCard({
             : 'bg-[#1b1c1d] border-[#292a2b] hover:border-[#343536]'
         }`}
       >
-        <div className="flex-1 flex flex-col min-h-0">
-          {/* Card Header matching Stitch */}
-          <div
-            className={`flex flex-wrap items-center justify-between gap-2 pb-3 border-b ${
-              isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <div
-                className={`flex h-7 w-7 items-center justify-center rounded-lg border ${
-                  isLight
-                    ? 'bg-[#18181B] text-amber-500 border-[#18181B]'
-                    : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
-                }`}
-              >
-                {isRefining ? (
-                  <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
-                ) : (
-                  <GitPullRequest className="h-3.5 w-3.5" />
+        {/* Card Header matching Stitch */}
+        <div
+          className={`flex items-center justify-between gap-2 pb-2 border-b shrink-0 ${
+            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          }`}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <div
+              className={`flex h-6.5 w-6.5 items-center justify-center rounded-lg border shrink-0 ${
+                isLight
+                  ? 'bg-[#18181B] text-amber-500 border-[#18181B]'
+                  : 'bg-[#1f2021] text-[#5e6ad2] border border-[#292a2b]'
+              }`}
+            >
+              {isRefining ? (
+                <Loader2 className={`h-3 w-3 animate-spin ${isLight ? 'text-amber-500' : 'text-[#5e6ad2]'}`} />
+              ) : (
+                <GitPullRequest className="h-3 w-3" />
+              )}
+            </div>
+            <div className="min-w-0 truncate">
+              <div className="flex items-center gap-1.5 truncate">
+                <h3
+                  className={`text-xs font-semibold tracking-tight truncate ${
+                    isLight ? 'text-zinc-900' : 'text-[#e3e2e3]'
+                  }`}
+                >
+                  GitHub Pull Request
+                </h3>
+                <span
+                  className={`font-mono text-[9px] px-1.5 py-0.2 rounded border shrink-0 hidden sm:inline-block ${
+                    isLight
+                      ? 'bg-[#F4F4F5] text-zinc-600 border-[#E6E6E4]'
+                      : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
+                  }`}
+                >
+                  {(compareBranch || 'main...feature').replace('...', ' → ')}
+                </span>
+                {isRefining && (
+                  <span className={`text-[9px] font-mono shrink-0 ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
+                    Refining...
+                  </span>
                 )}
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3
-                    className={`text-xs font-semibold tracking-tight ${
-                      isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
-                    }`}
-                  >
-                    GitHub Pull Request &amp; Commit
-                  </h3>
-                  {/* Target Branch Tag Pill */}
-                  <span
-                    className={`font-mono text-[10px] px-2 py-0.5 rounded border hidden sm:inline-block ${
-                      isLight
-                        ? 'bg-[#F4F4F5] text-zinc-600 border-[#E6E6E4]'
-                        : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
-                    }`}
-                  >
-                    Target: {(compareBranch || 'main...feature').replace('...', ' → ')}
-                  </span>
-                  {isRefining && (
-                    <span className={`text-[10px] font-mono ${isLight ? 'text-amber-600' : 'text-[#bdc2ff]'}`}>
-                      Refining...
-                    </span>
-                  )}
-                </div>
-                <p className={`text-[11px] mt-0.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-                  Automated Engine PR
-                </p>
-              </div>
             </div>
+          </div>
 
-            {/* Ghost Toolbar & Actions */}
-            <div className="flex items-center gap-1.5">
-              {/* View Tab Toggle */}
-              <div
-                role="tablist"
-                aria-label="PR view options"
-                className={`flex rounded-md p-0.5 border ${
-                  isLight
-                    ? 'bg-[#F4F4F5] border-[#E6E6E4]'
-                    : 'bg-[#0d0e0f] border border-[#292a2b]'
-                }`}
-              >
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={viewTab === 'structured'}
-                  onClick={() => setViewTab('structured')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
-                    viewTab === 'structured'
-                      ? isLight
-                        ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
-                        : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
-                      : isLight
-                      ? 'text-zinc-600 hover:text-[#18181B]'
-                      : 'text-[#908f9e] hover:text-[#e3e2e3]'
-                  }`}
-                >
-                  <Layers className="h-3 w-3" />
-                  <span>Spec</span>
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={viewTab === 'markdown'}
-                  onClick={() => setViewTab('markdown')}
-                  className={`flex items-center gap-1 rounded px-2 py-0.5 text-[11px] font-medium transition-colors cursor-pointer ${
-                    viewTab === 'markdown'
-                      ? isLight
-                        ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
-                        : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
-                      : isLight
-                      ? 'text-zinc-600 hover:text-[#18181B]'
-                      : 'text-[#908f9e] hover:text-[#e3e2e3]'
-                  }`}
-                >
-                  <FileText className="h-3 w-3" />
-                  <span>Markdown</span>
-                </button>
-              </div>
-
-              {/* Copy PR Button */}
+          {/* Ghost Toolbar & Actions */}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* View Tab Toggle */}
+            <div
+              role="tablist"
+              aria-label="PR view options"
+              className={`flex rounded p-0.5 border ${
+                isLight
+                  ? 'bg-[#F4F4F5] border-[#E6E6E4]'
+                  : 'bg-[#0d0e0f] border border-[#292a2b]'
+              }`}
+            >
               <button
                 type="button"
-                onClick={handleCopy}
-                title="Copy markdown spec"
-                className={`flex items-center p-1.5 rounded-md border transition-colors text-xs cursor-pointer ${
+                role="tab"
+                aria-selected={viewTab === 'structured'}
+                onClick={() => setViewTab('structured')}
+                className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  viewTab === 'structured'
+                    ? isLight
+                      ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
+                      : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                    : isLight
+                    ? 'text-zinc-600 hover:text-[#18181B]'
+                    : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                }`}
+              >
+                <Layers className="h-2.5 w-2.5" />
+                <span>Spec</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewTab === 'markdown'}
+                onClick={() => setViewTab('markdown')}
+                className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors cursor-pointer ${
+                  viewTab === 'markdown'
+                    ? isLight
+                      ? 'bg-white text-[#18181B] shadow-xs border border-[#E6E6E4]'
+                      : 'bg-[#1f2021] text-white shadow-xs border border-[#343536]'
+                    : isLight
+                    ? 'text-zinc-600 hover:text-[#18181B]'
+                    : 'text-[#908f9e] hover:text-[#e3e2e3]'
+                }`}
+              >
+                <FileText className="h-2.5 w-2.5" />
+                <span>MD</span>
+              </button>
+            </div>
+
+            {/* Copy PR Button */}
+            <button
+              type="button"
+              onClick={handleCopy}
+              title="Copy markdown spec"
+              className={`flex items-center p-1 rounded border transition-colors text-xs cursor-pointer ${
+                isLight
+                  ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-600'
+                  : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+              }`}
+            >
+              {copied ? (
+                <Check className="h-3 w-3 text-emerald-600" />
+              ) : (
+                <Copy className="h-3 w-3" />
+              )}
+            </button>
+
+            {/* Export Bundle Button */}
+            {onExportBundle && (
+              <button
+                type="button"
+                onClick={onExportBundle}
+                disabled={isExportingBundle}
+                title="Export complete deliverables bundle (.zip)"
+                className={`flex items-center p-1 rounded border transition-colors text-xs disabled:opacity-40 cursor-pointer ${
                   isLight
                     ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-600'
                     : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
                 }`}
               >
-                {copied ? (
-                  <Check className="h-3.5 w-3.5 text-emerald-600" />
+                {isExportingBundle ? (
+                  <Loader2 className={`h-3 w-3 animate-spin ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
                 ) : (
-                  <Copy className="h-3.5 w-3.5" />
+                  <Archive className="h-3 w-3" />
                 )}
               </button>
-
-              {/* Export Bundle Button */}
-              {onExportBundle && (
-                <button
-                  type="button"
-                  onClick={onExportBundle}
-                  disabled={isExportingBundle}
-                  title="Export complete deliverables bundle (.zip)"
-                  className={`flex items-center p-1.5 rounded-md border transition-colors text-xs disabled:opacity-40 cursor-pointer ${
-                    isLight
-                      ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-600'
-                      : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
-                  }`}
-                >
-                  {isExportingBundle ? (
-                    <Loader2 className={`h-3.5 w-3.5 animate-spin ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                  ) : (
-                    <Archive className="h-3.5 w-3.5" />
-                  )}
-                </button>
-              )}
-            </div>
+            )}
           </div>
+        </div>
 
-          {/* Toast Notification */}
-          {toastMessage && (
-            <div
-              className={`mt-2.5 flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[11px] font-mono border animate-fadeIn ${
-                isLight
-                  ? 'bg-amber-50 text-amber-800 border-amber-200'
-                  : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
-              }`}
-            >
-              <Sparkles className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-              <span>{toastMessage}</span>
-            </div>
-          )}
+        {/* Toast Notification */}
+        {toastMessage && (
+          <div
+            className={`mt-1.5 flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[10px] font-mono border animate-fadeIn shrink-0 ${
+              isLight
+                ? 'bg-amber-50 text-amber-800 border-amber-200'
+                : 'bg-[#0d0e0f] text-[#bdc2ff] border-[#292a2b]'
+            }`}
+          >
+            <Sparkles className={`h-2.5 w-2.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+            <span>{toastMessage}</span>
+          </div>
+        )}
 
-          {/* Tab Content */}
+        {/* Card Content Viewport (scrollable middle section) */}
+        <div className="flex-1 overflow-y-auto pr-1.5 my-2 text-xs space-y-2 [scrollbar-width:thin]">
           {viewTab === 'structured' ? (
-            <div className="mt-3.5 flex-1 max-h-[340px] overflow-y-auto pr-1 space-y-3">
+            <>
               <div
-                className={`rounded-lg p-3 border ${
+                className={`rounded-lg p-2.5 border ${
                   isLight
                     ? 'bg-[#FAFAFA] border-[#E6E6E4]'
                     : 'bg-[#0d0e0f] border border-[#292a2b]'
                 }`}
               >
                 <div
-                  className={`flex items-center gap-1.5 text-xs font-medium ${
+                  className={`flex items-center gap-1.5 text-[11px] font-medium ${
                     isLight ? 'text-zinc-700' : 'text-[#bdc2ff]'
                   }`}
                 >
-                  <GitCommit className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'} shrink-0`} />
+                  <GitCommit className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'} shrink-0`} />
                   <span>Commit message</span>
                 </div>
                 <p
-                  className={`mt-1 font-mono text-xs select-all break-all ${
+                  className={`mt-0.5 font-mono text-[11px] select-all break-all ${
                     isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'
                   }`}
                 >
@@ -371,16 +367,16 @@ export function PullRequestCard({
               </div>
 
               <div>
-                <span className={`text-xs font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                <span className={`text-[11px] font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
                   PR title
                 </span>
-                <p className={`text-sm font-medium mt-0.5 ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
+                <p className={`text-xs font-semibold mt-0.5 ${isLight ? 'text-[#18181B]' : 'text-[#e3e2e3]'}`}>
                   {safeTitle}
                 </p>
               </div>
 
               <div>
-                <span className={`text-xs font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                <span className={`text-[11px] font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
                   Executive summary
                 </span>
                 <p className={`text-xs leading-relaxed mt-0.5 ${isLight ? 'text-zinc-600' : 'text-[#c6c5d5]'}`}>
@@ -390,21 +386,21 @@ export function PullRequestCard({
 
               {/* Stitch Checkmark Change List */}
               <div>
-                <div className={`flex items-center gap-1.5 text-xs font-medium mb-1.5 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-                  <Layers className="h-3 w-3" />
+                <div className={`flex items-center gap-1.5 text-[11px] font-medium mb-1 ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
+                  <Layers className="h-2.5 w-2.5" />
                   <span>Key changes ({keyChanges.length})</span>
                 </div>
-                <ul className="space-y-1.5">
+                <ul className="space-y-1">
                   {keyChanges.map((change, idx) => (
-                    <li key={idx} className={`flex items-start gap-2 text-xs ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
+                    <li key={idx} className={`flex items-start gap-1.5 text-xs ${isLight ? 'text-zinc-700' : 'text-[#e3e2e3]'}`}>
                       <span
-                        className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                        className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full ${
                           isLight
                             ? 'bg-emerald-100 text-emerald-700'
                             : 'bg-[#5e6ad2]/15 text-[#bdc2ff]'
                         }`}
                       >
-                        <Check className="h-2.5 w-2.5 stroke-[2.5]" />
+                        <Check className="h-2 w-2 stroke-[2.5]" />
                       </span>
                       <span className="leading-snug">{String(change)}</span>
                     </li>
@@ -420,17 +416,17 @@ export function PullRequestCard({
               {/* Breaking Changes Alert Box matching Stitch */}
               {breakingChanges.length > 0 && (
                 <div
-                  className={`rounded-lg p-3 border ${
+                  className={`rounded-lg p-2.5 border ${
                     isLight
                       ? 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
                       : 'border-red-500/30 bg-[#0d0e0f]'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 text-xs font-medium">
-                    <AlertTriangle className={`h-3.5 w-3.5 shrink-0 ${isLight ? 'text-amber-700' : 'text-red-400'}`} />
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium">
+                    <AlertTriangle className={`h-3 w-3 shrink-0 ${isLight ? 'text-amber-700' : 'text-red-400'}`} />
                     <span>Breaking changes detected</span>
                   </div>
-                  <ul className="mt-1.5 space-y-1">
+                  <ul className="mt-1 space-y-0.5">
                     {breakingChanges.map((bChange, idx) => (
                       <li key={idx} className={`text-xs flex items-start gap-1.5 ${isLight ? 'text-amber-800' : 'text-red-200/90'}`}>
                         <span className={`font-bold ${isLight ? 'text-amber-700' : 'text-red-400'}`}>•</span>
@@ -440,38 +436,31 @@ export function PullRequestCard({
                   </ul>
                 </div>
               )}
-            </div>
+            </>
           ) : (
-            <div className="mt-3.5 flex-1 flex flex-col min-h-0 space-y-2">
-              <div className={`flex items-center justify-between text-xs font-medium ${isLight ? 'text-zinc-500' : 'text-[#908f9e]'}`}>
-                <span className={`flex items-center gap-1 ${isLight ? 'text-zinc-800' : 'text-[#e3e2e3]'}`}>
-                  <CheckSquare className={`h-3 w-3 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-                  Overview • Changes • Checklist
-                </span>
-                <span className="font-mono text-[10px]">Markdown</span>
-              </div>
-              <pre
-                className={`flex-1 max-h-[340px] overflow-y-auto rounded-lg p-3.5 font-mono text-xs whitespace-pre-wrap leading-relaxed border ${
-                  isLight
-                    ? 'bg-[#FAFAFA] text-zinc-800 border-[#E6E6E4]'
-                    : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
-                }`}
-              >
-                {getFullMarkdown()}
-              </pre>
-            </div>
+            <pre
+              className={`font-mono text-[11px] whitespace-pre-wrap leading-relaxed rounded-lg p-3 border ${
+                isLight
+                  ? 'bg-[#FAFAFA] text-zinc-800 border-[#E6E6E4]'
+                  : 'bg-[#0d0e0f] text-[#e3e2e3] border-[#292a2b]'
+              }`}
+            >
+              {getFullMarkdown()}
+            </pre>
           )}
+        </div>
 
-          {/* Stitch PR Actions Footer */}
-          <div
-            className={`flex items-center justify-between pt-3 mt-3 border-t ${
-              isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
-            }`}
-          >
+        {/* Card Footer */}
+        <div
+          className={`pt-2 border-t mt-auto shrink-0 flex flex-col gap-1.5 ${
+            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          }`}
+        >
+          <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={handleCopy}
-              className={`py-1.5 px-2.5 rounded-lg border text-xs font-medium shadow-xs transition-colors cursor-pointer ${
+              className={`py-1 px-2.5 rounded-lg border text-xs font-medium shadow-xs transition-colors cursor-pointer ${
                 isLight
                   ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
                   : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:text-[#e3e2e3]'
@@ -483,7 +472,7 @@ export function PullRequestCard({
             <button
               type="button"
               onClick={() => setIsRepoModalOpen(true)}
-              className={`flex items-center justify-center gap-1.5 font-medium py-1.5 px-3 rounded-lg text-xs shadow-xs transition-colors cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 font-medium py-1 px-3 rounded-lg text-xs shadow-xs transition-colors cursor-pointer ${
                 isLight
                   ? 'bg-amber-600 hover:bg-amber-700 text-white'
                   : 'bg-[#5e6ad2] hover:bg-[#4f5abf] text-white font-semibold'
@@ -494,14 +483,15 @@ export function PullRequestCard({
               <ExternalLink className="h-3 w-3 opacity-80" />
             </button>
           </div>
-        </div>
 
-        <VoiceTweakInput
-          cardName="Pull Request"
-          onTweak={onTweak}
-          isRefining={isRefining}
-          placeholder="Hold Wispr to refine this card."
-        />
+          <VoiceTweakInput
+            cardName="Pull Request"
+            onTweak={onTweak}
+            isRefining={isRefining}
+            placeholder="Hold Wispr to refine this card."
+            className="pt-1 mt-0 border-t-0"
+          />
+        </div>
       </div>
 
       {/* Zero-OAuth "Open on GitHub" Modal Popover */}

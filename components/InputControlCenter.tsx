@@ -318,11 +318,11 @@ export function InputControlCenter({
         <div className="relative rounded-lg" style={ambientAuraStyle}>
           <textarea
             id="voice-transcript"
-            rows={4}
+            rows={3}
             value={voiceTranscript}
             onChange={(e) => setVoiceTranscript(e.target.value)}
             placeholder="Speak or paste technical thoughts, commit notes, architectural adjustments..."
-            className={`w-full rounded-lg p-3 text-xs leading-relaxed transition-all resize-none focus:outline-none font-sans ${
+            className={`w-full max-h-28 overflow-y-auto [scrollbar-width:thin] rounded-lg p-3 text-xs leading-relaxed transition-all resize-none focus:outline-none font-sans ${
               isLight
                 ? 'bg-[#FAFAFA] border border-[#E6E6E4] text-zinc-700 placeholder:text-zinc-400 focus:border-amber-600'
                 : 'bg-[#0d0e0f] border border-[#292a2b] text-[#e3e2e3] placeholder:text-[#908f9e] focus:border-[#5e6ad2]'
@@ -442,15 +442,15 @@ export function InputControlCenter({
 
       {/* 4. Always-Visible Git Diff Code Block matching Stitch */}
       <div
-        className={`rounded-lg p-3 font-mono text-[11px] flex flex-col gap-2 shadow-xs border transition-colors ${
+        className={`h-36 overflow-y-auto [scrollbar-width:thin] rounded-lg p-3 font-mono text-[11px] flex flex-col gap-2 shadow-xs border transition-colors ${
           isLight
             ? 'bg-[#F4F4F5] border-[#E6E6E4]'
             : 'bg-[#0d0e0f] border-[#292a2b]'
         }`}
       >
         <div
-          className={`flex items-center justify-between pb-1 border-b ${
-            isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
+          className={`sticky top-0 z-10 flex items-center justify-between pb-1 border-b ${
+            isLight ? 'border-[#E6E6E4] bg-[#F4F4F5]' : 'border-[#292a2b] bg-[#0d0e0f]'
           }`}
         >
           <div className="flex items-center gap-1.5">
