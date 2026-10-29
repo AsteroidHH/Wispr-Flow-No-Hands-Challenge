@@ -323,36 +323,36 @@ export function BentoGrid({
           <div className="flex flex-wrap items-center gap-1.5">
             <button
               type="button"
-              onClick={() => onSelectPreset?.('ai-agent-router')}
+              onClick={() => onSelectPreset?.('auth-refactor')}
               className={`px-2.5 py-1 rounded border text-xs font-mono transition-all cursor-pointer ${
                 isLight
                   ? 'bg-white hover:bg-zinc-50 text-zinc-700 border-[#E6E6E4]'
                   : 'bg-[#121315] hover:bg-[#1f2021] text-[#e3e2e3] border-[#292a2b]'
               }`}
             >
-              ⌥1 AI Router
+              ⌥1 Auth Refactor
             </button>
             <button
               type="button"
-              onClick={() => onSelectPreset?.('voice-auth-flow')}
+              onClick={() => onSelectPreset?.('ai-agent-pipeline')}
               className={`px-2.5 py-1 rounded border text-xs font-mono transition-all cursor-pointer ${
                 isLight
                   ? 'bg-white hover:bg-zinc-50 text-zinc-700 border-[#E6E6E4]'
                   : 'bg-[#121315] hover:bg-[#1f2021] text-[#e3e2e3] border-[#292a2b]'
               }`}
             >
-              ⌥2 Zero-OAuth
+              ⌥2 AI Pipeline
             </button>
             <button
               type="button"
-              onClick={() => onSelectPreset?.('realtime-telemetry')}
+              onClick={() => onSelectPreset?.('hackathon-project')}
               className={`px-2.5 py-1 rounded border text-xs font-mono transition-all cursor-pointer ${
                 isLight
                   ? 'bg-white hover:bg-zinc-50 text-zinc-700 border-[#E6E6E4]'
                   : 'bg-[#121315] hover:bg-[#1f2021] text-[#e3e2e3] border-[#292a2b]'
               }`}
             >
-              ⌥3 Telemetry
+              ⌥3 ShipSpeak
             </button>
           </div>
         </div>

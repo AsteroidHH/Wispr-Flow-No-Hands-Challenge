@@ -198,17 +198,21 @@ export default function Home() {
 
       // 5. ⌥1, ⌥2, ⌥3 -> Quick load presets
       if (e.altKey && !e.ctrlKey && !e.metaKey) {
-        if (e.key === '1') {
+        const isPreset1 = e.key === '1' || e.key === '¡' || e.code === 'Digit1' || e.code === 'Numpad1';
+        const isPreset2 = e.key === '2' || e.key === '™' || e.code === 'Digit2' || e.code === 'Numpad2';
+        const isPreset3 = e.key === '3' || e.key === '£' || e.code === 'Digit3' || e.code === 'Numpad3';
+
+        if (isPreset1) {
           e.preventDefault();
-          handleSelectPreset('ai-agent-router');
+          handleSelectPreset('auth-refactor');
           return;
-        } else if (e.key === '2') {
+        } else if (isPreset2) {
           e.preventDefault();
-          handleSelectPreset('voice-auth-flow');
+          handleSelectPreset('ai-agent-pipeline');
           return;
-        } else if (e.key === '3') {
+        } else if (isPreset3) {
           e.preventDefault();
-          handleSelectPreset('realtime-telemetry');
+          handleSelectPreset('hackathon-project');
           return;
         }
       }

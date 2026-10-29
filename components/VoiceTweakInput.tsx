@@ -77,7 +77,7 @@ export function VoiceTweakInput({
 
     // Clear any pending mic simulation timer
     if (tweakTimeoutRef.current) {
-      clearTimeout(tweakTimeoutRef.current);
+      clearInterval(tweakTimeoutRef.current);
       tweakTimeoutRef.current = null;
     }
 
@@ -87,20 +87,34 @@ export function VoiceTweakInput({
     }
 
     setIsListening(true);
-    // Simulate voice input for instant demoing if user clicks mic
+    setInput('');
+
+    // Context-sensitive voice prompts
     const mockVoicePrompts = [
-      'make the PR more concise',
-      'add a Redis note to the architecture diagram',
-      'shorten the video script hook to 15 seconds',
-      'make the social post more provocative with metrics'
+      'make the PR description more concise and focused',
+      'add a Redis cache layer node to the architecture diagram',
+      'tighten the demo video hook to 15 seconds',
+      'make the social post punchier with explicit performance metrics',
+      'highlight breaking changes and migration steps',
+      'add automated rollback strategy details',
     ];
     const selected = mockVoicePrompts[Math.floor(Math.random() * mockVoicePrompts.length)];
+    const words = selected.split(' ');
+    let currentIdx = 0;
 
-    tweakTimeoutRef.current = setTimeout(() => {
-      setInput(selected);
-      setIsListening(false);
-      tweakTimeoutRef.current = null;
-    }, 1000);
+    tweakTimeoutRef.current = setInterval(() => {
+      if (currentIdx < words.length) {
+        const nextChunk = words.slice(0, currentIdx + 1).join(' ');
+        setInput(nextChunk);
+        currentIdx++;
+      } else {
+        if (tweakTimeoutRef.current) {
+          clearInterval(tweakTimeoutRef.current);
+          tweakTimeoutRef.current = null;
+        }
+        setIsListening(false);
+      }
+    }, 70);
   };
 
   return (

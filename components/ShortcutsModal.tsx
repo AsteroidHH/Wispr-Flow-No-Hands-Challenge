@@ -17,11 +17,12 @@ interface ShortcutItem {
 
 const SHORTCUTS: ShortcutItem[] = [
   { keys: ['⌘', '↵'], description: 'Synthesize all 4 shipping artifacts via Gemini 2.5', category: 'Actions' },
+  { keys: ['Space'], description: 'Tap or hold Space to talk / simulate Wispr voice stream', category: 'Actions' },
   { keys: ['⌘', 'K'], description: 'Open interactive CLI and Terminal preview', category: 'Actions' },
   { keys: ['⌥', 'S'], description: 'Open Cockpit Configuration & API Keys drawer', category: 'Navigation' },
-  { keys: ['⌥', '1'], description: 'Load AI Agent Pipeline preset (#142)', category: 'Presets' },
-  { keys: ['⌥', '2'], description: 'Load Zero-OAuth Auth Flow preset (#143)', category: 'Presets' },
-  { keys: ['⌥', '3'], description: 'Load Real-Time Telemetry preset (#144)', category: 'Presets' },
+  { keys: ['⌥', '1'], description: 'Load Auth Refactor preset (OAuth2 PKCE + Redis)', category: 'Presets' },
+  { keys: ['⌥', '2'], description: 'Load AI Agent Pipeline preset (Multi-Agent RAG / PR #142)', category: 'Presets' },
+  { keys: ['⌥', '3'], description: 'Load Hackathon Project preset (ShipSpeak Wispr Challenge)', category: 'Presets' },
   { keys: ['?'], description: 'Toggle this keyboard shortcuts cheat sheet', category: 'Navigation' },
   { keys: ['Esc'], description: 'Dismiss any open modal, drawer, or notification', category: 'Navigation' },
 ];

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Mic,
   Activity,
@@ -10,6 +10,8 @@ import {
   ShieldCheck,
   Cpu,
   Trophy,
+  Check,
+  Volume2,
 } from 'lucide-react';
 import { JUDGE_PRESETS } from '@/lib/presets';
 import { AudioVisualizerHUD } from '@/components/AudioVisualizerHUD';
@@ -26,6 +28,43 @@ interface InputControlCenterProps {
   isGenerating: boolean;
 }
 
+// Lightweight Web Audio API synthesizer for tactile acoustic feedback (zero dependencies)
+function playAudioChime(type: 'start' | 'stop') {
+  try {
+    if (typeof window === 'undefined') return;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const ctx = new AudioContextClass();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'start') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.16);
+    } else {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(660, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1046, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.18);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.2);
+    }
+  } catch {
+    // Non-blocking for autoplay policies or headless test runners
+  }
+}
+
 export function InputControlCenter({
   activePresetId,
   onSelectPreset,
@@ -37,57 +76,53 @@ export function InputControlCenter({
   isGenerating = false,
 }: InputControlCenterProps) {
   const { isLight } = useTheme();
-  const [activeDiffFile, setActiveDiffFile] = useState<'tools/registry.ts' | 'services/agent_runner.py' | 'raw'>('tools/registry.ts');
+
+  // Active diff tab: dynamic per preset
+  const [activeDiffFile, setActiveDiffFile] = useState<string>('file1');
+
+  // Simulation & Voice Stream State
   const [isRecording, setIsRecording] = useState<boolean>(false);
+  const [streamElapsed, setStreamElapsed] = useState<number>(0);
+  const [simulatedLevel, setSimulatedLevel] = useState<number>(0);
+  const [justCompletedSimulation, setJustCompletedSimulation] = useState<boolean>(false);
+
+  // Live Audio HUD state
   const [isAudioReactive, setIsAudioReactive] = useState<boolean>(false);
   const [audioLevel, setAudioLevel] = useState<number>(0);
 
-  // Ref to hold simulation timer to prevent memory leaks on unmount
-  const simulationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Animation and streaming interval references
+  const streamIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const elapsedTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const waveAnimRef = useRef<number | null>(null);
+  const successBadgeTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Keep a stable ref for onSelectPreset to prevent unnecessary listener rebinding
+  // Keep stable refs to avoid stale closure in listeners
   const onSelectPresetRef = useRef(onSelectPreset);
   useEffect(() => {
     onSelectPresetRef.current = onSelectPreset;
   }, [onSelectPreset]);
 
-  // Clean up any pending voice simulation on unmount
+  const setVoiceTranscriptRef = useRef(setVoiceTranscript);
+  useEffect(() => {
+    setVoiceTranscriptRef.current = setVoiceTranscript;
+  }, [setVoiceTranscript]);
+
+  // Clean up all timers and animation frames on unmount
   useEffect(() => {
     return () => {
-      if (simulationTimerRef.current) {
-        clearTimeout(simulationTimerRef.current);
-        simulationTimerRef.current = null;
+      if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+      if (waveAnimRef.current !== null && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(waveAnimRef.current);
       }
+      if (successBadgeTimerRef.current) clearTimeout(successBadgeTimerRef.current);
     };
   }, []);
 
-  // Keyboard shortcut listener for ⌥1, ⌥2, ⌥3 / Alt+1, Alt+2, Alt+3
+  // Sync active diff file default when preset changes
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Prevent flood from held-down repeat keys
-      if (e.repeat) return;
-
-      if (e.altKey && !e.ctrlKey && !e.metaKey) {
-        // Support macOS Option keys ('¡', '™', '£'), standard digits, and numpad digits
-        const isPreset1 = e.key === '1' || e.key === '¡' || e.code === 'Digit1' || e.code === 'Numpad1';
-        const isPreset2 = e.key === '2' || e.key === '™' || e.code === 'Digit2' || e.code === 'Numpad2';
-        const isPreset3 = e.key === '3' || e.key === '£' || e.code === 'Digit3' || e.code === 'Numpad3';
-
-        if (isPreset1 && JUDGE_PRESETS[0]?.id) {
-          e.preventDefault();
-          onSelectPresetRef.current(JUDGE_PRESETS[0].id);
-        } else if (isPreset2 && JUDGE_PRESETS[1]?.id) {
-          e.preventDefault();
-          onSelectPresetRef.current(JUDGE_PRESETS[1].id);
-        } else if (isPreset3 && JUDGE_PRESETS[2]?.id) {
-          e.preventDefault();
-          onSelectPresetRef.current(JUDGE_PRESETS[2].id);
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    setActiveDiffFile('file1');
+  }, [activePresetId]);
 
   // Icon mapping for presets
   const getPresetIcon = (id: string) => {
@@ -103,30 +138,128 @@ export function InputControlCenter({
     }
   };
 
-  const handleSimulateWisprVoice = () => {
-    // Cancel any active simulation if already running
-    if (simulationTimerRef.current) {
-      clearTimeout(simulationTimerRef.current);
-      simulationTimerRef.current = null;
-    }
+  // Terminate stream cleanly
+  const stopVoiceStream = useCallback(
+    (completedTranscript?: string) => {
+      if (streamIntervalRef.current) {
+        clearInterval(streamIntervalRef.current);
+        streamIntervalRef.current = null;
+      }
+      if (elapsedTimerRef.current) {
+        clearInterval(elapsedTimerRef.current);
+        elapsedTimerRef.current = null;
+      }
+      if (waveAnimRef.current !== null && typeof cancelAnimationFrame === 'function') {
+        cancelAnimationFrame(waveAnimRef.current);
+        waveAnimRef.current = null;
+      }
 
-    if (isRecording) {
+      if (completedTranscript !== undefined) {
+        setVoiceTranscriptRef.current(completedTranscript);
+      }
+
       setIsRecording(false);
+      setSimulatedLevel(0);
+      playAudioChime('stop');
+
+      setJustCompletedSimulation(true);
+      if (successBadgeTimerRef.current) clearTimeout(successBadgeTimerRef.current);
+      successBadgeTimerRef.current = setTimeout(() => {
+        setJustCompletedSimulation(false);
+      }, 3500);
+    },
+    []
+  );
+
+  // Realistic Wispr Flow Word-by-Word Voice Stream Simulation
+  const handleSimulateWisprVoice = useCallback(() => {
+    // If currently simulating, stop and finalize immediately
+    if (isRecording) {
+      // Find full transcript to populate instantly on early stop
+      const targetPreset =
+        JUDGE_PRESETS.find((p) => p.id === activePresetId) ||
+        JUDGE_PRESETS[1] ||
+        JUDGE_PRESETS[0];
+      const fullText = targetPreset?.voiceTranscript || '';
+      stopVoiceStream(fullText);
       return;
     }
 
+    // Determine target transcript based on currently active preset
+    const targetPreset =
+      JUDGE_PRESETS.find((p) => p.id === activePresetId) ||
+      JUDGE_PRESETS[1] ||
+      JUDGE_PRESETS[0];
+
+    const fullTranscript =
+      targetPreset?.voiceTranscript ||
+      'Shipped autonomous multi-agent tool routing with cosine similarity fallback and token retry bounds. PR ready for merge.';
+
+    const words = fullTranscript.split(/\s+/);
+    if (words.length === 0) return;
+
+    // Start simulation
+    playAudioChime('start');
     setIsRecording(true);
-    simulationTimerRef.current = setTimeout(() => {
-      setVoiceTranscript(
-        "Refactored our autonomous agent tool routing pipeline. Replaced brittle hardcoded switch statements with dynamic vector tool-match scoring in tools/registry.ts. Fixed the token exhaustion race condition when concurrent sub-agents spawn parallel research loops and added exponential jittered backoff on agent_runner.py. PR target is ready for main."
-      );
-      setIsRecording(false);
-      simulationTimerRef.current = null;
-    }, 1500);
-  };
+    setStreamElapsed(0);
+    setJustCompletedSimulation(false);
+    setVoiceTranscriptRef.current('');
+
+    // Start elapsed second ticker
+    if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+    elapsedTimerRef.current = setInterval(() => {
+      setStreamElapsed((prev) => prev + 1);
+    }, 1000);
+
+    // Dynamic wave animation loop
+    let waveTick = 0;
+    const animateWave = () => {
+      waveTick += 0.18;
+      // Synthesize realistic speech amplitude modulation
+      const energy = 0.35 + Math.sin(waveTick * 1.5) * 0.25 + Math.cos(waveTick * 3.1) * 0.2;
+      setSimulatedLevel(Math.max(0.1, Math.min(1, energy)));
+      waveAnimRef.current = requestAnimationFrame(animateWave);
+    };
+    waveAnimRef.current = requestAnimationFrame(animateWave);
+
+    // Stream words into textarea with natural cadence (~55ms per word)
+    let wordIndex = 0;
+    let accumulatedText = '';
+
+    if (streamIntervalRef.current) clearInterval(streamIntervalRef.current);
+    streamIntervalRef.current = setInterval(() => {
+      if (wordIndex < words.length) {
+        // Append 1 to 2 words per tick for realistic speech burst rhythm
+        const count = wordIndex % 5 === 0 ? 2 : 1;
+        const nextWords = words.slice(wordIndex, wordIndex + count).join(' ');
+        accumulatedText = accumulatedText ? `${accumulatedText} ${nextWords}` : nextWords;
+        wordIndex += count;
+        setVoiceTranscriptRef.current(accumulatedText);
+      } else {
+        // Finished all words
+        stopVoiceStream(fullTranscript);
+      }
+    }, 55);
+  }, [activePresetId, isRecording, stopVoiceStream]);
+
+  // Spacebar push/tap to talk (when outside input fields)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && !e.repeat) {
+        const target = e.target as HTMLElement | null;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+          return;
+        }
+        e.preventDefault();
+        handleSimulateWisprVoice();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSimulateWisprVoice]);
 
   const handleSyncPr142 = () => {
-    // Robust preset lookup for PR #142 (ai-agent-pipeline) with safe fallbacks
     const pr142Preset =
       JUDGE_PRESETS.find((p) => p.id === 'ai-agent-pipeline') ??
       JUDGE_PRESETS[1] ??
@@ -137,42 +270,46 @@ export function InputControlCenter({
     }
   };
 
-  // Sanitize audioLevel to safe numeric range [0, 1] - guards against NaN, -1, Infinity, overflow
+  // Sanitize audio level (either from live mic or from simulation)
+  const activeLevel = isRecording ? simulatedLevel : audioLevel;
   const safeAudioLevel =
-    typeof audioLevel === 'number' && Number.isFinite(audioLevel)
-      ? Math.max(0, Math.min(1, audioLevel))
+    typeof activeLevel === 'number' && Number.isFinite(activeLevel)
+      ? Math.max(0, Math.min(1, activeLevel))
       : 0;
 
-  const isSoundActive = isAudioReactive && safeAudioLevel > 0.04;
+  const isSoundActive = (isAudioReactive || isRecording) && safeAudioLevel > 0.05;
 
-  // Calculate box-shadow blur radius and glow alpha with guaranteed bounds
-  const blurRadius = Math.round(12 + safeAudioLevel * (isLight ? 20 : 24));
-  const glowAlpha = Math.min(1, Math.max(0, 0.25 + safeAudioLevel * (isLight ? 0.3 : 0.35))).toFixed(3);
+  // Visual aura glow
+  const blurRadius = Math.round(12 + safeAudioLevel * (isLight ? 20 : 26));
+  const glowAlpha = Math.min(1, Math.max(0, 0.25 + safeAudioLevel * (isLight ? 0.35 : 0.4))).toFixed(3);
 
   const ambientAuraStyle = isSoundActive
     ? {
         boxShadow: isLight
           ? `0 0 ${blurRadius}px rgba(217, 119, 6, ${glowAlpha})`
           : `0 0 ${blurRadius}px rgba(94, 106, 210, ${glowAlpha})`,
-        borderColor: isLight ? 'rgba(217, 119, 6, 0.4)' : 'rgba(94, 106, 210, 0.4)',
-        transition: 'box-shadow 0.08s ease-out, border-color 0.15s ease-out',
+        borderColor: isLight ? 'rgba(217, 119, 6, 0.5)' : 'rgba(94, 106, 210, 0.5)',
+        transition: 'box-shadow 0.08s ease-out, border-color 0.12s ease-out',
       }
     : {
         transition: 'box-shadow 0.25s ease-out, border-color 0.25s ease-out',
       };
 
-  // Static waveform baseline heights matching Stitch
+  // Waveform heights
   const waveformHeights = [8, 14, 20, 10, 16, 12, 6, 18, 20, 12, 8, 16, 20, 10, 4, 8, 4, 8, 4, 4, 4, 4, 4];
 
-  // Dynamic word count and estimated speech duration
+  // Dynamic word count and speech estimation
   const trimmedTranscript = (voiceTranscript || '').trim();
   const wordCount = trimmedTranscript ? trimmedTranscript.split(/\s+/).length : 0;
   const estSeconds = Math.max(0, Math.round(wordCount / 2.2));
   const estMinutesFormatted = String(Math.floor(estSeconds / 60)).padStart(2, '0');
   const estSecondsFormatted = String(estSeconds % 60).padStart(2, '0');
-  const durationDisplay = wordCount > 0 ? `${estMinutesFormatted}:${estSecondsFormatted}` : '01:24';
+  const durationDisplay =
+    wordCount > 0 ? `${estMinutesFormatted}:${estSecondsFormatted}` : '01:24';
 
-  // Master CTA disabled check: locked if generating or if neither voice transcript nor git diff has content
+  const streamDurationDisplay = `00:${String(streamElapsed).padStart(2, '0')}`;
+
+  // Master CTA disabled check
   const hasContent = Boolean(voiceTranscript?.trim() || gitDiff?.trim());
   const canGenerate = !isGenerating && hasContent;
 
@@ -180,6 +317,33 @@ export function InputControlCenter({
     e.preventDefault();
     if (!canGenerate) return;
     onGenerate();
+  };
+
+  // Dynamic Git Diff Metadata per Preset
+  const diffMeta = {
+    'auth-refactor': {
+      branch: 'feat/oauth2-pkce-edge',
+      stats: '+30 -6 (2 files)',
+      file1Name: 'middleware.ts',
+      file2Name: 'lib/auth/redis.ts',
+    },
+    'hackathon-project': {
+      branch: 'feat/whispr-flow-v1',
+      stats: '+142 -12 (3 files)',
+      file1Name: 'app/page.tsx',
+      file2Name: 'components/BentoGrid.tsx',
+    },
+    'ai-agent-pipeline': {
+      branch: 'feat/agent-router-v2',
+      stats: '+84 -29 (2 files)',
+      file1Name: 'tools/registry.ts',
+      file2Name: 'services/agent_runner.py',
+    },
+  }[activePresetId || 'ai-agent-pipeline'] || {
+    branch: 'feat/agent-router-v2',
+    stats: '+84 -29 (2 files)',
+    file1Name: 'tools/registry.ts',
+    file2Name: 'services/agent_runner.py',
   };
 
   return (
@@ -199,8 +363,16 @@ export function InputControlCenter({
         >
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span
+                className={`animate-ping absolute inline-flex h-full w-full rounded-full ${
+                  isRecording ? 'bg-rose-400 opacity-90' : 'bg-emerald-400 opacity-75'
+                }`}
+              ></span>
+              <span
+                className={`relative inline-flex rounded-full h-2 w-2 ${
+                  isRecording ? 'bg-rose-500' : 'bg-emerald-500'
+                }`}
+              ></span>
             </span>
             <h2
               className={`text-xs font-semibold tracking-tight ${
@@ -211,11 +383,15 @@ export function InputControlCenter({
             </h2>
             <span className={isLight ? 'text-zinc-400 text-xs' : 'text-zinc-600 text-xs'}>•</span>
             <span
-              className={`text-[11px] font-mono ${
-                isLight ? 'text-zinc-500' : 'text-[#908f9e]'
+              className={`text-[11px] font-mono flex items-center gap-1 ${
+                isRecording
+                  ? 'text-rose-500 font-semibold animate-pulse'
+                  : isLight
+                  ? 'text-zinc-500'
+                  : 'text-[#908f9e]'
               }`}
             >
-              Voice Engine Ready
+              {isRecording ? 'Wispr Flow Streaming...' : 'Voice Engine Ready'}
             </span>
           </div>
 
@@ -235,7 +411,11 @@ export function InputControlCenter({
                   : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:text-[#e3e2e3]'
               }`}
             >
-              <Activity className={`h-3 w-3 ${isAudioReactive ? (isLight ? 'text-amber-700' : 'text-[#bdc2ff]') : 'text-zinc-400'}`} />
+              <Activity
+                className={`h-3 w-3 ${
+                  isAudioReactive ? (isLight ? 'text-amber-700' : 'text-[#bdc2ff]') : 'text-zinc-400'
+                }`}
+              />
               <span className="text-[11px]">HUD</span>
               <span
                 className={`h-1.5 w-1.5 rounded-full ${
@@ -246,7 +426,7 @@ export function InputControlCenter({
           </div>
         </div>
 
-        {/* 2. Segmented Presets Track matching Stitch */}
+        {/* 2. Segmented Presets Track */}
         <div
           className={`p-1 rounded-lg grid grid-cols-3 gap-1 border ${
             isLight
@@ -273,7 +453,11 @@ export function InputControlCenter({
                     : 'text-[#908f9e] hover:text-[#e3e2e3] hover:bg-[#1f2021]/50'
                 }`}
               >
-                <span className={`shrink-0 ${isSelected ? (isLight ? 'text-amber-600' : 'text-[#bdc2ff]') : 'text-zinc-400'}`}>
+                <span
+                  className={`shrink-0 ${
+                    isSelected ? (isLight ? 'text-amber-600' : 'text-[#bdc2ff]') : 'text-zinc-400'
+                  }`}
+                >
                   {getPresetIcon(preset.id)}
                 </span>
                 <span className="truncate">{preset.name}</span>
@@ -290,28 +474,50 @@ export function InputControlCenter({
         </div>
       </div>
 
-      {/* 3. Primary Voice Transcript Box matching Stitch */}
+      {/* 3. Primary Voice Transcript Box */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between text-xs">
           <span
-            className={`font-mono text-[11px] font-medium flex items-center gap-1 ${
-              isLight ? 'text-zinc-600' : 'text-[#908f9e]'
+            className={`font-mono text-[11px] font-medium flex items-center gap-1.5 ${
+              isRecording
+                ? 'text-rose-500 font-semibold'
+                : isLight
+                ? 'text-zinc-600'
+                : 'text-[#908f9e]'
             }`}
           >
-            <Mic className={`h-3.5 w-3.5 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-            Speech-to-Artifact Stream
+            <Mic
+              className={`h-3.5 w-3.5 ${
+                isRecording
+                  ? 'text-rose-500 animate-pulse'
+                  : isLight
+                  ? 'text-amber-600'
+                  : 'text-[#5e6ad2]'
+              }`}
+            />
+            {isRecording ? 'Wispr Flow Speech Stream (Active)' : 'Speech-to-Artifact Stream'}
           </span>
-          <span className={`font-mono text-[10px] ${isLight ? 'text-zinc-400' : 'text-[#908f9e]'}`}>
-            Raw Transcript ({wordCount} {wordCount === 1 ? 'word' : 'words'}, {durationDisplay})
-          </span>
+
+          <div className="flex items-center gap-2">
+            {justCompletedSimulation && (
+              <span className="font-mono text-[10px] text-emerald-500 flex items-center gap-1 animate-fadeIn">
+                <Check className="h-3 w-3" />
+                Synced via Wispr
+              </span>
+            )}
+            <span
+              className={`font-mono text-[10px] ${
+                isLight ? 'text-zinc-400' : 'text-[#908f9e]'
+              }`}
+            >
+              Raw Transcript ({wordCount} {wordCount === 1 ? 'word' : 'words'}, {durationDisplay})
+            </span>
+          </div>
         </div>
 
         {/* Live Audio Visualizer HUD (When Enabled) */}
         {isAudioReactive && (
-          <AudioVisualizerHUD
-            isActive={isAudioReactive}
-            onVolumeChange={setAudioLevel}
-          />
+          <AudioVisualizerHUD isActive={isAudioReactive} onVolumeChange={setAudioLevel} />
         )}
 
         {/* Textarea */}
@@ -321,21 +527,31 @@ export function InputControlCenter({
             rows={3}
             value={voiceTranscript}
             onChange={(e) => setVoiceTranscript(e.target.value)}
-            placeholder="Speak or paste technical thoughts, commit notes, architectural adjustments..."
+            placeholder="Speak or paste technical thoughts, commit notes, architectural adjustments... (Or tap Space to dictate)"
             className={`w-full max-h-28 overflow-y-auto [scrollbar-width:thin] rounded-lg p-3 text-xs leading-relaxed transition-all resize-none focus:outline-none font-sans ${
-              isLight
+              isRecording
+                ? isLight
+                  ? 'bg-amber-50/40 border-amber-500/80 text-zinc-800'
+                  : 'bg-[#5e6ad2]/10 border-[#5e6ad2]/80 text-white'
+                : isLight
                 ? 'bg-[#FAFAFA] border border-[#E6E6E4] text-zinc-700 placeholder:text-zinc-400 focus:border-amber-600'
                 : 'bg-[#0d0e0f] border border-[#292a2b] text-[#e3e2e3] placeholder:text-[#908f9e] focus:border-[#5e6ad2]'
             }`}
           />
+
+          {/* Subtle live transcription typing indicator inside textarea */}
+          {isRecording && (
+            <div className="absolute bottom-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/60 text-emerald-400 backdrop-blur-xs">
+              <span className="animate-ping h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block"></span>
+              <span>listening...</span>
+            </div>
+          )}
         </div>
 
         {/* Audio Waveform Scrubber HUD matching Stitch */}
         <div
           className={`p-2.5 rounded-lg border flex flex-col gap-1.5 shadow-xs transition-colors ${
-            isLight
-              ? 'bg-white border-[#E6E6E4]'
-              : 'bg-[#1b1c1d] border-[#292a2b]'
+            isLight ? 'bg-white border-[#E6E6E4]' : 'bg-[#1b1c1d] border-[#292a2b]'
           }`}
         >
           <div
@@ -343,15 +559,34 @@ export function InputControlCenter({
               isLight ? 'text-zinc-500' : 'text-[#908f9e]'
             }`}
           >
-            <span className={isLight ? 'text-amber-700 font-semibold' : 'text-[#bdc2ff] font-semibold'}>
-              00:48
+            <span
+              className={
+                isRecording
+                  ? 'text-rose-500 font-semibold font-mono animate-pulse'
+                  : isLight
+                  ? 'text-amber-700 font-semibold'
+                  : 'text-[#bdc2ff] font-semibold'
+              }
+            >
+              {isRecording ? streamDurationDisplay : '00:48'}
             </span>
             <span
-              className={`text-[9px] uppercase tracking-wider ${
-                isLight ? 'text-zinc-400' : 'text-[#908f9e]'
+              className={`text-[9px] uppercase tracking-wider flex items-center gap-1.5 ${
+                isRecording
+                  ? 'text-emerald-500 font-semibold animate-pulse'
+                  : isLight
+                  ? 'text-zinc-400'
+                  : 'text-[#908f9e]'
               }`}
             >
-              Vector Routing Pinpointed
+              {isRecording ? (
+                <>
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                  STREAMING AUDIO VIA WISPR FLOW
+                </>
+              ) : (
+                'VECTOR ROUTING PINPOINTED'
+              )}
             </span>
             <span>{durationDisplay}</span>
           </div>
@@ -359,15 +594,19 @@ export function InputControlCenter({
           {/* Waveform Bars */}
           <div
             className={`w-full h-7 flex items-center justify-between gap-[3px] px-1 rounded border overflow-hidden ${
-              isLight
-                ? 'bg-[#FAFAFA] border-[#E6E6E4]'
-                : 'bg-[#0d0e0f] border-[#292a2b]'
+              isLight ? 'bg-[#FAFAFA] border-[#E6E6E4]' : 'bg-[#0d0e0f] border-[#292a2b]'
             }`}
           >
             {waveformHeights.map((h, i) => {
               // Bound dynamic height strictly between 4px and 24px
               const dynamicHeight = isSoundActive
-                ? Math.max(4, Math.min(24, Math.round(h * (1 + safeAudioLevel * 1.5))))
+                ? Math.max(
+                    4,
+                    Math.min(
+                      24,
+                      Math.round(h * (1 + safeAudioLevel * (0.8 + Math.sin(i * 0.7) * 0.5)))
+                    )
+                  )
                 : Math.max(4, Math.min(24, h));
               const isHighlight = i < 18;
               return (
@@ -375,7 +614,11 @@ export function InputControlCenter({
                   key={i}
                   style={{ height: `${dynamicHeight}px` }}
                   className={`w-1 rounded-full transition-all duration-75 ${
-                    isHighlight
+                    isRecording
+                      ? i % 2 === 0
+                        ? 'bg-rose-500'
+                        : 'bg-amber-500'
+                      : isHighlight
                       ? isLight
                         ? i % 4 === 0
                           ? 'bg-amber-600'
@@ -398,18 +641,37 @@ export function InputControlCenter({
           <button
             type="button"
             onClick={handleSimulateWisprVoice}
-            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
+            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
               isRecording
-                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                ? 'bg-rose-500 text-white hover:bg-rose-600 animate-pulse'
                 : isLight
                 ? 'bg-[#18181B] hover:bg-black text-white'
                 : 'bg-[#1f2021] hover:bg-[#292a2b] text-[#e3e2e3] border border-[#292a2b]'
             }`}
           >
-            <Mic className={`h-3.5 w-3.5 ${isRecording ? 'text-rose-400 animate-pulse' : (isLight ? 'text-amber-500' : 'text-[#ffb867]')}`} />
-            <span>
-              {isRecording ? 'Simulating recording...' : 'Simulate Wispr Voice'}
+            <Mic
+              className={`h-3.5 w-3.5 ${
+                isRecording
+                  ? 'text-white animate-spin'
+                  : isLight
+                  ? 'text-amber-500'
+                  : 'text-[#ffb867]'
+              }`}
+            />
+            <span className="font-medium">
+              {isRecording ? 'Stop Streaming (Space / Click)' : 'Simulate Wispr Voice'}
             </span>
+            {!isRecording && (
+              <kbd
+                className={`ml-1 px-1.5 py-0.2 rounded text-[10px] font-mono border ${
+                  isLight
+                    ? 'bg-zinc-800 text-zinc-300 border-zinc-700'
+                    : 'bg-[#121315] text-[#908f9e] border-[#292a2b]'
+                }`}
+              >
+                Space
+              </kbd>
+            )}
           </button>
 
           <button
@@ -440,12 +702,10 @@ export function InputControlCenter({
         </div>
       </div>
 
-      {/* 4. Always-Visible Git Diff Code Block matching Stitch */}
+      {/* 4. Always-Visible Git Diff Code Block */}
       <div
         className={`h-36 overflow-y-auto [scrollbar-width:thin] rounded-lg p-3 font-mono text-[11px] flex flex-col gap-2 shadow-xs border transition-colors ${
-          isLight
-            ? 'bg-[#F4F4F5] border-[#E6E6E4]'
-            : 'bg-[#0d0e0f] border-[#292a2b]'
+          isLight ? 'bg-[#F4F4F5] border-[#E6E6E4]' : 'bg-[#0d0e0f] border-[#292a2b]'
         }`}
       >
         <div
@@ -456,48 +716,40 @@ export function InputControlCenter({
           <div className="flex items-center gap-1.5">
             <GitBranch className={`h-3.5 w-3.5 ${isLight ? 'text-zinc-600' : 'text-[#5e6ad2]'}`} />
             <span className={`font-semibold ${isLight ? 'text-zinc-800' : 'text-[#e3e2e3]'}`}>
-              {activePresetId === 'auth-refactor'
-                ? 'feat/oauth2-pkce-edge'
-                : activePresetId === 'hackathon-project'
-                ? 'feat/whispr-flow-v1'
-                : 'feat/agent-router-v2'}
+              {diffMeta.branch}
             </span>
             <span className={isLight ? 'text-zinc-500 text-[10px]' : 'text-[#908f9e] text-[10px]'}>
-              {activePresetId === 'auth-refactor'
-                ? '(+30 -6, 2 files)'
-                : activePresetId === 'hackathon-project'
-                ? '(+142 -12, 3 files)'
-                : '(+84 -29, 2 files)'}
+              {diffMeta.stats}
             </span>
           </div>
 
-          {/* File Tabs */}
+          {/* Dynamic File Tabs */}
           <div className="flex items-center gap-1">
             <button
               type="button"
-              onClick={() => setActiveDiffFile('tools/registry.ts')}
+              onClick={() => setActiveDiffFile('file1')}
               className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer ${
-                activeDiffFile === 'tools/registry.ts'
+                activeDiffFile === 'file1'
                   ? isLight
                     ? 'bg-white border border-[#E6E6E4] text-zinc-800'
                     : 'bg-[#1f2021] border border-[#292a2b] text-[#e3e2e3]'
                   : 'text-zinc-500 hover:text-zinc-800'
               }`}
             >
-              tools/registry.ts
+              {diffMeta.file1Name}
             </button>
             <button
               type="button"
-              onClick={() => setActiveDiffFile('services/agent_runner.py')}
+              onClick={() => setActiveDiffFile('file2')}
               className={`px-1.5 py-0.5 rounded text-[10px] font-medium transition-colors cursor-pointer ${
-                activeDiffFile === 'services/agent_runner.py'
+                activeDiffFile === 'file2'
                   ? isLight
                     ? 'bg-white border border-[#E6E6E4] text-zinc-800'
                     : 'bg-[#1f2021] border border-[#292a2b] text-[#e3e2e3]'
                   : 'text-zinc-500 hover:text-zinc-800'
               }`}
             >
-              agent_runner.py
+              {diffMeta.file2Name}
             </button>
             <button
               type="button"
@@ -515,76 +767,8 @@ export function InputControlCenter({
           </div>
         </div>
 
-        {/* Syntax Lines */}
-        {activeDiffFile === 'tools/registry.ts' ? (
-          <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-tight">
-            <div className={isLight ? 'text-zinc-400' : 'text-[#908f9e]'}>
-              @@ -14,6 +14,8 @@ export class ToolRegistry &#123;
-            </div>
-            {/* Deletion in soft red */}
-            <div
-              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
-                isLight
-                  ? 'bg-[#FEE2E2] text-[#991B1B] border-[#EF4444]'
-                  : 'bg-red-500/10 text-red-400 border-red-500'
-              }`}
-            >
-              -   if (tool.name === &apos;eval&apos;) &#123; runOldEval(task); &#125;
-            </div>
-            {/* Additions in soft green */}
-            <div
-              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
-                isLight
-                  ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
-                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
-              }`}
-            >
-              +   const toolScore = await computeEmbeddingSimilarity(task, tool.schema);
-            </div>
-            <div
-              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
-                isLight
-                  ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
-                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
-              }`}
-            >
-              +   if (toolScore &gt; threshold) return this.dispatchVectorNode(tool);
-            </div>
-          </div>
-        ) : activeDiffFile === 'services/agent_runner.py' ? (
-          <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-tight">
-            <div className={isLight ? 'text-zinc-400' : 'text-[#908f9e]'}>
-              @@ -58,6 +58,12 @@ def execute_agent_loop(context):
-            </div>
-            <div
-              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
-                isLight
-                  ? 'bg-[#FEE2E2] text-[#991B1B] border-[#EF4444]'
-                  : 'bg-red-500/10 text-red-400 border-red-500'
-              }`}
-            >
-              -   result = legacy_single_eval(context.prompt)
-            </div>
-            <div
-              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
-                isLight
-                  ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
-                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
-              }`}
-            >
-              +   result = await vector_route_dispatch(context.task_schema)
-            </div>
-            <div
-              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
-                isLight
-                  ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
-                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
-              }`}
-            >
-              +   telemetry.record_latency(result.duration_ms)
-            </div>
-          </div>
-        ) : (
+        {/* Dynamic Syntax Lines based on Active Preset & File */}
+        {activeDiffFile === 'raw' ? (
           <div className="flex flex-col gap-0.5 font-mono text-[10px] leading-tight max-h-36 overflow-y-auto">
             {gitDiff ? (
               gitDiff.split('\n').map((line, idx) => {
@@ -619,6 +803,181 @@ export function InputControlCenter({
             ) : (
               <div className="text-zinc-500 italic py-1">// No git diff provided</div>
             )}
+          </div>
+        ) : activePresetId === 'auth-refactor' ? (
+          activeDiffFile === 'file1' ? (
+            <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-tight">
+              <div className={isLight ? 'text-zinc-400' : 'text-[#908f9e]'}>
+                @@ -12,8 +12,12 @@ export async function middleware(req: NextRequest) &#123;
+              </div>
+              <div
+                className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                  isLight
+                    ? 'bg-[#FEE2E2] text-[#991B1B] border-[#EF4444]'
+                    : 'bg-red-500/10 text-red-400 border-red-500'
+                }`}
+              >
+                - const session = await getCookieSession(req);
+              </div>
+              <div
+                className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                  isLight
+                    ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+                }`}
+              >
+                + const token = req.headers.get(&apos;authorization&apos;)?.replace(&apos;Bearer &apos;, &apos;&apos;);
+              </div>
+              <div
+                className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                  isLight
+                    ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+                }`}
+              >
+                + const verification = await verifyEdgeJwt(token);
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-tight">
+              <div className={isLight ? 'text-zinc-400' : 'text-[#908f9e]'}>
+                @@ -0,0 +1,18 @@ export async function isTokenRevoked(jti: string)
+              </div>
+              <div
+                className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                  isLight
+                    ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+                }`}
+              >
+                + import &#123; Redis &#125; from &apos;@upstash/redis&apos;;
+              </div>
+              <div
+                className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                  isLight
+                    ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+                }`}
+              >
+                + const revoked = await redis.get(`revoked:$&#123;jti&#125;`);
+              </div>
+            </div>
+          )
+        ) : activePresetId === 'hackathon-project' ? (
+          activeDiffFile === 'file1' ? (
+            <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-tight">
+              <div className={isLight ? 'text-zinc-400' : 'text-[#908f9e]'}>
+                @@ -0,0 +1,28 @@ export default function ShipSpeakApp()
+              </div>
+              <div
+                className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                  isLight
+                    ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+                }`}
+              >
+                + import &#123; VoiceInputCenter &#125; from &apos;@/components/InputControlCenter&apos;;
+              </div>
+              <div
+                className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                  isLight
+                    ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+                }`}
+              >
+                + &lt;Navbar badge=&quot;Built for Wispr No Hand Challenge&quot; /&gt;
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-tight">
+              <div className={isLight ? 'text-zinc-400' : 'text-[#908f9e]'}>
+                @@ -18,6 +18,14 @@ export function BentoGrid(&#123; deliverables &#125;)
+              </div>
+              <div
+                className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                  isLight
+                    ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+                }`}
+              >
+                + &lt;PullRequestCard data=&#123;pullRequest&#125; /&gt;
+              </div>
+              <div
+                className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                  isLight
+                    ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                    : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+                }`}
+              >
+                + &lt;ArchitectureCard data=&#123;architecture&#125; /&gt;
+              </div>
+            </div>
+          )
+        ) : activeDiffFile === 'file1' ? (
+          <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-tight">
+            <div className={isLight ? 'text-zinc-400' : 'text-[#908f9e]'}>
+              @@ -14,6 +14,8 @@ export class ToolRegistry &#123;
+            </div>
+            <div
+              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                isLight
+                  ? 'bg-[#FEE2E2] text-[#991B1B] border-[#EF4444]'
+                  : 'bg-red-500/10 text-red-400 border-red-500'
+              }`}
+            >
+              - if (tool.name === &apos;eval&apos;) &#123; runOldEval(task); &#125;
+            </div>
+            <div
+              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                isLight
+                  ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+              }`}
+            >
+              + const toolScore = await computeEmbeddingSimilarity(task, tool.schema);
+            </div>
+            <div
+              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                isLight
+                  ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+              }`}
+            >
+              + if (toolScore &gt; threshold) return this.dispatchVectorNode(tool);
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-1 font-mono text-[10.5px] leading-tight">
+            <div className={isLight ? 'text-zinc-400' : 'text-[#908f9e]'}>
+              @@ -58,6 +58,12 @@ def execute_agent_loop(context):
+            </div>
+            <div
+              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                isLight
+                  ? 'bg-[#FEE2E2] text-[#991B1B] border-[#EF4444]'
+                  : 'bg-red-500/10 text-red-400 border-red-500'
+              }`}
+            >
+              - result = legacy_single_eval(context.prompt)
+            </div>
+            <div
+              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                isLight
+                  ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+              }`}
+            >
+              + result = await vector_route_dispatch(context.task_schema)
+            </div>
+            <div
+              className={`px-1.5 py-0.5 rounded-r border-l-2 ${
+                isLight
+                  ? 'bg-[#DCFCE7] text-[#166534] border-[#22C55E]'
+                  : 'bg-emerald-500/10 text-emerald-400 border-emerald-500'
+              }`}
+            >
+              + telemetry.record_latency(result.duration_ms)
+            </div>
           </div>
         )}
       </div>
