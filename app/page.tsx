@@ -11,6 +11,7 @@ import { ReleaseMatrixView } from '@/components/views/ReleaseMatrixView';
 import { DeployQueueView } from '@/components/views/DeployQueueView';
 import { ChangelogAiView } from '@/components/views/ChangelogAiView';
 import { TerminalPreview } from '@/components/terminal-preview';
+import { ShortcutsModal } from '@/components/ShortcutsModal';
 import { getPresetById, getDefaultPreset } from '@/lib/presets';
 import { transformApiResponseToDeliverables } from '@/lib/transform';
 import { exportArtifactsBundle } from '@/lib/exportBundle';
@@ -41,6 +42,7 @@ export default function Home() {
   const [refiningCard, setRefiningCard] = useState<keyof Deliverables | null>(null);
   const [isExportingBundle, setIsExportingBundle] = useState<boolean>(false);
   const [isTerminalOpen, setIsTerminalOpen] = useState<boolean>(false);
+  const [isShortcutsModalOpen, setIsShortcutsModalOpen] = useState<boolean>(false);
   const [generationSource, setGenerationSource] = useState<string>('preset_ready');
   const [notification, setNotification] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
@@ -159,7 +161,7 @@ export default function Home() {
     }
   }, [activePresetId, voiceTranscript, gitDiff, defaultPreset, showNotification]);
 
-  // Global keyboard shortcuts: ⌘+Enter / Ctrl+Enter (Generate), ⌘K / Ctrl+K (CLI), ⌥S (Settings), Esc (Clear / Dismiss)
+  // Global keyboard shortcuts: ⌘+Enter / Ctrl+Enter (Generate), ⌘K / Ctrl+K (CLI), ⌥S (Settings), ⌥1-3 (Presets), ? (Shortcuts), Esc (Dismiss)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // 1. ⌘+Enter or Ctrl+Enter -> Generate deliverables
@@ -183,9 +185,39 @@ export default function Home() {
         return;
       }
 
-      // 4. Escape -> Close any active modal / overlay / notification
+      // 4. ? or Shift+/ -> Toggle Keyboard Shortcuts Cheat Sheet Modal
+      if (e.key === '?' && !e.metaKey && !e.ctrlKey) {
+        const target = e.target as HTMLElement;
+        if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) {
+          return;
+        }
+        e.preventDefault();
+        setIsShortcutsModalOpen((prev) => !prev);
+        return;
+      }
+
+      // 5. ⌥1, ⌥2, ⌥3 -> Quick load presets
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        if (e.key === '1') {
+          e.preventDefault();
+          handleSelectPreset('ai-agent-router');
+          return;
+        } else if (e.key === '2') {
+          e.preventDefault();
+          handleSelectPreset('voice-auth-flow');
+          return;
+        } else if (e.key === '3') {
+          e.preventDefault();
+          handleSelectPreset('realtime-telemetry');
+          return;
+        }
+      }
+
+      // 6. Escape -> Close any active modal / overlay / notification
       if (e.key === 'Escape') {
-        if (isTerminalOpen) {
+        if (isShortcutsModalOpen) {
+          setIsShortcutsModalOpen(false);
+        } else if (isTerminalOpen) {
           setIsTerminalOpen(false);
         } else if (isToolingOpen) {
           setIsToolingOpen(false);
@@ -199,7 +231,7 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleGenerate, isTerminalOpen, isToolingOpen, isSidebarOpen, notification]);
+  }, [handleGenerate, handleSelectPreset, isTerminalOpen, isToolingOpen, isSidebarOpen, isShortcutsModalOpen, notification]);
 
   // Handle Voice Tweaks on Individual Bento Cards via /api/tweak
   const handleTweakCard = async (cardKey: keyof Deliverables, instruction: string) => {
@@ -443,23 +475,47 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Dynamic Notification Banner */}
+        {/* Floating Modern Toast Notification (Bottom-Right) */}
         {notification && (
-          <div
-            className={`mb-4 flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-mono animate-fadeIn shadow-xs border ${
-              isLight
-                ? 'bg-amber-50 text-amber-800 border-amber-200'
-                : 'bg-[#1b1c1d] text-[#e3e2e3] border-[#292a2b]'
-            }`}
+          <aside
+            role="status"
+            aria-live="polite"
+            className="fixed bottom-6 right-6 z-50 max-w-sm animate-toast-in pointer-events-auto"
           >
-            <CheckCircle2 className={`h-3.5 w-3.5 shrink-0 ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
-            <span>{notification}</span>
-          </div>
+            <div
+              className={`flex items-start gap-3 p-3.5 rounded-xl border shadow-xl backdrop-blur-md transition-all ${
+                isLight
+                  ? 'bg-white/95 text-zinc-900 border-[#E6E6E4] shadow-zinc-300/40'
+                  : 'bg-[#1b1c1d]/95 text-white border-[#292a2b] shadow-black/80'
+              }`}
+            >
+              <div
+                className={`p-1.5 rounded-lg shrink-0 ${
+                  isLight ? 'bg-amber-100 text-amber-800' : 'bg-[#5e6ad2]/20 text-[#bdc2ff]'
+                }`}
+              >
+                <Sparkles className="h-4 w-4" />
+              </div>
+              <div className="flex-1 min-w-0 pr-1">
+                <p className="text-xs font-medium leading-relaxed font-sans">{notification}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNotification(null)}
+                className={`text-xs p-1 rounded transition-colors cursor-pointer ${
+                  isLight ? 'text-zinc-400 hover:text-zinc-700' : 'text-[#908f9e] hover:text-white'
+                }`}
+                aria-label="Dismiss notification"
+              >
+                ✕
+              </button>
+            </div>
+          </aside>
         )}
 
         {/* VIEW 1: Overview Cockpit */}
         {activeView === 'overview' && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div key="overview" className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start animate-view-transition">
             {/* Left Column: Input Control Center */}
             <div className="lg:col-span-5 xl:col-span-5">
               <InputControlCenter
@@ -483,6 +539,8 @@ export default function Home() {
                 refiningCard={refiningCard}
                 onExportBundle={handleExportBundle}
                 isExportingBundle={isExportingBundle}
+                onSelectPreset={handleSelectPreset}
+                onGenerate={handleGenerate}
               />
             </div>
           </div>
@@ -490,35 +548,43 @@ export default function Home() {
 
         {/* VIEW 2: Pull Requests Release Pipeline */}
         {activeView === 'pull-requests' && (
-          <PullRequestsView
-            deliverables={deliverables}
-            onBack={() => setActiveView('overview')}
-            onExportBundle={handleExportBundle}
-          />
+          <div key="pull-requests" className="animate-view-transition">
+            <PullRequestsView
+              deliverables={deliverables}
+              onBack={() => setActiveView('overview')}
+              onExportBundle={handleExportBundle}
+            />
+          </div>
         )}
 
         {/* VIEW 3: Release Matrix & Edge Deployments */}
         {activeView === 'release-matrix' && (
-          <ReleaseMatrixView
-            onBack={() => setActiveView('overview')}
-          />
+          <div key="release-matrix" className="animate-view-transition">
+            <ReleaseMatrixView
+              onBack={() => setActiveView('overview')}
+            />
+          </div>
         )}
 
         {/* VIEW 4: Deploy Queue & Pipeline Events */}
         {activeView === 'deploy-queue' && (
-          <DeployQueueView
-            onBack={() => setActiveView('overview')}
-          />
+          <div key="deploy-queue" className="animate-view-transition">
+            <DeployQueueView
+              onBack={() => setActiveView('overview')}
+            />
+          </div>
         )}
 
         {/* VIEW 5: Changelog AI Copilot */}
         {activeView === 'changelog-ai' && (
-          <ChangelogAiView
-            voiceTranscript={voiceTranscript}
-            gitDiff={gitDiff}
-            deliverables={deliverables}
-            onBack={() => setActiveView('overview')}
-          />
+          <div key="changelog-ai" className="animate-view-transition">
+            <ChangelogAiView
+              voiceTranscript={voiceTranscript}
+              gitDiff={gitDiff}
+              deliverables={deliverables}
+              onBack={() => setActiveView('overview')}
+            />
+          </div>
         )}
 
         {/* Bottom Global Terminal / Status Bar (from Stitch) */}
@@ -580,9 +646,28 @@ export default function Home() {
               </span>
               <span>Clear</span>
             </div>
+            <button
+              type="button"
+              onClick={() => setIsShortcutsModalOpen(true)}
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded border transition-colors cursor-pointer ${
+                isLight
+                  ? 'bg-amber-50 hover:bg-amber-100/70 border-amber-200 text-amber-800'
+                  : 'bg-[#1f2021] hover:bg-[#292a2b] border-[#292a2b] text-[#bdc2ff]'
+              }`}
+              title="View all keyboard shortcuts (?)"
+            >
+              <span className="font-semibold">?</span>
+              <span>Shortcuts</span>
+            </button>
           </div>
         </div>
       </main>
+
+      {/* Keyboard Shortcuts Cheat Sheet Modal */}
+      <ShortcutsModal
+        isOpen={isShortcutsModalOpen}
+        onClose={() => setIsShortcutsModalOpen(false)}
+      />
 
       {/* Terminal Preview Modal Drawer */}
       <TerminalPreview
