@@ -206,13 +206,15 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
       if (!preparedSvg.includes('xmlns=')) {
         preparedSvg = preparedSvg.replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg"');
       }
+      if (!preparedSvg.includes('xmlns:xlink=')) {
+        preparedSvg = preparedSvg.replace('<svg', '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
+      }
       if (!/<svg[^>]*\bwidth=["'][0-9]+/.test(preparedSvg)) {
         preparedSvg = preparedSvg.replace(/<svg\b/, `<svg width="${width}" height="${height}"`);
       }
 
-      const svgBlob = new Blob([preparedSvg], { type: 'image/svg+xml;charset=utf-8' });
-      const URLObj = window.URL || window.webkitURL || window;
-      blobURL = URLObj.createObjectURL(svgBlob);
+      // Convert SVG to data URI for cross-browser same-origin safety
+      const svgDataUri = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(preparedSvg)}`;
 
       const img = new Image();
       img.onload = () => {
@@ -251,16 +253,26 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
 
           showToast('Exported architecture-diagram.png');
         } catch (canvasErr) {
-          console.error('Canvas export error:', canvasErr);
-          showToast('Export failed: Canvas serialization error');
+          // Graceful vector SVG fallback if canvas rasterization is restricted in strict environments
+          console.warn('Canvas export fallback to vector SVG:', canvasErr);
+          try {
+            const fallbackBlob = new Blob([preparedSvg], { type: 'image/svg+xml;charset=utf-8' });
+            const fallbackUrl = URL.createObjectURL(fallbackBlob);
+            const fallbackLink = document.createElement('a');
+            fallbackLink.download = 'architecture-diagram.svg';
+            fallbackLink.href = fallbackUrl;
+            document.body.appendChild(fallbackLink);
+            fallbackLink.click();
+            document.body.removeChild(fallbackLink);
+            setTimeout(() => URL.revokeObjectURL(fallbackUrl), 1500);
+            showToast('Exported architecture-diagram.svg (Vector)');
+          } catch {
+            showToast('Export failed: SVG generation error');
+          }
         } finally {
           // Release canvas bitmap memory immediately
           canvas.width = 0;
           canvas.height = 0;
-          if (blobURL) {
-            URLObj.revokeObjectURL(blobURL);
-            blobURL = null;
-          }
           if (isMountedRef.current) {
             setIsExportingPng(false);
           }
@@ -270,25 +282,18 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
       img.onerror = (err) => {
         img.onload = null;
         img.onerror = null;
-        console.error('Image load error for PNG export:', err);
-        showToast('Export failed: Image rendering error');
-        if (blobURL) {
-          URLObj.revokeObjectURL(blobURL);
-          blobURL = null;
-        }
+        console.warn('Image load fallback to direct SVG export:', err);
+        handleExportSvg();
         if (isMountedRef.current) {
           setIsExportingPng(false);
         }
       };
 
-      img.src = blobURL;
+      // Set source using safe data URI
+      img.src = svgDataUri;
     } catch (err) {
-      if (blobURL) {
-        window.URL.revokeObjectURL(blobURL);
-        blobURL = null;
-      }
-      console.error('PNG export error:', err);
-      showToast('Failed to export PNG');
+      console.warn('PNG export fallback to direct SVG:', err);
+      handleExportSvg();
       if (isMountedRef.current) {
         setIsExportingPng(false);
       }

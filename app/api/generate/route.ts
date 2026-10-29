@@ -176,13 +176,20 @@ export function getMockFallbackForPreset(presetId?: string, transcript?: string,
   }
 
   const rawText = (transcript && transcript.trim()) || (preset?.voiceTranscript) || 'Voice-first last-mile shipping engine';
-  const cleanFirstLine = rawText.trim().split('\n')[0]?.trim();
-  const firstLine = (cleanFirstLine && cleanFirstLine.length > 0 ? cleanFirstLine : 'developer shipping pipeline').slice(0, 60);
+  const cleanFirstLine = rawText.trim().split('\n')[0]?.trim().replace(/^[-*#\s]+/, '');
+  let formattedTitle = cleanFirstLine || 'developer shipping pipeline';
+  if (formattedTitle.length > 60) {
+    formattedTitle = formattedTitle.slice(0, 60).trim();
+  }
+  // Convert ALL CAPS to clean sentence case for professional PR title presentation
+  if (formattedTitle === formattedTitle.toUpperCase() && formattedTitle.length > 4) {
+    formattedTitle = formattedTitle.charAt(0).toUpperCase() + formattedTitle.slice(1).toLowerCase();
+  }
 
   return {
-    prTitle: `feat(core): ${firstLine}`,
-    commitMessage: `feat: ${firstLine.slice(0, 50)}`,
-    prMarkdown: `## Overview\n${rawText.slice(0, 280)}\n\n## Detailed Changes\n- Implemented voice-to-deliverables synthesis pipeline\n- Structured git diff context ingestion\n- Generated reactive diagrams and script timelines\n\n## Environment Setup Checklist\n- [ ] Ensure Node.js 18+ is installed\n- [ ] Set \`GEMINI_API_KEY\` in environment\n- [ ] Run \`npm run build\` to verify clean compilation`,
+    prTitle: `feat(core): ${formattedTitle}`,
+    commitMessage: `feat: ${formattedTitle.slice(0, 50)}`,
+    prMarkdown: `## Overview\n${rawText.length > 20 ? rawText : `Implements ${formattedTitle} with structured voice synthesis and edge validation.`}\n\n## Detailed Changes\n- Implemented voice-to-deliverables synthesis pipeline\n- Structured git diff context ingestion\n- Generated reactive diagrams and script timelines\n\n## Environment Setup Checklist\n- [ ] Ensure Node.js 18+ is installed\n- [ ] Set \`GEMINI_API_KEY\` in environment (or via Cockpit Config ⌥S)\n- [ ] Run \`npm run build\` to verify clean compilation`,
     mermaidSyntax: `flowchart TD
   VoiceIn["Voice Brain Dump"] --> Pipeline["ShipSpeak Synthesis Engine"]
   DiffIn["Git Diff / Context"] --> Pipeline
@@ -194,7 +201,7 @@ export function getMockFallbackForPreset(presetId?: string, transcript?: string,
       {
         timestamp: '00:00 - 00:20',
         visualCue: 'Developer talking into microphone with Wispr Flow indicator active',
-        spokenLine: `Here is what we built: ${firstLine}. Instead of spending hours typing documentation, we talk and ship.`,
+        spokenLine: `Here is what we built: ${formattedTitle}. Instead of spending hours typing documentation, we talk and ship.`,
       },
       {
         timestamp: '00:20 - 00:55',
@@ -212,7 +219,7 @@ export function getMockFallbackForPreset(presetId?: string, transcript?: string,
         spokenLine: 'ShipSpeak removes the last-mile cognitive drag for builders. Try the demo today!',
       },
     ],
-    socialPost: `🚀 Shipping ${firstLine}\n\nDevelopers spend 90% of their time coding, then burn out writing PRs, diagrams, and video scripts.\n\nToday we're launching ShipSpeak for the Wispr No Hand Challenge:\n• Voice brain dump -> GitHub PR with breaking changes\n• Auto-generated Mermaid architecture diagrams\n• 2-minute timed demo video script\n• Twitter & LinkedIn social drafts\n\nBuilt voice-first. Try it out! 👇\n\n#WisprNoHandChallenge #buildinpublic #webdev #ai`,
+    socialPost: `🚀 Shipping ${formattedTitle}\n\nDevelopers spend 90% of their time coding, then burn out writing PRs, diagrams, and video scripts.\n\nToday we're launching ShipSpeak for the Wispr No Hand Challenge:\n• Voice brain dump -> GitHub PR with breaking changes\n• Auto-generated Mermaid architecture diagrams\n• 2-minute timed demo video script\n• Twitter & LinkedIn social drafts\n\nBuilt voice-first. Try it out! 👇\n\n#WisprNoHandChallenge #buildinpublic #webdev #ai`,
   };
 }
 

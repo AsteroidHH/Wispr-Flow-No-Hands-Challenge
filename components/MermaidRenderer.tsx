@@ -132,6 +132,11 @@ export function MermaidRenderer({
         suppressErrorRendering: true, // Prevents Mermaid from injecting error DOM elements into document.body
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
         themeVariables: themeVars,
+        flowchart: {
+          htmlLabels: false, // Ensures native SVG <text> elements rather than <foreignObject> so canvas export is never tainted
+          useMaxWidth: true,
+          curve: 'basis',
+        },
       });
     } catch (err) {
       console.warn('Mermaid initialization warning:', err);
