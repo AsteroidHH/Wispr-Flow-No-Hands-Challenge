@@ -60,6 +60,7 @@ export function PullRequestCard({
 }: PullRequestCardProps) {
   const { isLight } = useTheme();
   const [copied, setCopied] = useState(false);
+  const [copiedGhCli, setCopiedGhCli] = useState(false);
   const [viewTab, setViewTab] = useState<'structured' | 'markdown'>('structured');
   const [isRepoModalOpen, setIsRepoModalOpen] = useState(false);
   const [repoPath, setRepoPath] = useState('AsteroidHH/Wispr-Flow-No-Hands-Challenge');
@@ -68,6 +69,7 @@ export function PullRequestCard({
 
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const copiedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const copiedGhCliTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Load saved repo path safely from localStorage if present
   useEffect(() => {
@@ -86,6 +88,7 @@ export function PullRequestCard({
     return () => {
       if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
       if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+      if (copiedGhCliTimeoutRef.current) clearTimeout(copiedGhCliTimeoutRef.current);
     };
   }, []);
 
@@ -121,6 +124,21 @@ export function PullRequestCard({
       copiedTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error('Failed to copy', err);
+    }
+  };
+
+  const handleCopyGhCli = async () => {
+    try {
+      const titleEscaped = (data?.title || 'Feature Implementation').replace(/"/g, '\\"');
+      const bodyEscaped = getFullMarkdown().replace(/"/g, '\\"');
+      const ghCliCommand = `gh pr create --title "${titleEscaped}" --body "${bodyEscaped}"`;
+      await safeClipboardCopy(ghCliCommand);
+      if (copiedGhCliTimeoutRef.current) clearTimeout(copiedGhCliTimeoutRef.current);
+      setCopiedGhCli(true);
+      showToast('Copied `gh pr create` command!');
+      copiedGhCliTimeoutRef.current = setTimeout(() => setCopiedGhCli(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy gh cli', err);
     }
   };
 
@@ -456,30 +474,45 @@ export function PullRequestCard({
             isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
           }`}
         >
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={handleCopy}
-              className={`py-1 px-2.5 rounded-lg border text-xs font-medium shadow-xs transition-colors cursor-pointer ${
-                isLight
-                  ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
-                  : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:text-[#e3e2e3]'
-              }`}
-            >
-              {copied ? 'Copied!' : 'Copy Markdown'}
-            </button>
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={handleCopyGhCli}
+                title="Copy GitHub CLI command: gh pr create"
+                className={`py-1 px-2 rounded-lg border text-xs font-mono shadow-xs transition-colors cursor-pointer ${
+                  isLight
+                    ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
+                    : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:text-[#e3e2e3]'
+                }`}
+              >
+                {copiedGhCli ? 'Copied CLI!' : 'gh pr'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCopy}
+                className={`py-1 px-2 rounded-lg border text-xs font-medium shadow-xs transition-colors cursor-pointer ${
+                  isLight
+                    ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
+                    : 'border-[#292a2b] bg-[#1f2021] text-[#908f9e] hover:text-[#e3e2e3]'
+                }`}
+              >
+                {copied ? 'Copied!' : 'Copy MD'}
+              </button>
+            </div>
 
             <button
               type="button"
               onClick={() => setIsRepoModalOpen(true)}
-              className={`flex items-center justify-center gap-1.5 font-medium py-1 px-3 rounded-lg text-xs shadow-xs transition-colors cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 font-medium py-1 px-2.5 rounded-lg text-xs shadow-xs transition-colors cursor-pointer ${
                 isLight
                   ? 'bg-amber-600 hover:bg-amber-700 text-white'
                   : 'bg-[#5e6ad2] hover:bg-[#4f5abf] text-white font-semibold'
               }`}
             >
               <GithubIcon className="h-3.5 w-3.5" />
-              <span>Create PR on GitHub</span>
+              <span>Create PR</span>
               <ExternalLink className="h-3 w-3 opacity-80" />
             </button>
           </div>

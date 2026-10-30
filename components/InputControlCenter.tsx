@@ -80,6 +80,13 @@ export function InputControlCenter({
   // Active diff tab: dynamic per preset
   const [activeDiffFile, setActiveDiffFile] = useState<string>('file1');
 
+  // Dual-mode Voice Engine: 'simulate' (Wispr Auto Stream) or 'real_mic' (Browser Speech Recognition)
+  const [voiceMode, setVoiceMode] = useState<'simulate' | 'real_mic'>('simulate');
+  const [isLiveMicListening, setIsLiveMicListening] = useState<boolean>(false);
+  const [voiceCommandFeedback, setVoiceCommandFeedback] = useState<string | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const voiceCommandTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Simulation & Voice Stream State
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [streamElapsed, setStreamElapsed] = useState<number>(0);
@@ -102,6 +109,11 @@ export function InputControlCenter({
     onSelectPresetRef.current = onSelectPreset;
   }, [onSelectPreset]);
 
+  const onGenerateRef = useRef(onGenerate);
+  useEffect(() => {
+    onGenerateRef.current = onGenerate;
+  }, [onGenerate]);
+
   const setVoiceTranscriptRef = useRef(setVoiceTranscript);
   useEffect(() => {
     setVoiceTranscriptRef.current = setVoiceTranscript;
@@ -116,6 +128,16 @@ export function InputControlCenter({
         cancelAnimationFrame(waveAnimRef.current);
       }
       if (successBadgeTimerRef.current) clearTimeout(successBadgeTimerRef.current);
+      if (voiceCommandTimerRef.current) clearTimeout(voiceCommandTimerRef.current);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.onend = null;
+          recognitionRef.current.onerror = null;
+          recognitionRef.current.onresult = null;
+          recognitionRef.current.stop();
+        } catch {}
+        recognitionRef.current = null;
+      }
     };
   }, []);
 
@@ -242,6 +264,145 @@ export function InputControlCenter({
     }, 55);
   }, [activePresetId, isRecording, stopVoiceStream]);
 
+  // Voice Command Detection Notification
+  const handleVoiceCommandDetected = useCallback((commandName: string) => {
+    setVoiceCommandFeedback(`Voice Command: "${commandName}"`);
+    playAudioChime('stop');
+    if (voiceCommandTimerRef.current) clearTimeout(voiceCommandTimerRef.current);
+    voiceCommandTimerRef.current = setTimeout(() => {
+      setVoiceCommandFeedback(null);
+    }, 3000);
+  }, []);
+
+  // Stop Live Microphone Recording cleanly
+  const stopLiveMic = useCallback(() => {
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.stop();
+      } catch {
+        // non-blocking
+      }
+      recognitionRef.current = null;
+    }
+    if (elapsedTimerRef.current) {
+      clearInterval(elapsedTimerRef.current);
+      elapsedTimerRef.current = null;
+    }
+    if (waveAnimRef.current !== null && typeof cancelAnimationFrame === 'function') {
+      cancelAnimationFrame(waveAnimRef.current);
+      waveAnimRef.current = null;
+    }
+    setIsLiveMicListening(false);
+    setSimulatedLevel(0);
+    playAudioChime('stop');
+    setJustCompletedSimulation(true);
+    if (successBadgeTimerRef.current) clearTimeout(successBadgeTimerRef.current);
+    successBadgeTimerRef.current = setTimeout(() => {
+      setJustCompletedSimulation(false);
+    }, 3500);
+  }, []);
+
+  // Start Live Microphone Speech Dictation via Web Speech API
+  const startLiveMic = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    const SpeechRecognition =
+      (window as unknown as { SpeechRecognition?: any; webkitSpeechRecognition?: any }).SpeechRecognition ||
+      (window as unknown as { webkitSpeechRecognition?: any }).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      alert('Web Speech API is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari, or switch to "Simulate Wispr".');
+      setVoiceMode('simulate');
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+
+      playAudioChime('start');
+      setIsLiveMicListening(true);
+      setStreamElapsed(0);
+      setJustCompletedSimulation(false);
+
+      if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
+      elapsedTimerRef.current = setInterval(() => {
+        setStreamElapsed((prev) => prev + 1);
+      }, 1000);
+
+      // Animate wave on live mic speech energy
+      let waveTick = 0;
+      const animateWave = () => {
+        waveTick += 0.2;
+        const energy = 0.4 + Math.sin(waveTick * 2) * 0.3;
+        setSimulatedLevel(energy);
+        waveAnimRef.current = requestAnimationFrame(animateWave);
+      };
+      waveAnimRef.current = requestAnimationFrame(animateWave);
+
+      recognition.onresult = (event: any) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const item = event.results[i];
+          if (item.isFinal) {
+            finalTranscript += item[0].transcript;
+          } else {
+            interimTranscript += item[0].transcript;
+          }
+        }
+
+        const combined = (finalTranscript || interimTranscript).trim();
+        if (combined) {
+          setVoiceTranscriptRef.current(combined);
+
+          // Detect Voice Commands for the No-Hands Challenge
+          const lower = combined.toLowerCase();
+          if (lower.includes('ship it') || lower.includes('generate deliverables')) {
+            handleVoiceCommandDetected('Ship It');
+            stopLiveMic();
+            onGenerateRef.current();
+          } else if (lower.includes('preset one') || lower.includes('auth refactor')) {
+            handleVoiceCommandDetected('Load Auth Refactor');
+            onSelectPresetRef.current('auth-refactor');
+          } else if (lower.includes('preset two') || lower.includes('ai pipeline')) {
+            handleVoiceCommandDetected('Load AI Pipeline');
+            onSelectPresetRef.current('ai-agent-pipeline');
+          } else if (lower.includes('preset three') || lower.includes('hackathon')) {
+            handleVoiceCommandDetected('Load Hackathon Project');
+            onSelectPresetRef.current('hackathon-project');
+          } else if (lower.includes('clear transcript')) {
+            handleVoiceCommandDetected('Clear');
+            setVoiceTranscriptRef.current('');
+          }
+        }
+      };
+
+      recognition.onerror = (e: any) => {
+        console.warn('SpeechRecognition error:', e);
+        if (e.error !== 'no-speech') {
+          stopLiveMic();
+        }
+      };
+
+      recognition.onend = () => {
+        setIsLiveMicListening(false);
+      };
+
+      recognition.start();
+      recognitionRef.current = recognition;
+    } catch (err) {
+      console.error('Failed to start speech recognition:', err);
+      setIsLiveMicListening(false);
+    }
+  }, [handleVoiceCommandDetected, stopLiveMic]);
+
   // Spacebar push/tap to talk (when outside input fields)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -251,13 +412,21 @@ export function InputControlCenter({
           return;
         }
         e.preventDefault();
-        handleSimulateWisprVoice();
+        if (voiceMode === 'real_mic') {
+          if (isLiveMicListening) {
+            stopLiveMic();
+          } else {
+            startLiveMic();
+          }
+        } else {
+          handleSimulateWisprVoice();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSimulateWisprVoice]);
+  }, [voiceMode, isLiveMicListening, stopLiveMic, startLiveMic, handleSimulateWisprVoice]);
 
   const handleSyncPr142 = () => {
     const pr142Preset =
@@ -271,13 +440,14 @@ export function InputControlCenter({
   };
 
   // Sanitize audio level (either from live mic or from simulation)
-  const activeLevel = isRecording ? simulatedLevel : audioLevel;
+  const isVoiceActive = isRecording || isLiveMicListening;
+  const activeLevel = isVoiceActive ? simulatedLevel : audioLevel;
   const safeAudioLevel =
     typeof activeLevel === 'number' && Number.isFinite(activeLevel)
       ? Math.max(0, Math.min(1, activeLevel))
       : 0;
 
-  const isSoundActive = (isAudioReactive || isRecording) && safeAudioLevel > 0.05;
+  const isSoundActive = (isAudioReactive || isVoiceActive) && safeAudioLevel > 0.05;
 
   // Visual aura glow
   const blurRadius = Math.round(12 + safeAudioLevel * (isLight ? 20 : 26));
@@ -479,7 +649,7 @@ export function InputControlCenter({
         <div className="flex items-center justify-between text-xs">
           <span
             className={`font-mono text-[11px] font-medium flex items-center gap-1.5 ${
-              isRecording
+              isVoiceActive
                 ? 'text-rose-500 font-semibold'
                 : isLight
                 ? 'text-zinc-600'
@@ -488,21 +658,25 @@ export function InputControlCenter({
           >
             <Mic
               className={`h-3.5 w-3.5 ${
-                isRecording
+                isVoiceActive
                   ? 'text-rose-500 animate-pulse'
                   : isLight
                   ? 'text-amber-600'
                   : 'text-[#5e6ad2]'
               }`}
             />
-            {isRecording ? 'Wispr Flow Speech Stream (Active)' : 'Speech-to-Artifact Stream'}
+            {isVoiceActive
+              ? voiceMode === 'real_mic'
+                ? 'Browser Speech Recognition (Listening)'
+                : 'Wispr Flow Speech Stream (Active)'
+              : 'Speech-to-Artifact Stream'}
           </span>
 
           <div className="flex items-center gap-2">
             {justCompletedSimulation && (
-              <span className="font-mono text-[10px] text-emerald-500 flex items-center gap-1 animate-fadeIn">
+              <span className="font-mono text-[10px] text-emerald-500 flex items-center gap-1 animate-fadeIn font-semibold">
                 <Check className="h-3 w-3" />
-                Synced via Wispr
+                {voiceMode === 'real_mic' ? 'Transcribed via Mic' : 'Synced via Wispr'}
               </span>
             )}
             <span
@@ -527,9 +701,13 @@ export function InputControlCenter({
             rows={3}
             value={voiceTranscript}
             onChange={(e) => setVoiceTranscript(e.target.value)}
-            placeholder="Speak or paste technical thoughts, commit notes, architectural adjustments... (Or tap Space to dictate)"
+            placeholder={
+              voiceMode === 'real_mic'
+                ? 'Speak into your microphone... Or say "Ship it" to generate all deliverables hands-free!'
+                : 'Speak or paste technical thoughts, commit notes, architectural adjustments... (Or tap Space to dictate)'
+            }
             className={`w-full max-h-28 overflow-y-auto [scrollbar-width:thin] rounded-lg p-3 text-xs leading-relaxed transition-all resize-none focus:outline-none font-sans ${
-              isRecording
+              isVoiceActive
                 ? isLight
                   ? 'bg-amber-50/40 border-amber-500/80 text-zinc-800'
                   : 'bg-[#5e6ad2]/10 border-[#5e6ad2]/80 text-white'
@@ -540,10 +718,10 @@ export function InputControlCenter({
           />
 
           {/* Subtle live transcription typing indicator inside textarea */}
-          {isRecording && (
+          {isVoiceActive && (
             <div className="absolute bottom-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-black/60 text-emerald-400 backdrop-blur-xs">
               <span className="animate-ping h-1.5 w-1.5 rounded-full bg-emerald-400 inline-block"></span>
-              <span>listening...</span>
+              <span>{voiceMode === 'real_mic' ? 'mic listening...' : 'streaming...'}</span>
             </div>
           )}
         </div>
@@ -561,28 +739,30 @@ export function InputControlCenter({
           >
             <span
               className={
-                isRecording
+                isVoiceActive
                   ? 'text-rose-500 font-semibold font-mono animate-pulse'
                   : isLight
                   ? 'text-amber-700 font-semibold'
                   : 'text-[#bdc2ff] font-semibold'
               }
             >
-              {isRecording ? streamDurationDisplay : '00:48'}
+              {isVoiceActive ? streamDurationDisplay : '00:48'}
             </span>
             <span
               className={`text-[9px] uppercase tracking-wider flex items-center gap-1.5 ${
-                isRecording
+                isVoiceActive
                   ? 'text-emerald-500 font-semibold animate-pulse'
                   : isLight
                   ? 'text-zinc-400'
                   : 'text-[#908f9e]'
               }`}
             >
-              {isRecording ? (
+              {isVoiceActive ? (
                 <>
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                  STREAMING AUDIO VIA WISPR FLOW
+                  {voiceMode === 'real_mic'
+                    ? 'REAL-TIME BROWSER SPEECH (SAY "SHIP IT")'
+                    : 'STREAMING AUDIO VIA WISPR FLOW'}
                 </>
               ) : (
                 'VECTOR ROUTING PINPOINTED'
@@ -614,7 +794,7 @@ export function InputControlCenter({
                   key={i}
                   style={{ height: `${dynamicHeight}px` }}
                   className={`w-1 rounded-full transition-all duration-75 ${
-                    isRecording
+                    isVoiceActive
                       ? i % 2 === 0
                         ? 'bg-rose-500'
                         : 'bg-amber-500'
@@ -636,13 +816,76 @@ export function InputControlCenter({
           </div>
         </div>
 
+        {/* Dual-Mode Selector & Voice Command Notification */}
+        <div className="flex items-center justify-between gap-2 pt-0.5">
+          <div
+            role="tablist"
+            aria-label="Voice input mode selection"
+            className={`flex rounded-lg p-0.5 border ${
+              isLight ? 'bg-[#F4F4F5] border-[#E6E6E4]' : 'bg-[#0d0e0f] border-[#292a2b]'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                if (isLiveMicListening) stopLiveMic();
+                setVoiceMode('simulate');
+              }}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-mono transition-colors cursor-pointer ${
+                voiceMode === 'simulate'
+                  ? isLight
+                    ? 'bg-white text-zinc-900 font-semibold shadow-xs border border-[#E6E6E4]'
+                    : 'bg-[#1f2021] text-white font-semibold shadow-xs border border-[#343536]'
+                  : isLight
+                  ? 'text-zinc-500 hover:text-zinc-800'
+                  : 'text-[#908f9e] hover:text-[#e3e2e3]'
+              }`}
+            >
+              <Sparkles className="h-2.5 w-2.5 text-amber-500" />
+              <span>Simulate Wispr</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (isRecording) stopVoiceStream();
+                setVoiceMode('real_mic');
+              }}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[10.5px] font-mono transition-colors cursor-pointer ${
+                voiceMode === 'real_mic'
+                  ? isLight
+                    ? 'bg-white text-zinc-900 font-semibold shadow-xs border border-[#E6E6E4]'
+                    : 'bg-[#1f2021] text-white font-semibold shadow-xs border border-[#343536]'
+                  : isLight
+                  ? 'text-zinc-500 hover:text-zinc-800'
+                  : 'text-[#908f9e] hover:text-[#e3e2e3]'
+              }`}
+            >
+              <Mic className="h-2.5 w-2.5 text-rose-500" />
+              <span>Live Mic (Web Speech)</span>
+            </button>
+          </div>
+
+          {voiceCommandFeedback && (
+            <span className="font-mono text-[10px] text-emerald-500 font-semibold flex items-center gap-1 animate-fadeIn bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              <Check className="h-2.5 w-2.5" />
+              {voiceCommandFeedback}
+            </span>
+          )}
+        </div>
+
         {/* Voice Trigger Row Micro-Controls */}
-        <div className="flex items-center justify-between gap-2 pt-1">
+        <div className="flex items-center justify-between gap-2 pt-0.5">
           <button
             type="button"
-            onClick={handleSimulateWisprVoice}
+            onClick={
+              voiceMode === 'real_mic'
+                ? isLiveMicListening
+                  ? stopLiveMic
+                  : startLiveMic
+                : handleSimulateWisprVoice
+            }
             className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer ${
-              isRecording
+              isVoiceActive
                 ? 'bg-rose-500 text-white hover:bg-rose-600 animate-pulse'
                 : isLight
                 ? 'bg-[#18181B] hover:bg-black text-white'
@@ -651,7 +894,7 @@ export function InputControlCenter({
           >
             <Mic
               className={`h-3.5 w-3.5 ${
-                isRecording
+                isVoiceActive
                   ? 'text-white animate-spin'
                   : isLight
                   ? 'text-amber-500'
@@ -659,9 +902,15 @@ export function InputControlCenter({
               }`}
             />
             <span className="font-medium">
-              {isRecording ? 'Stop Streaming (Space / Click)' : 'Simulate Wispr Voice'}
+              {voiceMode === 'real_mic'
+                ? isLiveMicListening
+                  ? 'Stop Dictation (Space / Click)'
+                  : 'Start Microphone Dictation'
+                : isRecording
+                ? 'Stop Streaming (Space / Click)'
+                : 'Simulate Wispr Voice'}
             </span>
-            {!isRecording && (
+            {!isVoiceActive && (
               <kbd
                 className={`ml-1 px-1.5 py-0.2 rounded text-[10px] font-mono border ${
                   isLight

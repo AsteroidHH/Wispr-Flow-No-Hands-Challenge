@@ -239,7 +239,43 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
         },
         {
           type: 'system',
-          text: 'Available ShipSpeak commands:\n• speak --listen (or "shipspeak --listen"): Run voice-to-code pipeline simulation\n• clear (or "cls"): Clear the terminal screen\n• reset: Reset terminal session to default logs\n• help: Show this command directory',
+          text: 'Available ShipSpeak commands:\n• speak --listen (or "ship"): Run voice-to-deliverables pipeline simulation\n• status: Check core engine, VAD, and model latency health\n• export: Inspect zip packaging bundle structure\n• clear (or "cls"): Clear the terminal screen\n• reset: Reset terminal session to default logs\n• help: Show this command directory',
+          timestamp: getTimestamp(),
+        },
+      ]);
+      setInputValue('');
+      return;
+    }
+
+    if (cmd === 'status' || cmd === 'health' || cmd === '--status') {
+      setLogs((prev) => [
+        ...prev,
+        {
+          type: 'input',
+          text: raw,
+          timestamp: getTimestamp(),
+        },
+        {
+          type: 'info',
+          text: '● Daemon v2.4 Active | Model: Gemini 2.5 Flash | VAD Engine: Wispr Flow | Latency: 18ms | Memory: 248MB | Edge Status: Ready',
+          timestamp: getTimestamp(),
+        },
+      ]);
+      setInputValue('');
+      return;
+    }
+
+    if (cmd === 'export' || cmd === 'bundle' || cmd === 'zip') {
+      setLogs((prev) => [
+        ...prev,
+        {
+          type: 'input',
+          text: raw,
+          timestamp: getTimestamp(),
+        },
+        {
+          type: 'success',
+          text: '📦 Bundle structure: Request.md, Architecture.mmd, Demo_script.md, Social_post.md, and README.md. Click "Export ZIP" in the top bar or use ⌥S to configure.',
           timestamp: getTimestamp(),
         },
       ]);
@@ -252,6 +288,7 @@ export function TerminalPreview({ isOpen, onClose }: TerminalPreviewProps) {
       cmd === 'shipspeak --listen' ||
       cmd === 'speak' ||
       cmd === 'shipspeak' ||
+      cmd === 'ship' ||
       cmd.includes('listen') ||
       cmd.includes('--voice')
     ) {

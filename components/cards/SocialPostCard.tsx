@@ -10,6 +10,7 @@ import {
   Repeat,
   Heart,
   BarChart2,
+  ExternalLink,
 } from 'lucide-react';
 import { SocialPostDeliverable } from '@/lib/types';
 import { VoiceTweakInput } from '@/components/VoiceTweakInput';
@@ -196,17 +197,33 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <span
-            className={`font-mono text-[9.5px] transition-colors ${
-              isOverLimit
-                ? 'text-rose-500 font-semibold'
-                : isLight
-                ? 'text-zinc-500'
-                : 'text-[#bdc2ff]'
-            }`}
-          >
-            {charCount} / {maxChars} chars
-          </span>
+          <div className="flex items-center gap-1.5">
+            <div className={`w-12 h-1.5 rounded-full overflow-hidden border ${isLight ? 'bg-zinc-100 border-[#E6E6E4]' : 'bg-[#0d0e0f] border-[#292a2b]'}`}>
+              <div
+                style={{ width: `${Math.min(100, (charCount / maxChars) * 100)}%` }}
+                className={`h-full transition-all duration-200 ${
+                  isOverLimit
+                    ? 'bg-rose-500'
+                    : charCount / maxChars > 0.85
+                    ? 'bg-amber-500'
+                    : isLight
+                    ? 'bg-emerald-600'
+                    : 'bg-[#5e6ad2]'
+                }`}
+              />
+            </div>
+            <span
+              className={`font-mono text-[9.5px] transition-colors ${
+                isOverLimit
+                  ? 'text-rose-500 font-semibold'
+                  : isLight
+                  ? 'text-zinc-500'
+                  : 'text-[#bdc2ff]'
+              }`}
+            >
+              {charCount} / {maxChars}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -348,9 +365,9 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
           isLight ? 'border-[#E6E6E4]' : 'border-[#292a2b]'
         }`}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-1.5">
           <span
-            className={`font-mono text-[9.5px] px-1.5 py-0.5 rounded border ${
+            className={`font-mono text-[9.5px] px-1.5 py-0.5 rounded border hidden sm:inline-block ${
               isLight
                 ? 'text-zinc-400 bg-[#F4F4F5] border-[#E6E6E4]'
                 : 'text-[#908f9e] bg-[#0d0e0f] border-[#292a2b]'
@@ -359,27 +376,62 @@ export function SocialPostCard({ data, onTweak, isRefining = false }: SocialPost
             Tone: <strong className={isLight ? 'text-zinc-700 font-normal' : 'text-[#e3e2e3] font-normal'}>Direct &amp; Tech</strong>
           </span>
 
-          <button
-            type="button"
-            onClick={handleCopy}
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-lg border font-medium text-xs transition-colors shadow-xs cursor-pointer ${
-              isLight
-                ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
-                : 'bg-[#1f2021] hover:bg-[#292a2b] text-[#e3e2e3] hover:text-white border-[#292a2b] font-mono'
-            }`}
-          >
-            {copied ? (
-              <>
-                <Check className="h-3 w-3 text-emerald-600" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className={`h-3 w-3 ${isLight ? 'text-zinc-500' : 'text-[#bdc2ff]'}`} />
-                <span>Copy to Clipboard</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-1.5 ml-auto">
+            {platform === 'twitter' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const text = getCopyText();
+                  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
+                }}
+                title="Post directly to X / Twitter"
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-colors shadow-xs cursor-pointer ${
+                  isLight
+                    ? 'bg-zinc-900 text-white hover:bg-black border-zinc-900'
+                    : 'bg-white text-zinc-900 hover:bg-zinc-100 border-white font-semibold'
+                }`}
+              >
+                <TwitterIcon className="h-3 w-3" />
+                <span>Post to 𝕏</span>
+                <ExternalLink className="h-2.5 w-2.5 opacity-70" />
+              </button>
+            ) : platform === 'linkedin' ? (
+              <button
+                type="button"
+                onClick={() => {
+                  window.open('https://www.linkedin.com/feed/?shareActive=true', '_blank', 'noopener,noreferrer');
+                }}
+                title="Share to LinkedIn"
+                className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-medium transition-colors shadow-xs cursor-pointer bg-[#0A66C2] text-white hover:bg-[#004182] border-[#0A66C2]`}
+              >
+                <LinkedinIcon className="h-3 w-3" />
+                <span>Share</span>
+                <ExternalLink className="h-2.5 w-2.5 opacity-70" />
+              </button>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={handleCopy}
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg border font-medium text-xs transition-colors shadow-xs cursor-pointer ${
+                isLight
+                  ? 'border-[#E6E6E4] bg-white hover:bg-zinc-50 text-zinc-700'
+                  : 'bg-[#1f2021] hover:bg-[#292a2b] text-[#e3e2e3] hover:text-white border-[#292a2b] font-mono'
+              }`}
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3 w-3 text-emerald-600" />
+                  <span>Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className={`h-3 w-3 ${isLight ? 'text-zinc-500' : 'text-[#bdc2ff]'}`} />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         <VoiceTweakInput

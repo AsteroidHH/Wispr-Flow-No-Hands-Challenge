@@ -17,7 +17,8 @@ interface ShortcutItem {
 
 const SHORTCUTS: ShortcutItem[] = [
   { keys: ['⌘', '↵'], description: 'Synthesize all 4 shipping artifacts via Gemini 2.5', category: 'Actions' },
-  { keys: ['Space'], description: 'Tap or hold Space to talk / simulate Wispr voice stream', category: 'Actions' },
+  { keys: ['Space'], description: 'Tap Space to talk / toggle Wispr voice stream or live mic', category: 'Actions' },
+  { keys: ['Voice'], description: 'Say "Ship it" or "Load preset" for hands-free generation', category: 'Actions' },
   { keys: ['⌘', 'K'], description: 'Open interactive CLI and Terminal preview', category: 'Actions' },
   { keys: ['⌥', 'S'], description: 'Open Cockpit Configuration & API Keys drawer', category: 'Navigation' },
   { keys: ['⌥', '1'], description: 'Load Auth Refactor preset (OAuth2 PKCE + Redis)', category: 'Presets' },

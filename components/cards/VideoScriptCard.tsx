@@ -13,6 +13,8 @@ import {
   Pause,
   X,
   RotateCcw,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { VideoScriptDeliverable } from '@/lib/types';
 import { VoiceTweakInput } from '@/components/VoiceTweakInput';
@@ -30,11 +32,45 @@ export function VideoScriptCard({ data, onTweak, isRefining = false }: VideoScri
   const [playbackSpeed, setPlaybackSpeed] = useState<'1.0x' | '1.2x'>('1.0x');
   const [isTeleprompterOpen, setIsTeleprompterOpen] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isNarrationEnabled, setIsNarrationEnabled] = useState(true);
   const [activeSegmentIndex, setActiveSegmentIndex] = useState(0);
   const copyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Safe segments extraction with defensive fallback
   const segments = Array.isArray(data?.segments) ? data.segments : [];
+
+  // Stop any active Web Speech synthesis narration
+  const stopTts = useCallback(() => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  // Speak narration line for current teleprompter segment
+  const speakLine = useCallback((text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      if (!text || !text.trim()) return;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = playbackSpeed === '1.2x' ? 1.15 : 1.0;
+      utterance.pitch = 1.0;
+      window.speechSynthesis.speak(utterance);
+    } catch {
+      // non-blocking
+    }
+  }, [playbackSpeed]);
+
+  // Clean up narration on unmount
+  useEffect(() => {
+    return () => {
+      stopTts();
+    };
+  }, [stopTts]);
 
   // Clamp activeSegmentIndex if segments change or shrink
   useEffect(() => {
@@ -45,18 +81,11 @@ export function VideoScriptCard({ data, onTweak, isRefining = false }: VideoScri
     }
   }, [segments.length, activeSegmentIndex]);
 
-  // Clean up copy timeout on unmount
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
-    };
-  }, []);
-
   // Auto-scroll simulation in teleprompter modal
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
     if (isTeleprompterOpen && isPlaying && segments.length > 0) {
-      const delay = playbackSpeed === '1.2x' ? 3200 : 4000;
+      const delay = playbackSpeed === '1.2x' ? 3600 : 4500;
       interval = setInterval(() => {
         setActiveSegmentIndex((prev) => {
           if (segments.length <= 1) return 0;
@@ -70,11 +99,24 @@ export function VideoScriptCard({ data, onTweak, isRefining = false }: VideoScri
     };
   }, [isTeleprompterOpen, isPlaying, playbackSpeed, segments.length]);
 
+  // Auto-speak narration when active segment advances during playback
+  useEffect(() => {
+    if (isTeleprompterOpen && isPlaying && isNarrationEnabled && segments[activeSegmentIndex]) {
+      const textToSpeak = segments[activeSegmentIndex]?.spokenLine || segments[activeSegmentIndex]?.audio || '';
+      if (textToSpeak) {
+        speakLine(textToSpeak);
+      }
+    } else if (!isPlaying) {
+      stopTts();
+    }
+  }, [isTeleprompterOpen, isPlaying, isNarrationEnabled, activeSegmentIndex, segments, speakLine, stopTts]);
+
   // Close teleprompter and halt playback safely
   const handleCloseTeleprompter = useCallback(() => {
     setIsTeleprompterOpen(false);
     setIsPlaying(false);
-  }, []);
+    stopTts();
+  }, [stopTts]);
 
   // Keyboard shortcut listener (Escape to close, Space to toggle play/pause)
   useEffect(() => {
@@ -405,6 +447,29 @@ ${segments
               </div>
 
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsNarrationEnabled((prev) => {
+                      if (prev) stopTts();
+                      return !prev;
+                    });
+                  }}
+                  title={isNarrationEnabled ? 'Mute AI Voice Narration' : 'Enable AI Voice Narration (TTS)'}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-mono transition-colors cursor-pointer ${
+                    isNarrationEnabled
+                      ? isLight
+                        ? 'bg-amber-100 text-amber-900 border-amber-300 font-semibold'
+                        : 'bg-[#5e6ad2]/20 text-[#bdc2ff] border-[#5e6ad2]/40 font-semibold'
+                      : isLight
+                      ? 'border-[#E6E6E4] text-zinc-400 hover:text-zinc-700'
+                      : 'border-[#292a2b] text-[#908f9e] hover:text-[#e3e2e3]'
+                  }`}
+                >
+                  {isNarrationEnabled ? <Volume2 className="h-3.5 w-3.5 text-amber-600 dark:text-[#bdc2ff]" /> : <VolumeX className="h-3.5 w-3.5" />}
+                  <span className="hidden sm:inline">{isNarrationEnabled ? 'Voice: On' : 'Voice: Mute'}</span>
+                </button>
+
                 <button
                   type="button"
                   disabled={segments.length === 0}

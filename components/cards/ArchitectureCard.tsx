@@ -551,7 +551,7 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
               type="button"
               onClick={handleExportPng}
               disabled={isExportingPng || !safeMermaidCode.trim()}
-              title="Export as PNG"
+              title="Export high-resolution PNG"
               className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-mono transition-colors disabled:opacity-40 cursor-pointer ${
                 isLight
                   ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700 hover:bg-white'
@@ -564,6 +564,26 @@ export function ArchitectureCard({ data, onTweak, isRefining = false }: Architec
                 <ImageIcon className="h-2.5 w-2.5" />
               )}
               <span>PNG</span>
+            </button>
+
+            {/* Export as SVG Vector Button */}
+            <button
+              type="button"
+              onClick={handleExportSvg}
+              disabled={isExportingSvg || !safeMermaidCode.trim()}
+              title="Export vector SVG"
+              className={`flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-mono transition-colors disabled:opacity-40 cursor-pointer ${
+                isLight
+                  ? 'bg-[#F4F4F5] border-[#E6E6E4] text-zinc-700 hover:bg-white'
+                  : 'border-[#292a2b] bg-[#1f2021] hover:bg-[#292a2b] text-[#908f9e]'
+              }`}
+            >
+              {isExportingSvg ? (
+                <Loader2 className={`h-2.5 w-2.5 animate-spin ${isLight ? 'text-amber-600' : 'text-[#5e6ad2]'}`} />
+              ) : (
+                <FileCode className="h-2.5 w-2.5" />
+              )}
+              <span>SVG</span>
             </button>
 
             {/* Copy Raw Mermaid Button */}

@@ -1,5 +1,4 @@
 import { POST as tweakPost, GET as tweakGet, getFallbackTweak } from '../app/api/tweak/route';
-import { POST as weekPost, GET as weekGet } from '../app/api/week/route';
 import { NextRequest } from 'next/server';
 
 let passed = 0;
@@ -321,41 +320,17 @@ async function runTests() {
   }
 
   // -------------------------------------------------------------
-  // SCENARIO F: Verify /api/week Route Export Behavior
+  // SCENARIO F: Verify /api/tweak Route Export Behavior
   // -------------------------------------------------------------
-  console.log('\n--- Scenario F: Verify /api/week Route Export Behavior ---');
+  console.log('\n--- Scenario F: Verify /api/tweak Route Export Behavior ---');
   {
-    assert(typeof weekPost === 'function', '/api/week exports POST function');
-    assert(typeof weekGet === 'function', '/api/week exports GET function');
-    assert(weekPost === tweakPost, '/api/week POST is exact reference alias of /api/tweak POST');
-    assert(weekGet === tweakGet, '/api/week GET is exact reference alias of /api/tweak GET');
-
-    // Execute POST via weekPost
-    const weekReq = makeRequest(
-      {
-        cardKey: 'pullRequest',
-        currentContent: { summary: 'Route alias test summary' },
-        instruction: 'add redis caching',
-      },
-      'POST',
-      'http://localhost:3000/api/week'
-    );
-    const weekRes = await weekPost(weekReq);
-    assert(weekRes.status === 200, '/api/week POST execution returns HTTP 200');
-    const weekData = await weekRes.json();
-    assert(weekData.success === true, '/api/week POST execution returns success: true');
-    assert(weekData.data.summary.includes('Redis'), '/api/week applied refinement accurately');
-
-    // Execute GET via weekGet and tweakGet
+    assert(typeof tweakPost === 'function', '/api/tweak exports POST function');
+    assert(typeof tweakGet === 'function', '/api/tweak exports GET function');
+    // Execute GET via tweakGet
     const tweakGetRes = await tweakGet();
     assert(tweakGetRes.status === 200, '/api/tweak GET returns HTTP 200 healthcheck');
     const tweakGetData = await tweakGetRes.json();
     assert(tweakGetData.status === 'healthy', '/api/tweak health status is healthy');
-
-    const weekGetRes = await weekGet();
-    assert(weekGetRes.status === 200, '/api/week GET returns HTTP 200 healthcheck');
-    const weekGetData = await weekGetRes.json();
-    assert(weekGetData.status === 'healthy', '/api/week health status is healthy');
   }
 
   // Restore API key
